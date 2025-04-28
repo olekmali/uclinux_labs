@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8" />
+<title>ECE472/572 (UCLX) Assignment Number 10</title>
+<!-- meta http-equiv="Pragma" content="no-cache" -->
+<meta name="robots" content="index,follow" />
+<!-- meta name="robots" content="noarchive" -->
+<link rel="shortcut icon" href="../../../icons/mopsys.ico" type="image/x-icon" />
+<script type="text/JavaScript" src="../../../default.js"></script>
+<link rel="stylesheet" href="../../../default.css" type="text/css" />
+<style type="text/css" />
+<!--
+.s_command {font-family: "Courier New", Courier, mono; }
+.s_tograde {color: #006600; }
+.s_tosee {color: #0000FF; }
+.s_optional { font-weight: lighter; color: #3F3FFF; }
+.s_warning {font-weight: bold; color: #7F0000; }
+.s_cmd_choice {color: #FF0000; font-family: "Courier New", Courier, mono; }
+.s_cmd_4grade {color: #006600; font-family: "Courier New", Courier, mono; }
+.s_code_fragment {font-family: "Courier New", Courier, mono; color: #0000FF; }
+-->
+</style>
+</head>
+<body>
+
+<h1>ECE 472/572 Assignment 10</h1>
+
+
+<h2>Purpose</h2>
+
+<h3>Skills</h3>
+
+<p>The purpose of this assignment is to help you practice the following skills that are essential to your success in this course / in school / in this field / in professional life beyond school:</p>
+
+<ul>
+    <li>Configuring <span class="s_command">udev</span> system to allow non-root access to selected device(s).</li>
+    <li>Communicating with device drivers using ioctl API in user space.</li>
+    <li>Configuring and using Linux sysfs digital IO interface that allows for control Digital IO Pins.</li>
+</ul>
+
+<h3>Knowledge</h3>
+
+<p>This assignment will also help you to become familiar with the following important content knowledge in this discipline:</p>
+
+<ul>
+    <li>Use of ioctl API.</li>
+    <li><span class="s_command">/dev</span> interface to devices.</li>
+    <li><span class="s_command">/sys/class</span> interface to devices.</li>
+</ul>
+
+
+
+<h2>Prepare for the lab - direct questions</h2>
+
+<p>Answer these questions while doing this lab &ndash; they will help you understand the procedure and better prepare for the tests.</p>
+<ul>
+    <li>Look around and find on your hard drive the header files for the include files &lt;linux/xxxx.h&gt; Hint: look for a directory under <span class="s_command">/usr/</span></li>
+    <li>Look into <span class="s_command">man rtc</span> and explain if ioctl RTC_RD_TIME command and read from "file" do the same thing. If not, then what does read return?</li>
+    <li>Check the real time clock device file name both on your Ubuntu Linux and on ucLinux. Hint: <span class="s_command">ls -l /dev/rt*</span> . Pay attention to capital o and to zero.</li>
+    <li>What is the difference between <span class="s_command">open</span> and <span class="s_command">fopen</span>? </li>
+    <li>What does <span class="s_command">ioctl</span> do?</li>
+    <li>What does <span class="s_command">lsusb</span> do?</li>
+    <li>What is <span class="s_command">UDEV</span>?
+        What is <span class="s_command">EUDEV</span>? 
+        What does <span class="s_command">udevadm</span> command do? 
+        Why a tool like this became necessary?
+    </li>
+    <li>What is the file <span class="s_command">/etc/group</span>? What groups do you see predefined inside?</li>
+    <li>Observe the group ownership of devices like <span class="s_command">/dev/ttyS*</span>, <span class="s_command">/dev/ttyUSB*</span>,
+        <span class="s_command">/dev/input/</span>, <span class="s_command">/dev/video*</span>, <span class="s_command"> /dev/audio*</span>,
+        <span class="s_command">/dev/rtc</span>, and others. 
+        What groups do you see? Which devices are accessible only by root? 
+        (Make a note of your findings for the sake of possible question at the exam.)
+    </li>
+    <li>Optional experiments: If you have access to the needed resources observe:
+        <ul>
+            <li>What happens when you connect more than one USB-based mouse to the system? (Touchpad might count as the first mouse.) Watch for <span class="s_command">/dev/mouse*</span> and <span class="s_command">/dev/mice</span> </li>
+            <li>What happens when you connect more than one USB-to-serial converter?</li>
+        </ul>
+    </li>
+</ul>
+
+<h2>Prepare for the lab - indirect questions</h2>
+
+<ul>
+    <li>A set of questions about partition tables and partitions:
+        <ul>
+            <li>What is the maximum number of partition tables that can be located on one disk?</li>
+            <li>What is the maximum number of partition entries that are stored directly in one partition table?</li>
+            <li>Disregard practical limitations of disk capacity and data processing time, what is the maximum number of partitions on one disk?</li>
+            <li>Are there any emerging standards (not yet fully adopted) that can cause that there are two sets of correct answers to this group of questions?</li>
+        </ul>
+    </li>
+    <li>Windows &quot;format d: /s&quot; or Linux mkfs -t ext2&quot; - are they perform high level disk formatting, or low level disk formatting?</li>
+    <li>Consider: GRUB, LILO, SYSLINUX, NTLDR: which ones can load only an operating system 
+        which ones can load only another boot loader, which ones can do both?
+    </li>
+    <li>Is legacy floppy disk boot record a master or volume boot record?</li>
+    <li>What is the maximum file name or path name in number of characters on the following file systems: FAT-12, FAT-32, NTFS, ext2,3,4?</li>
+    <li>What is the maximum file name or path name in number of characters in case of CDROM/DVD file systems: ISO, Joliet, UDF?</li>
+</ul>
+
+<h2>Activity 1 (10 pts.)</h2>
+
+<ol>
+    <li>Find and inspect the Linux rtc device. Run <span class="s_command">ls -l /dev/rt*</span></li>
+    <li class="s_tograde">Capture the screen that shows who can access the device and to what capacity.</li>
+    <li>Change the access restrictions and add another alias for the <span class="s_command">rtc</span> device:
+        <ol>
+            <li>Run <span class="s_command">udevadm info -a -p /sys/class/rtc/rtc0</span> and observe its output</li>
+            <li>Edit/create the content of the file <span class="s_command">/etc/udev/rules.d/10-local.rules</span> and add the following line:
+                <br><span class="s_command">SUBSYSTEM==&quot;rtc&quot; KERNEL==&quot;rtc0&quot; SYMLINK=&quot;clock&quot; MODE=&quot;0666&quot; GROUP=&quot;uclinux&quot;</span></li>
+            <li>Run <span class="s_command">sudo udevadm control --reload-rules</span></li>
+            <li>Run <span class="s_command">sudo udevadm trigger</span></li>
+        </ol>
+    </li>
+    <li>Run <span class="s_command">ls -l /dev/rt* /dev/cl*</span></li>
+    <li class="s_tograde">Capture the view of the output of the <span class="s_command">ls</span> command above.</li>
+    <li>Refer to the example program that illustrates use of direct read and 
+        write as well as ioctl in order to access features of the RTC device. 
+        Write a short program that accesses <span class="s_command">/dev/rtc<span class="s_cmd_choice">x</span></span> 
+        or its equivalent and prints the current time of the hardware clock.
+        <ol>
+            <li>Use <a href="A_rtc_outline.c.HTML">the following loose program outline</a>. 
+                Please note that we will read the clock state not by reading from the device file 
+                (like we did in case of joystick) but instead by executing ioctl with parameter 
+                <span class="s_command">RTC_RD_TIME</span> and the pointer to a variable of type 
+                <span class="s_command">rtc_time</span>.
+            </li>
+        </ol>
+    </li>
+    <li><span class="s_tograde">Capture the view of the output of the program you wrote.</span></li>
+</ol>
+
+<h2>Activity 2 (10 pts.)</h2>
+
+<ol>
+    <li>Inspect the GPIO access description
+        <a href="http://www.armhf.com/using-beaglebone-black-gpios/" target="_blank">provided on ARMhf Web site</a>.
+    </li>
+    <li>Inspect the GPIO assignment
+       <ul>
+            <li><span class="s_command">mount -t  debugfs none /mnt</span></li>
+            <li><span class="s_command">ls /mnt</span></li>
+            <li><span class="s_command">cat /mnt/gpio</span></li>
+            <li><span class="s_command">umount /mnt</span></li>
+
+        </ul>
+    </li>
+    <li>Look at the provided example of a <a href="A_shell_script_w_loop.sh.HTML">shell script with a loop</a>.</li>
+    <li>On the microcontroller running Buildroot or full size Linux:
+        <br>Test you ability to set up and control the digital IO pins on the board of your choice. 
+        Use <span class="s_command">sudo</span> only if absolutely necessary.
+        <ol>
+            <li>Inspect what needs to be done to set up one of the on-board LED pins as an output and control it. 
+                Use shell commands like
+                <ol>
+                    <li><span class="s_command">echo "text" &gt; /device_name_with_path</span></li>
+                    <li><span class="s_command">cat /device_name_with_path</span></li>
+                    <li>inspect the results of each step using <span class="s_command">ls -l /path_as_needed</span></li>
+                </ol>
+            </li>
+            <li>In case the pin of your choice was already set up, remove the settings so that the pin is no longer available. 
+                <span class="s_tograde">Document as needed.</span></li>
+            <li>Activate the gpio pin as an output pin. 
+                Verify using appropriate <span class="s_command">ls -l</span> commands. 
+            <li>Verify that you can control the LED by sending subsequently "0" and "1" several times and observing the LED behavior.</li>
+        </ol>
+    </li>
+    <li>Perform the graded lab activity:
+        <ul>
+            <li>Write and cross-compile a short program in C or write a shell script that
+                <ul>
+                    <li>first sets up an output pin connected to a LED as needed</li>
+                    <li>and then toggles one of the board LEDs once per second.</li>
+                </ul>
+            </li>
+            <li>In case of a program in C or C++
+                <ul>
+                    <li>Use open the file for writing, write to the file, close the file sequence instead of each echo redirection</li>
+                    <li>Use open the file for reading, read a line from the file, and close the file sequence instead of each cat</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li>Cross-compile your program and transfer it to the board. 
+        (A shell script can be developed directly on the board.)
+    </li>
+    <li>Test your program by running it on the board. 
+        Use <span class="s_command">sudo</span> only if absolutely necessary.
+    </li>
+    <li><span class="s_tograde">Submit your program source code</span> and at the same time</li>
+    <li><span class="s_tograde">Capture a short video of the LED activity generated by the program you wrote.</span></li>
+</ol>
+
+
+<h3>Details for BeagleBone</h3>
+
+<p>The LEDs on the BBB are on GPIO numbers 21, 22, 23, and 24.
+That corresponds to GPIO addresses of 53, 54, 55, and 56 (gpio+32), 
+OR 533, 534, 535, and 536 (gpio+512)
+depending on the addressing convention used by your Linux OS.
+Note that GPIO numbers do not correspond to the pin numbers on the board connectors.</p>
+
+<p>The S2/boot button is on GPIO number 40 which is either 72 or 552. 
+(Pressed value is 0, released value is 1.)</p>
+
+<p>The design of the recent operating systems including 2024 Buildroot for Beaglebone 
+disabled direct access to these LEDs using low-level GPIO. 
+Instead, you have to use the predefined devices located at <span class="s_command">/sys/class/leds/</span>.</p>
+
+<p>However, first, disable the predefined actions on these four LEDs (until the next system reboot)
+by running four commands in the format like the one listed below. Adjust file names as necessary.
+<br><span class="s_command">echo none &gt; /sys/class/leds/beaglebone\:green\:usrN/trigger
+</p>
+
+
+<h3>Details for RaspberryPi</h3>
+
+<p>The GREEN LED is on GPIO 47 and the RED LED is on GPIO 35. The USB high power mode LED is on GPI38.</p>
+
+<p>The design of Raspberry Pi 3 or later disabled direct access to these LEDs using low-level GPIO. 
+Instead, you have to use the predefined devices located at <span class="s_command">/sys/class/leds/</span>.</p>
+
+<p>However, first, disable the predefined actions on the two LEDs (until the next system reboot):
+<br><span class="s_command">echo none &gt; /sys/class/leds/led0/trigger
+<br>echo none &gt;/sys/class/leds/led1/trigger</span></p>
+
+
+
+<h3>Details for Orange Pi Zero 3</h3>
+
+<p>The GREEN LED is on GPIO 77 and the RED LED is on GPIO 76.</p>
+
+<p>The design of Orange Pi Zero 3 Buildroot disabled direct access to these LEDs using low-level GPIO. 
+Instead, you have to use the predefined devices located at <span class="s_command">/sys/class/leds/</span>.</p>
+
+<p>However, first, disable the predefined actions on the two LEDs (until the next system reboot):
+<br><span class="s_command">echo none &gt; /sys/class/leds/green_led/trigger
+<br>echo none &gt;/sys/class/leds/red_led/trigger</span>
+</p>
+
+
+
+<h2>Submission</h2>
+
+<p>Submit both the source code of your program or script and
+a short video demonstration of the LED control to the corresponding assignment drop box on Canvas.</p>
+
+<p>Thank you.</p>
+
+
+
+<h2>Criteria for Success</h2>
+
+<p>Successful completion of Activity 1 relies on three steps that can be evaluated independently. 
+<ul>
+    <li>25% of credit is awarded for successful demonstration that RTC is replicated to CLOCK.</li>
+    <li>Next 25% of credit is subsequently awarded for successful demonstration that CLOCK 
+        can be accessed without escalating privileges to root.</li>
+    <li>Another 50%  of credit is awarded for successful demonstration of executing an expanded
+        version of the provided RTC program. In case the aforementioned steps are not
+        successful, the program can be executed using sudo in the privileged mode and access RTC device
+        instead of CLOCK device alias.</li>
+</ul>
+</p>
+
+<p>Successful completion of Activity 2 is evaluated based on the content of 
+the provided (submitted) shell script or source code of a program in C or C++, 
+and the video recording of the behavior of of that program to control the board LEDs. 
+A complete demo documents starting the program from a console and then focuses on the board LEDs, 
+all recorded in one uninterrupted session.</p>
+
+
+
+<p>
+<a href="../../../index.html"><img src="../../../icons/main.gif" class="menu32x32" alt="web site front" /></a>
+<a href="../index.html"><img src="../../../icons/menu.gif" class="menu32x32" alt="local main page" /></a>
+<a href="index.html"><img src="../../../icons/mmisc.gif" class="menu32x32" alt="local list page" /></a>
+<a href="../../../bookmark/index.html"><img src="../../../icons/mbookmark.gif" class="menu32x32" alt="general bookmarks" /></a>
+<a href="../../../bookmark/software.html"><img src="../../../icons/mbookabcd.gif" class="menu32x32" alt="software bookmarks" /></a>
+<a href="javascript:void(window.history.back());"><img src="../../../icons/maleft.gif" class="menu32x32" alt="go back" /></a>
+<a href="javascript:void(window.open('../../../copyright.html','C','toolbar=no,status=no,menubar=no,directories=no,location=no,width=600,height=500,resizable=no'));"><img src="../../../icons/mchecked.gif" class="menu32x32" alt="copyright info" /></a>
+</p>
+
+</body>
+</html>

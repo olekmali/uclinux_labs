@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8" />
+<title>ECE472/572 (UCLX) Assignment Number 5</title>
+<!-- meta http-equiv="Pragma" content="no-cache" -->
+<meta name="robots" content="index,follow" />
+<!-- meta name="robots" content="noarchive" -->
+<link rel="shortcut icon" href="../../../icons/mopsys.ico" type="image/x-icon" />
+<script type="text/JavaScript" src="../../../default.js"></script>
+<link rel="stylesheet" href="../../../default.css" type="text/css" />
+<style type="text/css" />
+<!--
+.style1 {color: #FF0000}
+.style2 {font-family: "Courier New", Courier, mono}
+.style3 {color: #0000FF}
+.style5 {color: #FF00FF}
+.style6 {color: #006600; font-weight: bold;}
+.style7 {color: #006600}
+.style8 {font-size: x-large; color: #000099;}
+.style9 {color: #666666}
+.style10 {font-family: "Courier New", Courier, mono; color: #666666;}
+.style11 {font-family: "Courier New", Courier, mono; color: #FF00FF;}
+.style12 {color: #009900; font-family: Courier;}
+.style15 {font-family: "Courier New", Courier, mono; color: #0000FF; }
+.style16 { color: #FF0000; font-weight: bold; }
+.auto-style1 { color: #000077; }
+.auto-style2 { color: #FF0000; font-family: Courier; }
+.auto-style3 { font-family: Courier; }
+.auto-style4 { font-family: "Courier New"; color: #008000; display: normal; }
+.auto-style5 { background-color: #FFFF00; }
+-->
+</style>
+</head>
+<body>
+
+<h1>ECE472/572 (UCLX) Assignment 5 - version for kernels 3.x and 4.x</h1>
+
+<p class="style8">&quot;Everything is hard before it's easy&quot; - Thomas Fuller</p>
+
+
+
+<h2>Prepare for the lab</h2>
+
+<p>Answer these questions while doing this lab &ndash; they will help you understand the procedure and better prepare for the tests.</p>
+<ul>
+    <li>What is the difference between<span class="style2"> apt-get</span> and 
+        <span class="style2">apt</span>, and<span class="style2"> aptitude</span>?<br>
+        Note that <span class="style2"> aptitude</span> is no longer installed by 
+        default on Ubuntu even though it is a more powerful tool.</li>
+    <li>What is the difference between<span class="style2"> apt-get </span>and <span class="style2">dpkg</span>? 
+        <br>Note that there is another software similar to <span class="style2">dpkg</span> 
+        that was initially called <span class="style2">ipkg</span> and now is known as
+        <span class="style2">opkg</span>.</li>
+    <li>What is the difference between<span class="style2"> apt-get install</span> 
+        and <span class="style2"> apt-get build-dep</span>?</li>
+    <li>What is <span class="style2">fakeroot</span>?</li>
+    <li>What is the use of <span class="style2">strace</span> and <span class="style2">ltrace</span>?</li>
+    <li>What does <span class="style2">df</span> do? How it can be useful in this lab procedure?</li>
+    <li>Kernel version <span class="style5">4.15.0.45</span> is not the most current version available at 
+        <a href="https://www.kernel.org/" target="_blank">kernel.org</a>.
+        <ul>
+            <li>What is the number of the most recent stable major version?</li>
+            <li>What is the most recent minor version for the most recent stable major version?</li>
+            <li>What is the file time stamp date for the latest version in the 4.x family</li>
+            <li>What is the file time stamp date for the earliest version in the 4.x family?</li>
+            <li>What is the file time stamp date for the latest version in the 3.x family?</li>
+            <li>What is the file time stamp date for the earliest version in the 3.x family?</li>
+            <li>What is the file time stamp date for the latest version of kernel 2.6?</li>
+            <li>What is the file time stamp date for the earliest version of kernel 2.6?</li>
+            <li>What is the file time stamp date for the kernel 1.0?</li>
+        </ul>
+    </li>
+    <li>What is <span class="style2">uname</span>? What are its options?</li>
+    <li>Make will take almost forever to compile the lernel. What is 
+        <span class="style2">lscpu</span>? What is <span class="style2">-jN</span> 
+        option of <span class="style2">make</span>? How the number of CPU cores N 
+        obtained form the former may be utilized in the latter?
+    </li>
+    <li>What is a system call? Why must you make the changes below to access this feature? Name any reason a programmer may need to use a system call in software development.</li>
+</ul>
+
+
+<h2>Activity (30 pts.)</h2>
+
+<h3>Custom Kernel</h3>
+<ul>
+    <li class="style1"><strong>This procedure is currently being tested on Ubuntu Linux 18.04. 
+        Please report if it worked correctly or failed if you use a different version.</strong></li>
+    <li class="style1"><span class="auto-style5">You need </span> 
+        <strong><span class="auto-style5">at least 8GB of free space</span></strong>
+        <span class="auto-style5"> to complete the task</span>. 
+        You can reclaim the space afterwards by deleting the folder with the Kernel source code.</li>
+    <li class="style1">The main compilation of the kernel depending on options selected 
+        <strong>may take more than two hours or more</strong> without much of your attention most of the time.  
+        <br>Bring other work to do while waiting in the lab. 
+        <strong>Make sure that you can afford much more time then originally planned.</strong></li>
+    <li class="style1">Pay attention to any errors. <strong>Attend to any errors before attempting to proceed with further steps</strong> or you may be forced to start over from the beginning.</li>
+    <li class="style1">You are recompiling the operating system! This procedure may vary dramatically if a different version of Ubuntu is used. </li>
+    <li> Open a terminal window</li>
+    <li><span class="style6">Collecting materials for homework submission - type:</span>
+        <ul>
+            <li><span class="style2"><span class="style6">script hw5a.txt</span></span>
+                <ul>
+                      <li>Note: The command above will start recording the actions carried over in this terminal window.</li>
+                      <li>If you need to stop and return at a later time type <span class="style2">exit</span></li>
+                      <li>If you need to restart the recording you have to use a different file name, type <span class="style2">script hw5a-cont.txt</span> e.t.c.</li>
+                </ul>
+            </li>
+            <li class="style6">All further comments and commands in green are inserted for the sake of diagnostics and homework grading. Do not skip them. </li>
+        </ul>
+    </li>
+    <li>On Ubuntu 10 or later use the following commands to update package database and install kernel development packages:</li><br>
+    (<span class="style2">Note that libssl-dev</span> is required since Kernel version 4.x)
+    <ul>
+        <li><span class="style2">sudo apt update</span></li>
+        <li><span class="style2">sudo apt upgrade</span></li>
+        <li><span class="style2">sudo apt install <strong>build-essential</strong></span></li>
+        <li><span class="style2">sudo apt install fakeroot xz-utils git subversion</span></li>
+        <li><span class="style2">sudo apt install libncurses5 libncurses5-dev libssl-dev</span></li>
+    </ul>
+    <li>In case of no source location error in <span class="style2">apt-get
+        <strong>build-essential ...</strong></span> command do the following:<ul>
+        <li><span class="style2">sudo gedit /etc/apt/sources.list</span></li>
+        <li>&quot;Make 
+    sure that for every&nbsp;deb &#8230;&nbsp;entry 
+    in&nbsp;/etc/apt/sources.list&nbsp;and&nbsp;/etc/apt/sources.list.d/*, you have a 
+    matching&nbsp;deb-src &#8230;&nbsp;entry. The rest of the line must be identical. 
+    The&nbsp;deb&nbsp;entry is for binary packages (i.e. ready to install), the&nbsp;deb-src&nbsp;is 
+    for source packages (i.e. ready to compile).&quot;<a href="https://unix.stackexchange.com/questions/158395/apt-get-build-dep-is-unable-to-find-a-source-package" target="_blank">*</a></li>
+    </ul>
+    </li>
+    <li>Open a Web browser and inspect contents of the folder 
+    <span class="style2">
+    <a class="auto-style1" href="https://www.kernel.org/pub/linux/kernel/v4.x/" target="_blank">https://www.kernel.org/pub/linux/kernel/v4.x/</a></span></li>
+    <li>Download the appropriate kernel source and unpack it. <br><strong>In case of Ubuntu 
+    18 use one of subversion 4 kernels, named 
+    <span class="style2"><span class="style5">linux-4.15</span></span> as Ubuntu 18 kernel will be for sure 
+    compatible with system libraries. For the best results use one of the most 
+    recent minor versions.</strong><ul>
+        <li><span class="style12">uname -a</span></li>
+        <li><span class="style12">date</span></li>
+    </ul>
+    <ul>
+        <li><span class="style12">whoami</span></li>
+        <li><span class="style2">cd</span></li>
+        <li><span class="style2">pwd</span></li>
+        <li><span class="style2">uname -r</span></li>
+        <li><span class="style2">wget 
+        <a href="https://mirrors.edge.kernel.org/pub/linux/kernel/v4.x/" target="_blank">https://mirrors.edge.kernel.org/pub/linux/kernel/v4.x/<span class="style5">linux-4.15-xyz</span>.tar.xz</a></span></li>
+        <li><span class="style2">tar -xJf
+        <span class="style5">linux-4.15-xyz</span>.tar.xz</span></li>
+        <li><span class="style2">ln -s <span class="style5">linux-4.15-xyz</span> mylinux</span></li>
+        <li><span class="style2">ls -l</span></li>
+        <li><span class="style2">cd mylinux</span></li>
+        <li><span class="style2">pwd</span></li>
+        <li><span class="style2">make mrproper</span></li>
+    </ul>
+    <li>Configure the kernel by copying configuration file from the host system. 
+    You can either compile a generic version of the kernel that will work with 
+    various types of hardware or build one that uses only modules that are 
+    currently in use. In the first case you will need a lot of disk space. In 
+    the latter case any significant change to hardware may result in 
+    unrecognized component.<ul>
+        <li><strong>CHOICE 1</strong> - Specialized kernel that will work only with the hardware 
+        currently in use but will need only <strong>about 5GB of hard drive space
+        </strong>to 
+        compile. It works for kernels 2.6.32- or later.&nbsp; It takes about one 
+        hour to compile.
+        <ul>
+            <li>Make sure that you are running the generic version of the&nbsp;kernel</li>
+            <li>Plug in all devices that you expect to use on the system 
+            including SD card readers (with SD cards) and USB flash drives/</li>
+            <li><span class="style2">make localmodconfig</span></li>
+            <li>Give the default answers to any questions (about configuration 
+            settings not set in your current kernel built)</li>
+        </ul>
+        <li><strong>CHOICE 2</strong> - Universal generic kernel, <strong>requires a lot 
+        (16GB or more) of disk space to 
+        compile and takes several hours of unattended compilation</strong><ul>
+            <li><span class="style2">uname -r</span></li>
+            <li class="style2">ls -l /boot/config*</li>
+            <li><span class="style2">cp /boot/config-4.<span class="style5">4.4-NNN-generic</span> ./.config</span><br>
+            Use the current (latest) name of the configuration file if you updated the system as  
+            <span class="style5">NNN</span>-. </li>
+        </ul>
+        <li><span class="style2">make menuconfig</span> <br />This brings up the 
+        Configuration Menu
+            <ul>
+                <li>Select &ldquo;Load an Alternate Configuration File&rdquo;.</li>
+                <li>.config shall appear, as the name of the configuration file you wish to load, in the dialog box that appears next. Press &lt;Ok&gt;.\</li>
+                <li>You can make any configuration changes at this point. Be warned 
+            &#8211; this could damage your installation.</li>
+                <li>Select Exit and Yes to save.</li>
+        </ul>
+    </ul>
+</ul>
+<p>You are now ready to build your custom kernel. However, we will make all the changes necessary to create a system call so we do not have to rebuild the kernel twice.We will create a system call named test_call, which will print &ldquo;Hello World!&rdquo; in the system log.</p>
+<ul>
+
+    <li>Create a new directory for the call</li>
+        <ul>
+            <li><span class="style2">mkdir test_call</span></li>
+        </ul>
+    <li>Create a new file in the test_call directory.</li>
+    <ul>
+        <li><span class="style2">gedit test_call/test_call.c &amp;</span></li>
+        <li>Enter the following text</li>
+    </ul>
+</ul>
+<pre class="style3">/*----------Start of test_call.c----------*/<br>#include &lt;linux/linkage.h&gt;
+#include &lt;linux/kernel.h&gt;
+
+asmlinkage long sys_test_call(unsigned short n)
+{
+    unsigned short i;
+    for (i=0; i&lt;n; i++)
+        printk(KERN_EMERG &quot;Kernel Hello World! by <span class="style12">&lt;insert your name here&gt;</span>\n&quot;);
+    return 0;
+}
+/*-----------End of test_call.c-----------*/</pre>
+<ul>
+    <ul>
+        <li>Save file as test_call.c in the test_call directory</li>
+    </ul>
+    <li>Create a Makefile in the test_call directory.</li>
+    <ul>
+        <li><span class="style2">gedit test_call/Makefile &amp;</span></li>
+        <li>Enter the following text</li>
+    </ul>
+</ul>
+<pre class="style3">########## Start of Makefile ##########
+obj-y := test_call.o
+########## End of Makefile ############</pre>
+<ul>
+    <ul>
+        <li> Save file as Makefile in the test_call directory </li>
+    </ul>
+</ul>
+    <li>Add test_call to core-y in Makefile</li>
+    <ul>
+        <li><span class="style2">gedit Makefile &amp;</span></li>
+        <li>Search for core-y to find the line &ldquo;<span class="style15">core-y += kernel/ mm/ fs/ ipc/ security/ crypto/ block/</span>&rdquo;</li>
+        <li>Add &ldquo;<span class="style15"> test_call/</span>&#8221; at the end of &nbsp; the list of directories with source code. The list is space delimited.</li>
+    </ul>
+
+    <li>Add new call to syscall tables for x86 and x64 architectures at the end of each list. Pay attention to using the correct system call number.</li>
+    <ul>
+        <li><span class="style2">gedit arch/x86/entry/syscalls/syscall_32.tbl &amp;</span><ul>
+            <li><span class="style15"><span class="auto-style2">385</span> i386 
+            test_call sys_test_call</span></li>
+        </ul>
+        </li>
+        <li><span class="style2">gedit arch/x86/entry/syscalls/syscall_64.tbl &amp;</span><ul>
+            <li><span class="style15"><span class="auto-style2">333</span> 
+            common 
+            test_call sys_test_call</span></li>
+        </ul>
+        </li>
+    </ul>
+    <li>Add new call to system call header file just before the final <span class="style2">#endif</span></li>
+    <ul>
+        <li><span class="style2">gedit include/linux/syscalls.h &amp;</span></li>
+        <ul>
+            <li><span class="style15">asmlinkage long sys_test_call(unsigned short);</span></li>
+        </ul>
+    </ul>
+
+<p>Now let's record content of all created or midified files for the sake of the 
+submission of this lab.</p>
+<ul>
+        <li><span class="style12">cat test_call/test_call.c</span></li>
+        <li><span class="style12">cat test_call/Makefile</span></li>
+        <li><span class="style12">cat Makefile</span></li>
+        <li><span class="style12">cat arch/x86/entry/syscalls/syscall_32.tbl</span></li>
+        <li><span class="style12">cat arch/x86/entry/syscalls/syscall_64.tbl</span></li>
+        <li><span class="style12">cat include/linux/syscalls.h</span></li>
+</ul>
+
+<p>Now we will complete building the kernel with the new system call in place.</p>
+<ul>
+    <li>Back in the terminal window. This is the longest step and it does not 
+    require much attention. However, check on the building process every now and 
+    then so that any errors are discovered early and are corrected. If you made 
+    a mistake in your system call code it will during the make process. Correct 
+    and restart make by repeating the command.</li>
+    <ul>
+        <li><span class="style2">pwd</span> (you should be in 
+        <span class="style2">/home/your_user_id/mylinux</span>, use cd to correct if necessary)</li>
+        <li><span class="style12">date</span></li>
+        <li><span class="style2"> make deb-pkg LOCALVERSION=<span class="style5">-custom</span></span></li>
+        <li><span class="style12">date</span></li>
+    </ul>
+</ul>
+<p>&ldquo;-custom&rdquo; is the name for your new kernel build. You change it to something else if you like. However, it must start with a dash (-) and cannot contain any whitespace. The terminal will give you an error if your naming is not compatible.</p>
+<p>After the last line, your kernel will start compiling. This may take a few hours depending on your computer.</p>
+<ul>
+  <li>Install the new kernel (at the terminal)</li>
+  <ul>
+    <li><span class="style2">cd ..</span></li>
+    <li><span class="style2">pwd</span> (you should be in <span class="style2">/home/your_user_id</span>, use cd to correct if necessary)</li>
+    <li><span class="style2">ls -l</span></li>
+      <li><span class="style2">sudo dpkg -i linux-image-<span class="style5">4.15.0-custom_xxx</span>.deb</span></li>
+    <li><span class="style2">sudo dpkg -i linux-headers-<span class="style5">4.15.0-custom_xxx</span>.deb</span></li>
+    <li><span class="style2">cat /var/log/dpkg.log | tail -n 20</span></li>
+    <li><span class="style2">ls -a -l /boot</span></li>
+    <li>In case the file <span class="style2">initrd.img-<span class="style5">4.15.0-custom-xxx</span></span> is missing run </li>
+    <ul>
+      <li><span class="style2">sudo update-initramfs -c -k <span class="style5">
+      4.15.0-custom_xxx</span></span></li>
+      <li><span class="style2">sudo /usr/sbin/update-grub</span></li>
+      <li><span class="style2">cat /boot/grub/grub.cfg</span></li>
+      <li><span class="style2">ls -a -l /boot</span></li>
+    </ul>
+  </ul>
+  <li class="style9">If you still cannot see the custom kernel on the GRUB menu when rebooting then as a last 
+  resource run the line below. Do not run it at the first time &quot;just in case&quot; as it does mess up the setting that indicates the default boot kernel. Other that that, it is safe to run at any time. </li>
+  <ul>
+    <li><span class="style10">sudo /usr/sbin/update-grub</span></li>
+  </ul>
+  <li><span class="style6">Homework submission: type <span class="style2">exit</span>, gzip the file <span class="style2">hw5a.txt</span> that has been created in your home directory. Attach the file to the homework submission. </span></li>
+</ul>
+<h3>In case of Kernel Panic during boot time </h3>
+<ul>
+  <li>Do not panic! This affects only your version of Kernel. Reset the computer and choose the unmodified version of the kernel. If you see several versions on the menu, then choose the latest one 
+  that does not have word custom appended. </li>
+  <li> Inspect the boot folder for any irregularities: <span class="style2">ls -a -l /boot</span>  </li>
+  <li>In case the file <span class="style2">initrd.img-<span class="style5">4.15.0-custom_xxx</span></span> is missing run 
+  </li>
+  <ul>
+    <li><span class="style2">update-initramfs -c -k <span class="style5">4.15.0-custom_xxx</span></span></li>
+  </ul>
+  <li>Alternatively try to reinstall all kernel files
+    <ul>
+      <li><span class="style2">dpkg-reconfigure linux-image-<span class="style5">4.15.0-custom</span></span></li>
+    </ul>
+  </li>
+</ul>
+<h3>Running Your Custom Kernel</h3>
+<ul>
+  <li>Reboot your computer and select your custom configuration in grub menu at boot time.
+    <ul>
+      <li><span class="style2">sudo shutdown -r now</span></li>
+    </ul>
+  </li>
+  <li>The boot menu might show up for a few seconds. In case it does not then 
+  you need to depress and hold SHIFT during the boot procedure after the BIOS hands in control to grub2.<ul>
+      <li>Pressing SHIFT too long when running VMWare under Windows may initiate Windows Accessibility Tool. 
+      Depressing it too late will result in booting to the most recent version 
+      of the kernel instead of our modified version.</li>
+      <li>grub2 remembers the previous boot kernel selection, and it boots again into the same kernel 
+  unless menu is called again and the selection changed again.</li>
+  </ul>
+    </li>
+    <li>Select advanced options, and then select your kernel version <span class="style2">
+    linux-image-<span class="style5">4.15.0-custom-xxx</span></span></li>
+    <li>After the system is up verify whether you booted into the right kernel 
+    version:<ul>
+        <li><span class="style2">uname -r</span> </li>
+        <li>Reboot again if not running your version of the kernel.</li>
+    </ul>
+    </li>
+</ul>
+<p>To run your system call, you will need to write a short program. Make sure that you compile it while using your version of the kernel as you depend on your modified header files to do the call. </p>
+<ul>
+    <li><span class="style6">Homework submission: type <span class="style2">script hw5b.txt </span></span>
+    <li>Verify that you are using the right kernel<ul>
+        <li><span class="style12">date</span></li>
+        <li><span class="style2">uname -a</span></li>
+        <li><span class="style2">cat /proc/kallsyms | grep test_call</span></li>
+        <li><span class="style2">uname -r</span></li>
+    </ul>
+    <li>Create a new file in a directory under your account, say call the directory &ldquo;<span class="style2">test_call</span>&rdquo;.</li>
+    <ul>
+        <li><span class="style2">gedit test_call_run.c &amp;</span></li>
+        <li>Enter the following text. Make sure that you use the right system call number for the version of your kernel (32-bit vs. 64-bit). 
+        Please note that even if you installed 64-bit version of Ubuntu the new 
+        custom kernel might be 32-bit because of the unchecked x64 bit option in <span class="style2">make menuconfig</span> 
+        !!!</li>
+    </ul>
+</ul>
+<pre class="style3">/*----------Start of test_call_run.c----------*/
+#include &lt;stdio.h&gt;
+#include &lt;unistd.h&gt;  // to use syscall
+
+// Reminding that sys_test_call function is filed under the system call <span class="style1">XXX</span>
+#define __NR_test_call <span class="style1">XXX</span>
+
+// Calling a macro to define a system call with N parameters that returns a long
+long test_call()
+{
+    return( syscall(__NR_test_call, 3) );
+}
+
+int main()
+{
+    long status = test_call();
+    printf(&quot;Our test system call was called and returned status %ld\n&quot;, status);
+    return(0);
+}
+/*-----------End of test_call_run.c-----------*/</pre>
+<ul>
+  <ul>
+    <li>Save file as test_call_run.c in the test_call directory</li>
+  </ul>
+  <li>Compile your program and test. Inspect the kernel log file. </li>
+  <ul>
+    <li class="auto-style4">cat test_call_run.c</li>
+    <li><span class="style2">gcc test_call_run.c -o test_call_run</span></li>
+    <li><span class="style2">./test_call_run</span></li>
+    <li><span class="style2">cat /var/log/syslog | more </span> and inspect the file contents. If the log file is long search for the selected lines by using grep as shown below: </li>
+    <li><span class="style2">cat /var/log/syslog | grep &quot;Hello World&quot;</span> and see all the Hello World messages. The log file is buffered in memory. In case you can't see the text yet run the command below: </li>
+    <li><span class="style2">dmesg | more </span> and look again for the Hello World line(s).</li>
+    <li><span class="style6">Homework submission: type <span class="style2">exit</span>, gzip the file <span class="style2">hw5b.txt</span> that has been created in your home directory. Attach the file to the homework submission. </span></li>
+  </ul>
+</ul>
+
+
+
+<h3>Cleanup - optional</h3>
+
+<p>So now you wander whether now you need to live with your custom Kernel until the end of the course, or perhaps your hard drive life cycle? </p>
+
+<ul>
+  <li>Reboot into the current kernel version. </li>
+  <li><span class="style6">Homework submission: type <span class="style2">script hw5c.txt </span></span></li>
+  <li><span class="style2">uname -r</span> to verify the current kernel version. 
+  In case you are still running the custom version reboot and rectify the 
+  situation.</li>
+    <li class="auto-style3">uname -a</li>
+  <li><span class="style12">date</span></li>
+  <li><span class="style2">sudo dpkg -l 'linux-image-*'</span></li>
+    <li><span class="style2">sudo dpkg -r linux-image-<span class="style5">4.15.0-custom-xxx</span></span></li>
+  <li><span class="style2">sudo dpkg -l 'linux-headers-*'</span></li>
+    <li><span class="style2">sudo dpkg -r linux-headers-<span class="style5">4.15.0-custom-xxx</span></span></li>
+    <li><span class="style2">sudo rm /boot/*<span class="style5">.0-custom-xxx</span>*</span></li>
+  <li><span class="style2">sudo /usr/sbin/update-grub</span></li>
+    <li>Consider hunting down all of the past kernels except the most current one (two packages per kernel). Happy hunting!</li>
+    <li>Remove the folder where you downloaded, unpacked, modified, and compiled 
+    the kernel source file and all subfolders and their contents</li>
+  <li><span class="style6">Homework submission: type <span class="style2">exit</span>, gzip the file <span class="style2">hw5c.txt</span> that has been created in your home directory. Attach the file to the homework submission. </span></li>
+</ul>
+
+
+
+<h2>Submission</h2>
+
+<p>Use <span class="style2">tar</span> and then <span class="style2">gzip</span> 
+or <span class="style2">bz2</span> to combine all script files required for the 
+lab submission into one file. A &quot;convenience fee&quot; may be charged for use of 
+other kinds of compression.</p>
+
+<p>Drop the file with <span class="style7">the information collected during the 
+exercise as instructed</span> in the corresponding assignment drop box on Canvas. 
+The installed Ubuntu disks or the virtual machine configurations will not be 
+collected.</p>
+
+<p>Thank you.</p>
+
+
+
+<p>
+<a href="../../../index.html"><img src="../../../icons/main.gif" class="menu32x32" alt="web site front" /></a>
+<a href="../index.html"><img src="../../../icons/menu.gif" class="menu32x32" alt="local main page" /></a>
+<a href="index.html"><img src="../../../icons/mmisc.gif" class="menu32x32" alt="local list page" /></a>
+<a href="../../../bookmark/index.html"><img src="../../../icons/mbookmark.gif" class="menu32x32" alt="general bookmarks" /></a>
+<a href="../../../bookmark/software.html"><img src="../../../icons/mbookabcd.gif" class="menu32x32" alt="software bookmarks" /></a>
+<a href="javascript:void(window.history.back());"><img src="../../../icons/maleft.gif" class="menu32x32" alt="go back" /></a>
+<a href="javascript:void(window.open('../../../copyright.html','C','toolbar=no,status=no,menubar=no,directories=no,location=no,width=600,height=500,resizable=no'));"><img src="../../../icons/mchecked.gif" class="menu32x32" alt="copyright info" /></a>
+</p>
+
+</body>
+</html>

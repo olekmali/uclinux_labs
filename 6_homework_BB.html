@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8" />
+<title>ECE472/572 (UCLX) Assignment Number 6</title>
+<!-- meta http-equiv="Pragma" content="no-cache" -->
+<meta name="robots" content="index,follow" />
+<!-- meta name="robots" content="noarchive" -->
+<link rel="shortcut icon" href="../../../icons/mopsys.ico" type="image/x-icon" />
+<script type="text/JavaScript" src="../../../default.js"></script>
+<link rel="stylesheet" href="../../../default.css" type="text/css" />
+<style type="text/css">
+<!--
+.style1 {color: #FF0000}
+.style2 {font-family: "Courier New", Courier, mono}
+.style5 {font-family: "Courier New", Courier, mono}
+.style6 {color: #006600; font-weight: bold;}
+.style7 {color: #006600}
+.style9 {color: #FF00FF}
+.style10 { font-family: "Courier New", Courier, mono; font-style: italic; color: #0000FF; }
+.style11 {font-family: "Courier New", Courier, mono; color: #FF00FF; }
+.style12 {font-family: "Courier New", Courier, mono; color: #0000FF; }
+.style14 {color: #FF0000; font-weight: bold; }
+.style15 { font-family: "Courier New", Courier, mono; color: #FF0000; }
+-->
+</style>
+</head>
+<body>
+
+<h1>ECE 472/572 Assignment 6</h1>
+
+
+<h2>Purpose</h2>
+
+<h3>Skills</h3>
+
+<p>The purpose of this assignment is to help you practice the following skills that are essential to your success in this course / in school / in this field / in professional life beyond school:</p>
+
+<ul>
+    <li>Configuring microcontroller Linux for an Electronic Control Module (ECM) to be built using Buildroot method.</li>
+    <li>Buliding microcontroller Linux for an ECM using Buildroot method.</li>
+    <li>Monitorng ECM using UART-connected console.</li>
+    <li>BusyBox command set utilized by Buildroot and by Linux system recovery consoles.</li>
+</ul>
+
+<h3>Knowledge</h3>
+
+<p>This assignment will also help you to become familiar with the following important content knowledge in this discipline:</p>
+
+<ul>
+    <li>Sructure of Linux file system.</li>
+    <li>Essentials of Init.d system for OS processes startup.</li>
+    <li>Contents of essential configuration files in the /etc directory.</li>
+    <li>The origins of uClibc, Buildroot and BusyBox projects.</li>
+</ul>
+
+
+
+<h2>Prepare for the lab</h2>
+
+<p>Answer these questions while doing this lab &ndash; they will help you understand the procedure and better prepare for the tests.</p>
+<ul>
+    <li>What is a cross-compiler? Is one used in this project? Do we have a C compiler that can be run on the target board when using the default 
+        Buildroot configuration?</li>
+    <li>What is UCLIBC project?</li>
+    <li>What is Das U-boot project?</li>
+    <li>What is the difference between uImage and zImage?</li>
+    <li>What is the relation between Das U-boot and uImage/zImage? 
+        What is loaded first, what second? What happens afterward?</li>
+    <li>What is the Buildroot project?</li>
+    <li>What is BusyBox project?</li>
+    <li>Find the command to power off BusyBox system safely</li>
+    <li>What is the difference between a package and a package that usually starts with the same name but has -dev appended to its name?</li>
+    <li>Why there are two console programs that offer almost the same functionality: 
+        <span class="style2">fdisk</span> and <span class="style2">sfdisk</span> ?</li>
+    <li>What is the use of files <span class="style2">/etc/password</span> and <span class="style2">/etc/shadow</span> ?</li>
+    <li>What is the use of file <span class="style2">/etc/fstab</span> ? </li>
+    <li>What is the use of file <span class="style2">/etc/inittab</span> ?</li>
+    <li>What is the use of files <span class="style2">/etc/network/interfaces</span> and <span class="style2">/etc/init.d/S40network</span> ?</li>
+</ul>
+
+
+<h2>Activity (40 pts.)</h2>
+
+<!-- ---------------------------------------------------------------------- -->
+<h3>Customizing and Building ucLinux for BeagleBone</h3>
+<!-- ---------------------------------------------------------------------- -->
+
+<ul>
+    <li><strong>You will need to keep this project and the SD card until the end of the semester.</strong>
+    <li>You need about 12GB of free space on the top of your operating system to complete the task. 
+        You will also need a 2GB - 32GB micro SD card. 
+        (Actually, you will need only 512MB but such cards may be hard to find.)
+    <li>The first run of main compilation of the ucLinux kernel may take a long time 
+        due to numerous downloads of various source files and then compiling them.
+    </li>
+      <strong>Pay attention to any errors. Attend to any errors before attempting to proceed with further steps. Before proceeding check the instruction for this homework submission.</strong><li>Open a terminal window without root privileges.</li>
+    <li class="style6">Lab submission - type:
+        <ul>
+            <li><span class="style2">script hw6rp.txt</span></li>
+        </ul>
+    </li>
+    <li>Use the following commands to update package database and install kernel and common Linux tools development packages. 
+        The packages listed below are split into two groups out of convenience. 
+        The second group relates to packages that contain a source code for the program compilation rather than a precompiled program. 
+        These steps were already applied to the persistent virtual machine in the Networked Embedded Systems lab.
+        <ul>
+            <li><span class="style2">sudo apt-get update</span></li>
+            <li><span class="style2">sudo apt-get install autoconf automake binutils bison flex g++ gcc gettext libtool make patch sed texinfo</span></li>
+            <li><span class="style2">sudo apt-get install libacl1-dev liblzo2-dev libncurses5-dev libssl-dev zlib1g-dev</span></li>
+            <li><span class="style2">sudo apt-get install git-core # subversion</span></li>
+            <li><span class="style2">sudo apt-get install putty minicom</span></li>
+            <li><span class="style2">df</span>
+                <br><span class="style1">If the reported available free space column in the line of <code>/</code> 
+                mounting point is less than 12 million Bytes STOP NOW. Use a different virtual machine with a larger disk.</span></li>
+       </ul>
+    </li>
+    <li>Create a folder to contain the project
+        <ul>
+            <li><span class="style2">mkdir buildroot </span></li>
+            <li><span class="style2">cd buildroot</span></li>
+        </ul>
+    </li>
+<!-- ---------------------------------------------------------------------- -->
+    <li>Download the prepared buildroot tool for BeagleBone.
+<!-- ---------------------------------------------------------------------- -->
+        <ul>
+            <li><span class="style2">wget
+            <a href="https://buildroot.org/downloads/" target="_blank">
+            https://buildroot.org/downloads/</a><span class="style15">buildroot-2024.11.2.tar.gz</span></span></li>
+            <li><span class="style2">wget
+            <a href="https://buildroot.org/downloads/" target="_blank">
+            https://buildroot.org/downloads/</a><span class="style15">buildroot-2024.11.2.tar.gz.sign</span></span></li>
+            <li><span class="style2">sha256sum buildroot-<span class="style15">date_n_version</span>.tar.gz</span></li>
+            <li><span class="style2">cat buildroot-<span class="style15">date_n_version</span>.tar.gz.sign</span></li>
+            <li><span class="style2">tar -xzf buildroot-<span class="style15">date_n_version</span>.tar.gz</span></li>
+<!-- ---------------------------------------------------------------------- -->
+            <li><span class="style2">mv buildroot-<span class="style15">date_n_version</span>buildroot-<span class="style15">date_n_version</span>-bbone</span></li>
+            <li><span class="style2">cd buildroot-<span class="style15">date_n_version</span>-bbone</span></li>
+<!-- ---------------------------------------------------------------------- -->
+        </ul>
+    </li>
+
+    <li>Configure the installation
+        <ul>
+            <li>In case you are restarting the process to start over with a 
+                different target microcontroller clean up both the configuration 
+                settings and all compiled files by executing 
+                <span class="style2">make distclean</span>. It is almost like you 
+                deleted everything and unpacked the buildroot source code again. 
+                <ul>
+                    <li><span class="style2">make distclean</span></li>
+                </ul>
+            </li>
+            <li>In case you are restarting the process clean up the compiled files by executing 
+            <span class="style2">make clean</span>. Otherwise, start with the next step. Note that the "clean" rule does not delete downloaded source code. It only removes configuration files, intermediate temporary files, and the compiled binary files. 
+            <ul>
+                <li><span class="style2">make clean</span></li>
+            </ul>
+            </li>
+            <li>If you wander about available targets in this particular Buildroot setup type:
+            <ul>
+                <li><span class="style2">make help</span></li>
+            </ul>
+            </li>
+            <li>Now set your destination microcontroller board, type:
+                <ul>
+<!-- ---------------------------------------------------------------------- -->
+                    <li><span class="style2">ls -l configs | grep bone</span></li>
+                    <li><strong><span class="style2">make beaglebone_defconfig</span></strong></li>
+<!-- ---------------------------------------------------------------------- -->
+                </ul>
+            </li>
+        </ul>
+        <ul>
+            <li>Download all necessary source files and then compile building the ucLinux for the target board. 
+                This will take a while as source code for the kernel, BusyBox, Das U-boot 
+                and many other items would have to be downloaded and then compiled. 
+                The repositories with the source code may be busy at certain times during the day. 
+                If the build fails due to download failure there is high chance that 
+                it will restart from the place it failed and go further upon its restart a few minutes later. 
+                In order to prevent surprises we can download all needed source code first (which is optional), 
+                and then start compiling them. However, running
+                <span class="style2">make busybox-menuconfig</span> requires source code to be pre-downloaded.
+                <ul>
+                    <li><strong><span class="style2">make source</span></strong></li>
+                </ul>
+            </li>
+            <li>Now inspect the basic configuration for your development board and 
+                make a few small changes as requested:
+                <ul>
+                    <li><strong><span class="style2">make menuconfig</span></strong></li>
+                </ul>
+            </li>
+            <li>This brings up the Configuration Menu
+                <ul>
+                    <li>Select "Build options" and then
+                        <ul>
+                            <li>select Enable compiler cache</li>
+                        </ul>
+                    </li>
+                    <li><strong>Select "Toolchain" and then</strong>
+                        <ul>
+                            <li>Select "Enable WCHAR support" if the option is visible</li>
+                            <li><strong>Select "Enable C++ support"</strong>
+                                <br>If you skip this selection  the library file libstdc++ will not be added to the image. 
+                                This lab will still work but you will run into trouble in assignment 8. 
+                                You might have copy the missing library from a colleague's system 
+                                or redo this lab in order to rectify the situation.
+                            </li>
+                        </ul>
+                    </li>
+                    <li><strong>Select "System configuration"</strong>
+                        <ul>
+                            <li><strong>Change the "System Banner" to "Welcome to</strong>
+                                <span class="style1"><strong>insert-your-name-here</strong></span><strong> Buildroot"</strong>
+                            </li>
+                            <li><strong>Set "Root Password" to "ee00" without ""s (or anything else of your choice as long as it is not empty)</strong></li>
+                            <li><strong>Select "remount root filesystem read-write during boot"</strong>
+                                <br>Comment: if you plan not to change the embedded system frequently 
+                                then it may be better to leave the file system as read-only 
+                                and change it to read-write only temporarily when you want to apply changes to the live image. 
+                                Keeping it read-only decreases chances that something goes wrong 
+                                when the system is not properly shut down. 
+                                However, chances if something going wrong are rather small to start with.
+                            </li>
+                            <li><strong>Set "Network interface to configure through DHCP" to "eth0" without ""s</strong>
+                                <br>Note: this is the place where you could release the serial port from being an extra console. 
+                                You might want to do so if you need the UART to communicate with further devices. 
+                                However, you can also do it later by editing initialization configuration files on the working board.
+                            </li>
+                        </ul>
+                    </li>
+                    <li><strong>Select "Kernel"</strong>
+                        <ul>
+                            <li><strong>Select "Install kernel image to /boot in target"</strong>
+                                <br>Comment: this copies the file called uImage or zImage into rootfs.tar 
+                                and can be done by hand instead here. We will revisit that later.
+                            </li>
+                            <li><strong>Select "Needs host OpenSSL"</strong></li>
+                        </ul>
+                    </li>
+                    <li><strong>Select "Target packages"</strong>
+                        <ul>
+                            <li>Make sure that "BusyBox" is selected</li>
+                            <li><strong>Select "Install the watchdog daemon startup script"</strong>
+                                <br>Comment: this is not needed for our exercises in this lab but is 
+                                a must for any commercial level application. It will allow your 
+                                program to activate watchdog and restart the system if your 
+                                program fails.
+                            </li>
+                            <li>Select "Filesystem and flash utilities"
+                                <ul>
+                                    <li>Don't panic if you don't see your favorite file system 
+                                        support as it may be already included in the kernel
+                                    </li>
+                                </ul>
+                            </li>
+                            <li>Select "Interpreter languages and scripting"
+                                <ul>
+                                    <li>Consider "micropython"</li>
+                                    <li>Consider "micropython-lib"</li>
+                                </ul>
+                            </li>
+                            <li><strong>Select "Networking Applications"</strong>
+                                <ul>
+                                    <li><strong>Select "dropbear"</strong> (find out what dropbear is!)</li>
+                                    <li>Deselect "openssh" and all of its options
+                                        <br>(this would be more secure than dropbear but requires extra configuration)</li>
+                                    <li><strong>Select "ntp"</strong> (find out what ntp client is!)</li>
+                                    <li>Consider a lightweight Web server for your future projects - CivetWeb</li>
+                                    <li>Select "lrzsz"- file transfer over UART</li>
+                                    <li>Select "lynx"- a text mode Web browser</li>
+                                    <li>Select "mosquitto" and its broker - MQTTT support for IoT</li>
+                                    <li>Select "nmap" - a network diagnostic utility suite</li>
+                                    <li>Select "install netcat" - a network comm. utility</li>
+                                    <li>Select "install nmap" - a network scanning utility</li>
+                                    <li>Select "install nping" - a network diagnostic utility</li>
+                                    <li>Select "rsync"- a utility to keep directories synchronized over network</li>
+                                    <li>Select "tcpdump" - a network diagnostic utility</li>
+                                    <li>Select "wget" - everybody knows wget by now</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                    <li><strong>Select "Shell and Utilities"</strong></li>
+                        <ul>
+                            <li><strong>Select "screen"</strong></li>
+                            <li><strong>Select "sudo"</strong></li>
+                            <li><strong>Select "ytree"</strong></li>
+                        </ul>
+                    <li>Select "System tools"</li>
+                        <ul>
+                            <li>Select "cpuload"</li>
+                            <li>Select "htop"</li>
+                        </ul>
+                    </li>
+                    <li><strong>Select "Text editors and viewers"</strong></li>
+                        <ul>
+                            <li>Select "joe"</li>
+                            <li><strong>Select "nano"</strong>
+                                <br>that is unless you will follow the instructor who uses vi or vim
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+            <li><strong>Select "Filesystem images"</strong>
+                <ul>
+                    <li><strong>Select "tar the root filesystem"</strong>
+                        <ul>
+                            <li>Optionally select compression method to "(gzip)" 
+                                but compressing it does not save space as the plain tar file 
+                                will be created first anyway.
+                            </li>
+                        </ul>
+                    </li>
+                    <li><strong>Make sure that "ext2/3/4 root file system" was checked</strong>
+                        <ul>
+                            <li>select "ext4" as ext2/3/4 variant of the above</li>
+                            <li>These two options "waste" 100MB of your hard drive but 
+                            they make post-image script "happy" </li>
+                        </ul>
+                    </li>
+<!-- ---------------------------------------------------------------------- -->
+                    <li><strong>If exact size is lower than 128M set it to at least 128M. 
+                        If it is set to higher size, do not lower it.</strong>
+                        (Technically 100MB would be an absolute minimum for this board.)
+                        <br>Actually, the disk image size for the build with all add-ons 
+                        (including those that are only suggested) is 89M, where 1M=1024K=1024*1024.
+                    </li>
+<!-- ---------------------------------------------------------------------- -->
+                    <li>Make sure that any other file system than the two mentioned 
+                        above are unchecked to prevent wasting more hard drive space.
+                    </li>
+                </ul>
+            </li>
+            <li><strong>Select Exit and Yes to save.</strong></li>
+        </ul>
+    </li>
+    <li>Now inspect the core of the available Linux commands:
+        <ul>
+            <li><strong><span class="style2">make busybox-menuconfig</span></strong></li>
+        </ul>
+    </li>
+    <li>This brings up the Configuration Menu
+        <ul>
+            <li>Select "Archival Utilities"
+                <ul>
+                    <li>Select "Make tar, rpm, modprobe etc understand .xz data"</li>
+                    <li>Select "Make tar, rpm, modprobe etc understand .bz2 data"</li>
+                    <li>Select "Make tar, rpm, modprobe etc understand .gz data"</li>
+                    <li><strong>Select "bzip2"</strong></li>
+                </ul>
+            </li>
+            <li><strong>Select "Miscellaneous Utilities"</strong>
+                <ul>
+                    <li><strong>Select "crond"</strong></li>
+                    <li>Set "/etc/cron" as crond spool directory</li>
+                    <li>Select "crontab"</li>
+                </ul>
+            </li>
+            <li><strong>Select "Networking Utilities"</strong>
+                <ul>
+                    <li><strong>Select "ifplugd"</strong> (find out what ifplugd is!)</li>
+                    <li>Deselect "httpd" Web server (only if you chose to select another web server)</li>
+                </ul>
+            </li>
+            <li>Select "Process Utilities"
+                <ul>
+                    <li>Select "pstree"</li>
+                </ul>
+            </li>
+            <li><strong>Select Exit and Yes to save.</strong></li>
+        </ul>
+    </li>
+    <li>Now inspect the settings of the Linux Kernel:
+        <br>Note: if you are in a hurry skip this step for now.
+        <ul>
+            <li><strong><span class="style2">make linux-menuconfig</span></strong></li>
+        </ul>
+    </li>
+    <li>This brings up the configuration menu for the Linux kernel.
+        <ul>
+            <li>Select "Device Drivers"
+                <ul>
+                    <li>Select "GPIO Support"
+                        <ul>
+                            <li><strong>Make sure that "/sys/class/gpio/... (sysfs interface)" is selected</strong>.
+                                <br>Otherwise, you will have to redo this lab later in order to complete lab 10.
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+            <li>Go to networking support, observe that wireless support if off at this time.</li>
+            <li>If we did not make any changes, just browsed around - exit.
+                (Otherwise, save the configuration file.)
+            </li>
+        </ul>
+    </li>
+    <li>If you do not want to create the entire self contained operating system 
+        at the moment but you need only to compile the compilers in order to create 
+        your own programs to run on the board type:
+        <br>Note: if you are in hurry skip this intermediate step!
+        <ul>
+            <li><strong><span class="style2">make toolchain</span></strong></li>
+        </ul>
+    </li>
+    <li>Now it is time to start the actual compilation.
+        <ul>
+            <li><strong><span class="style2">make all</span></strong></li>
+            <li>There should be no errors. However, be prepared to manually re-download any archive files 
+                (tar/gzip/bz2/xz) that are reported corrupt. 
+                In such cases note the name and location of each such file, 
+                and re-download a new file from kernel.org, busybox.org, or buildroot.org, etc., 
+                save to replace the damaged file, and restart by running <span class="style2">make all</span>.
+                <ul>
+                    <li>In case you run out of space in the image file
+                        Redo the step where you set the image size and enter the larger size. 
+                        Restart compilation (it will be fast this time) by running <span class="style2">make all</span>
+                    </li>
+                    <li>In case you are experimenting and selected some extra options that caused build to fail
+                    <ul>
+                        <li>run the appropriate make menu-xxxconfig again and uncheck the offending option</li>
+                        <li>run make again</li>
+                    </ul>
+                    </li>
+                    <li>if error persists then
+                        <ul>
+                            <li><span class="style2">make clean</span>
+                                <br>- this will erase all compilation results 
+                                but will keep the downloaded source files and your settings.
+                            </li>
+                            <li><span class="style2">make all</span><br>- the entire compilation will start over.</li>
+                        </ul>
+                    </li>
+                    <li>if error persists then
+                        <ul>
+                            <li><span class="style2">make clean</span></li>
+<!-- ---------------------------------------------------------------------- -->
+                            <li><span class="style2">make beaglebone_defconfig</span></li>
+<!-- ---------------------------------------------------------------------- -->
+                            <li><span class="style2">make menuconfig</span>
+                                <br>- and customize settings again from their default values
+                            </li>
+                            <li><span class="style2">make busybox-menuconfig</span>
+                                <br>- and customize settings again from their default values
+                            </li>
+                            <li><span class="style2">make source</span></li>
+                            <li><span class="style2">make all</span></li>
+                        </ul>
+                    </li>
+                    <li>You probably never should have a need to delete the entire folder 
+                        and unpack the downloaded buildroot.tgz file again. 
+                        However, that would be the last resort action to try.
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+</ul>
+
+<h3>Preparing and inspecting SD Card with Buildroot</h3>
+
+<ul>
+    <li>Now it is time to prepare the SD card. In case you use Ubuntu without root access, 
+        or you do not have access to a SD card reader take the tar.bz2 file on a USB drive 
+        to a computer in the networked embedded systems lab and use virtual machine with 
+        live Ubuntu to complete the following steps.
+        Also, make sure that it does not mount again automatically on Ubuntu.
+    </li>
+    <li><strong>OPTION 1</strong>
+        <br>Note: OPTION 1 may not produce an image that is bootable on your microcontroller, OPTION 2 will work for sure.
+        <ul>
+            <li><span class="style2">sudo systemctl stop udisks2.service</span></li>
+            <li><span class="style2">sudo umount /dev/sd<span class="style1">x</span>?</span></li>
+            <li><span class="style2">sudo dd if=/dev/zero of=/dev/sd<span class="style1">x</span> bs=1024 count=1024 status=progress</span></li>
+            <li>do one of the two alternative ways to interact with the program to partition the SD card:
+                <ul>
+                    <li><span class="style2">sudo sfdisk /dev/sd<span class="style1">x</span></span>
+                        <br>Read the instruction printed by the program and type the following text line by line.
+                        <br><span class="style10">label: dos
+                        <br>1,16M,0x0E,*
+                        <br>,512M,,-
+                        <br>,,,-
+                        <br>write</span>
+                    </li>
+                    <li>Type all the lines until "<span class="style2">EOF</span>" and then answer yes
+                        <br><span class="style10"><span class="style2">sudo sfdisk /dev/sd<span class="style1">x</span> &lt;&lt; EOF
+                        <br></span>label: dos
+                        <br>1,16M,0x0E,*
+                        <br>,512M,,-
+                        <br>,,,-
+                        <br>EOF
+                        <br>y&lt;enter&gt;</span>
+                    </li>
+                </ul>
+            </li>
+            <li><span class="style2">sudo fdisk -l /dev/sd<span class="style1">x</span></span></li>
+            <li><span class="style2">lsblk</span></li>
+            <li><span class="style2">sudo umount /dev/sd<span class="style1">x</span>?</span></li>
+            <li><span class="style2">sudo mkfs.vfat -F 16 -n "BOOT" /dev/sd<span class="style1">x</span>1</span></li>
+            <li><span class="style2">sudo mkfs -t ext4 -L "rootfs" /dev/sd<span class="style1">x</span>2</span></li>
+            <li><span class="style2">sudo mkfs -t ext4 -L "data" /dev/sd<span class="style1">x3</span></span></li>
+            <li>We do not desire to mount the SD card partitions manually each time.
+                Restart the automount service:
+                <br><span class="style5">sudo systemctl start udisks2.service</span>
+            </li>
+            <li>Remove and reinsert the SD card. Your OS should mount it automatically under the folder 
+                <span class="style2">/media</span> . Please check if that happened before proceeding further. 
+                Some systems (e.g. Ubuntu 14.04 and later) mount the partitions under 
+                the account user name. Verify that and adjust this lab script accordingly.
+            </li>
+            <li><span class="style2">mount | grep /dev/sd.</span></li>
+            <li><span class="style2">ls -l /media</span></li>
+            <li><span class="style2">ls -l /media/<span class="style15">youruserid</span></span>
+                <br>In case you do not see folders with the names assigned to the partitions during formatting 
+                start the GUI file explorer (MENU:Places/Computer) and double click on the icon labeled "Buildroot" 
+                (actually, any name would do), go back and then click again on "boot". 
+                That should do the trick and is sufficient way around at this learning level. 
+                Repeat the command above to verify that both partitions are mounted.
+            </li>
+            <li>Now it is time to copy the ucLinux to the SD card. Mount the SD card 
+                again or alternatively remove and reinsert it into the card reader. <br>
+                Make sure that you do not remove the card before all operations are completed.</li>
+                Running <span class="style2">sync</span> should help with that. Note 
+                that you can see files already in the new disk but they are, in facxt, 
+                only in memory chache until <span class="style2">sync</span> is&nbsp; 
+                completed.
+                <ul>
+                    <li><span class="style2">cd output/images/</span></li>
+                    <li><span class="style2">ls -l</span></li>
+<!-- ---------------------------------------------------------------------- -->
+                    <li><span class="style2">sudo cp MLO u-boot.img uEnv.txt zImage *.dtb /media/</span><span class="style15">youruserid</span><span class="style2">/BOOT/</span></li>
+<!-- ---------------------------------------------------------------------- -->
+                    <li><span class="style2">ls -l /media/<span class="style15">youruserid</span>/BOOT/</span></li>
+                    <li><span class="style2">sudo tar -xf rootfs.tar -C /media/<span class="style15">youruserid</span>/rootfs/</span></li>
+                    <li><span class="style2">sudo ls -l /media/<span class="style15">youruserid</span>/rootfs</span></li>
+                    <li><span class="style2">sync</span></li>
+                    <li><span class="style2">cd ../../</span></li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>OPTION 2</strong>
+        <ul>
+            <li><span class="style2">sudo systemctl stop udisks2.service</span></li>
+            <li><span class="style2">sudo umount /dev/sd<span class="style1">x</span>?</span></li>
+            <li><span class="style2">sudo dd if=output/images/sdcard.img of=/dev/sd<span class="style1">x</span> bs=1024 status=progress</span></li>
+            <li><span class="style2">sudo resize2fs /dev/sd<span class="style1">x</span>2</span></li>
+            <li><span class="style2">lsblk</span></li>
+            <li><span class="style2">sudo fdisk -l /dev/sd<span class="style1">x</span></span></li>
+            <li><span class="style2">sudo fdisk /dev/sd<span class="style1">x</span></span>
+                <ul>
+                    <li>Add the third partition of Linuc ext2/3/4 type that utilizes the 
+                    reminder of the disk. If you do not do it now, you will have to do 
+                    it in Lab 7. The following sequence of commands should accomplish 
+                    that:<br><span class="style12">m<enter> p<enter> n<enter> p<enter> 3<enter> 
+                    default<enter> default<enter> p<enter> w<enter></span></li>
+                </ul>
+            </li>
+            <li><span class="style2">lsblk</span></li>
+            <li><span class="style2">sudo fdisk -l /dev/sd<span class="style1">x</span></span></li>
+            <li><span class="style2">lsblk</span></li>
+            <li><span class="style2">sudo mkfs -t ext4 -L "data" /dev/sd<span class="style1">x3</span></span></li>
+            <li>We do not desire to mount the SD card partitions manually each time.
+                Restart the automount service:
+                <br><span class="style5">sudo systemctl start udisks2.service</span>
+            </li>
+            <li>Remove and reinsert the SD card. Your OS should mount it automatically under the folder 
+                <span class="style2">/media</span> . Please check if that happened before proceeding further. 
+                Some systems (e.g. Ubuntu 14.04 and later) mount the partitions under 
+                the account user name. Verify that and adjust this lab script 
+                accordingly.
+            </li>
+        </ul>
+    </li>
+    <li><strong>BACK TO THE COMMON INSTRUCTION</strong></li>
+    <li>Now it is time to learn more about the Linux file system and some of its essential configuration files.
+        <ul>
+            <li><span class="style2">sudo ls -l /media/<span class="style15">youruserid</span>/rootfs</span></li>
+            <li><span class="style2">sudo gedit /media/<span class="style15">youruserid</span>/rootfs/etc/fstab &amp;</span>
+                <br>and Inspect contents of the file. You will edit it in Lab 7.
+            </li>
+            <li><span class="style2">sudo gedit /media/<span class="style15">youruserid</span>/rootfs/etc/shadow &amp;</span>
+                <ul>
+                    <li>Check if root has password set to "ee00". Otherwise, you may grab your Ubuntu account password from the 
+                    <span class="style2">/etc/shadow</span> and paste it there.</li>
+                    <li>If the root has no password then you would not be able to log in 
+                    to the root account remotely, i.e. in any other way than using 
+                    attached serial UART cable.</li>
+                    <li>Most of other users have direct login and password blocked by means of replacing it with "<span class="style2">*</span>" or "<span class="style2">!</span>". That does not mean that those accounts are not used. Operating system can run programs with access privileges of these users. Nobody can log in using these accounts though.</li>
+                    <li>Default account has no password. Remove any password or direct login block if found.</li>
+                    <li>There are two files: <span class="style2">passwd</span> and 
+                    <span class="style2">shadow</span>. Typically <span class="style2">passwd</span> file does not contain any password information. Instead it is moved to 
+                    <span class="style2">shadow</span> that also contains several other password-related parameters. Originally Linux/Unix had password encoded in the 
+                    <span class="style2">passwd</span> file but that approach was deemed insecure as the file needs to be readable by many system utility programs and thus by all users of the system. 
+                    Note: your system may encode the password using different parameters 
+                    which results in different sequence of characters. You do not have 
+                    to copy the sequence below.</li>
+                </ul>
+                <blockquote>
+                    <pre class="style12">root:<span class="style1">$5$H9khTMdxKDqZQN$obRPKgcTSZDabpUJVWSiP7AaQVTie4qH0PKWe41sJP2</span>:::::::
+daemon:*:::::::
+bin:*:::::::
+sys:*:::::::
+sync:*:::::::
+mail:*:::::::
+www-data:*:::::::
+operator:*:::::::
+nobody:*:::::::
+mosquitto:*:::::::<br></pre>
+                </blockquote>
+            </li>
+            <li><span class="style2">sudo cat /media/<span class="style15">youruserid</span>/rootfs/etc/shadow</span></li>
+            <li><span class="style2">sudo gedit /media/<span class="style15">youruserid</span>/rootfs/etc/network/interfaces &amp;</span></li>
+            <li>add the configuration for the Ethernet port eth0 to be enabled and to be configured using a DHCP client
+                <blockquote>
+                    <p><span class="style12"># Configure Loopback<br>auto lo<br>iface lo inet loopback<br>
+                    <br># Configure Ethernet0<br>auto eth0<br>iface eth0 inet dhcp<br>&nbsp;&nbsp;pre-up 
+                    /etc/network/nfs_check<br>&nbsp;&nbsp;wait-delay 15<br>&nbsp; 
+                    hostname&nbsp;$(hostname)</span></p>
+                </blockquote>
+            </li>
+        </ul>
+        <ul>
+            <li><span class="style2">sudo cat /media/<span class="style15">youruserid</span>/rootfs/etc/network/interfaces</span></li>
+        </ul>
+        <ul>
+            <li><span class="style2">sudo gedit /media/<span class="style15">youruserid</span>/rootfs/etc/inittab &amp;</span></li>
+            <li>Inspect the configuration of the console output to one of the UARTs. 
+            Typically no action is necessary.<br>Note1: The baud rate of
+            <span class="style2">0</span> means the default baud rate of 115200bps 
+            that is hardcoded in the kernel source code.<br>Note2: In older builds 
+            the name <span class="style2">console</span> was replaced by 
+            <span class="style2">ttyO0</span> or by <span class="style2">tty1</span>
+            <blockquote>
+                <p><span class="style12">console::respawn:/sbin/getty -L console 0 
+                vt100 # GENERIC_SERIAL </span></p>
+            </blockquote>
+            </li>
+            <li><span class="style2">sudo cat /media/<span class="style15">youruserid</span>/rootfs/etc/inittab</span></li>
+            <li><span class="style2">sudo gedit /media/<span class="style15">youruserid</span>/rootfs/etc/sudoers &amp;</span></li>
+            <li>Add capability to <span class="style2">poweroff</span>, 
+            <span class="style2">reboot</span> and 
+            <span class="style2">halt</span> the board by any user without need to 
+            provide root password    </li>
+            <blockquote>
+                <pre class="style12">user ALL=NOPASSWD: /sbin/shutdown,/sbin/reboot,/sbin/halt</pre>
+            </blockquote>
+            <li><span class="style2">sudo ls -l /media/<span class="style15">youruserid</span>/rootfs/etc/sudoers</span></li>
+            <li><span class="style2">sudo cat /media/<span class="style15">youruserid</span>/rootfs/etc/sudoers</span></li>
+            <li><span class="style2">sync</span></li>
+        </ul>
+        <ul>
+            <li><strong>Unmount the SD card now or you risk loosing your changes without any warning. Alternatively "eject" the card</strong></li>
+            <li>In fact, in case you had to redo this build with different option 
+                later on and put it again on the SD card you would have to perform the 
+                same edit again. We could rectify that situation by editing directly the 
+                version of this file in the skeleton folders. Let's do it now as an 
+                exercise. Note that not all files are available there. The image file 
+                will be updated next time you run make.
+                <ul>
+                    <li><span class="style2">cd</span></li>
+                    <li><span class="style2">cd buildroot/buildroot-<span class="style15">date_n_version</span>-bbone</span></li>
+                </ul>
+            </li>
+        </ul>
+        <ul>
+            <li><span class="style2">gedit system/skeleton/etc/network/interfaces &amp;</span></li>
+            <li><span class="style2">gedit system/skeleton/etc/inittab &amp;</span></li>
+        </ul>
+    </li>
+    <li><span class="style6">Lab submission: </span>
+        <ul>
+            <li><span class="style6">type </span><span class="style2">exit</span></li>
+            <li><span class="style6">save file hw6bb.txt for future submission.
+                Submit it together with the screenshot requested later in this instruction.</span>
+            </li>
+        </ul>
+    </li>
+    <li>Make sure that you did un-mounted the SD card! Remove it from the card reader.</li>
+</ul>
+
+<h3>Installing the SD Card in the Microcontroller</h3>
+
+<ul>
+    <li>Make sure that the target board (BeagleBone) is powered down. Insert into the SD card slot on the target board. </li>
+    <li>Make sure that the board is connected to the Internet using WAN port as the initial boot of the ucLinux requires use of current time (from Internet) to initialize SSL configuration correctly. </li>
+    <li class="style1"><strong>Make sure you have the device driver for your Linux 
+        for the UART to USB adaptor. If not, then do the following using Windows 
+        instead of Linux.</strong></li>
+    <li>Connect the HyperTerminal to the serial port so that you can observe the boot up sequence.
+        <ul>
+            <li>In Ubuntu GUI in <span class="style2">Menu / System / Administration / Users and Groups</span>        
+                <ul>
+                    <li>Select the current user</li>
+                    <li>Click <span class="style2">Advanced Settings</span> (administrator access verification)</li>
+                    <li>Select <span class="style2">User Privileges</span> tab</li>
+                    <li>Enable <span class="style2">Connect to Internet using a modem</span> and <span class="style2">Use modems</span> which together enables serial port access for that particular account.</li>
+            </li>
+            <li>open a terminal</li>
+            <li>start <span class="style2">putty</span>
+                <ul>
+                    <li><span class="style2">putty</span></li>
+                    <li>In <span class="style2">Serial Port Setup</span>:
+                        <ul>
+                            <li>Set serial device to (use correct capitalization!) <span class="style2">/dev/ttyUSB0</span></li>
+                            <li>Set <span class="style2">Speed</span> (baud rate) to <span class="style2">115200</span> </li>
+                            <li>Set <span class="style2">Data bits</span> to <span class="style2">eight</span></li>
+                            <li>Set <span class="style2">Stop bits</span> to <span class="style2">one</span></li>
+                            <li>Set <span class="style2">Parity</span> to <span class="style2">None</span></li>
+                            <li>Set <span class="style2">Hardware Flow Control</span> to <span class="style2">None</span> (important!)</li>
+                        </ul>
+                    </li>
+                    <li>verify transmission parameters: 115200 bits per second, 8-bit, no parity, 1 stop bit, no flow control</li>
+                    <li>In <span class="style2">Session</span>
+                        <ul>
+                            <li>Select <span class="style2">Serial</span></li>
+                            <li>Consider saving the settings so far using the Set <span class="style2">Saved sessions</span> future.</li>
+                            <li>Open the connection</li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+        <strong>Power it up and observe the boot sequence using the PUTTY hyper terminal</strong>.
+        <ul>
+            <li>Watch for any failed services.</li>
+            <li>When the sequence is completed successfully you will see a console prompt.</li>
+            <li>Log in as root if asked for a user ID </li>
+            <li>Set a new password using <span class="style2">passwd</span> command. Set it to "<span class="style2">ee00</span>" (certainly, without ""s). 
+                <ul>
+                    <li>Note: it was originally an empty password  in case you haven't changed it yet by editing&nbsp; </li>
+                </ul>
+            </li>
+            <li class="style7">Type <span class="style2">uname -a</span></li>
+            <li class="style6">Homework submission: capture the screen of the serial communication terminal 
+                showing the welcome message with your initials and upon your login the response to <span class="style2">uname -a</span> command.
+                <br>In case you take a photo using a camera instead of the screen capture - to ensure full credit make sure that captured the image shows 
+                clearly the build date and your initials or name above the login prompt.</li>
+            <li>You may want to reboot again to verify that all installation is complete (faster boot at the second time).</li>
+            <li class="style1"><strong>Shut the system down and then disconnect the power from the board. Warning: Before powering the board off and removing your SD card do find out how to shut it down safely from the console. I will be able to check if you did do so! </strong></li>
+        </ul>
+    </li>
+</ul>
+
+<h3>Backup your work and Restore<br>(<span class="style1">but do boot at least once or twice from the SD card first</span>!)</h3>
+
+<ul>
+  <li>To back up the card with your work
+    <ul>
+      <li>insert the card into the SD card reader</li>
+      <li><span class="style2">cd /media/<span class="style15">youruserid</span>/Buildroot</span></li>
+      <li><span class="style2">sudo tar czf <span class="style9">~/Desktop/backup_bpi_rootfs</span>.tgz *</span></li>
+      <li><span class="style2">cd /media/<span class="style15">youruserid</span>/boot</span></li>
+      <li><span class="style2">tar czf <span class="style9">~/Desktop/backup_bpi_boot</span>.tgz *</span></li>
+      <li><span class="style2">sudo umount /media/<span class="style15">youruserid</span>/Buildroot</span></li>
+      <li><span class="style2">sudo umount /media/<span class="style15">youruserid</span>/boot</span></li>
+        <li>remove the SD card </li>
+    </ul>
+  </li>
+    <li>To restore your work from the backup
+    <ul>
+        <li>insert the card into the SD card reader and delete the contents of 
+        both partitions:<ul>
+            <li><span class="style2">sudo rm -rf /media/<span class="style15">youruserid</span>/Buildroot/*</span></li>
+            <li><span class="style2">sudo rm -rf /media/<span class="style15">youruserid</span>/boot/*</span></li>
+        </ul>
+        </li>
+        <li>alternatively create a new partition table and reformat the 
+        partitions if the damage is suspected or new SD card used.</li>
+    </ul>
+    </li>
+    <ul>
+        <li>remove and reinsert the SD card 
+        <ul>
+            <li><span class="style2">sudo tar xzf <span class="style9">~/Desktop/backup_bpi_rootfs</span>.tgz -C 
+            /media/<span class="style15">youruserid</span>/Buildroot/</span></li>
+            <li><span class="style2">sudo tar xzf <span class="style9">~/Desktop/backup_bpi_boot</span>.tgz -C 
+            /media/<span class="style15">youruserid</span>/boot/</span></li>
+        </ul>
+        </li>
+        <li><span class="style2">sync</span></li>
+        <li><span class="style2">sudo umount /media/<span class="style15">youruserid</span>/Buildroot</span></li>
+        <li><span class="style2">sudo umount /media/<span class="style15">youruserid</span>/boot</span></li>
+        <li>remove the SD card and verify if it does boot correctly</li>
+    </ul>
+    <li>Cleanup temporary files:<ul>
+        <li><span class="style2">rm -rf ~/.buildroot-ccache</span></li>
+    </ul>
+    </li>
+</ul>
+
+<h3>Cleanup (<span class="style1">only after the semester is over</span>!)</h3>
+
+<p>Just remove the <span class="style2">buildroot</span> folder. 
+However, you will need this folder and its contents again very soon for the later assignments. 
+If you do not want to remove it but are short on space run <span class="style2">make clean</span> instead. 
+This will erase all target files and your customized configuration but it will keep all downloaded files.</p>
+
+
+
+<h2>Submission</h2>
+
+<p>Submit the aforementioned screen capture along with tar-gzipped script or scripts showing your lab effort
+in the corresponding assignment drop box on Canvas. To ensure full credit verify that the screen capture shows 
+the welcome screen with your name or initials and the build date obtained from the <span class="s_command">uname -a</span> command.
+<strong>Do not pack the screenshot together. Submit the two files at the same time.</strong></p>
+
+<p>Thank you.</p>
+
+
+
+<h2>Criteria for Success</h2>
+
+<p>This lab can be graded mostly only as all or nothing. Also, it has to be done successfully in order
+to have full successfull expeerience in Labs 7, 8B, 9B, 10B, and 11B. However, a way around will be provided
+in unlikely case one cannot complete this lab. This is a short list of criteria for success: 
+<ul>
+    <li>Your name, initials or user ID needs to be inserted into the operating system welcome messagea
+        as requested in the lab instruction in order to have any credit awarded for the work.</li>
+    <li>A partial credit of 50% is awarded If significant effort has been made as it can be 
+        verified by inspecting the recorded script or series of scripts but no postive results 
+        listed below have been achieved.</li>
+    <li>Full credit is awarded if a screenshot or a photo of UART or SSH console shows 
+        "Welcome to YOUR-INITIALS Buildroot" message followed by succesful login and
+        shown output of <span class="s_command">uname -a</span> command.</li>
+    <li>Additional generous extra credit of up to 50% is awarded if the fully successful lab 
+        is submitted by the "Early Biord Special" date annoucend in class.</li>
+</ul>
+</p>
+
+
+
+<p>
+<a href="../../../index.html"><img src="../../../icons/main.gif" class="menu32x32" alt="web site front" /></a>
+<a href="../index.html"><img src="../../../icons/menu.gif" class="menu32x32" alt="local main page" /></a>
+<a href="index.html"><img src="../../../icons/mmisc.gif" class="menu32x32" alt="local list page" /></a>
+<a href="../../../bookmark/index.html"><img src="../../../icons/mbookmark.gif" class="menu32x32" alt="general bookmarks" /></a>
+<a href="../../../bookmark/software.html"><img src="../../../icons/mbookabcd.gif" class="menu32x32" alt="software bookmarks" /></a>
+<a href="javascript:void(window.history.back());"><img src="../../../icons/maleft.gif" class="menu32x32" alt="go back" /></a>
+<a href="javascript:void(window.open('../../../copyright.html','C','toolbar=no,status=no,menubar=no,directories=no,location=no,width=600,height=500,resizable=no'));"><img src="../../../icons/mchecked.gif" class="menu32x32" alt="copyright info" /></a>
+</p>
+
+</body>
+</html>

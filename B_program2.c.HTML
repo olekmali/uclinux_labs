@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+  <title>A_program2.c</title>
+  <style type="text/css">
+  <!--
+body { color: #000000; background: #ffffff; }
+h3.title_comment             { color: #F00000; }
+span.comment                 { color: #444444; }
+span.doc_comment             { color: #444444; font-style: italic; }
+span.string                  { color: #008000; }
+span.esc_string              { color: #77dd77; }
+span.char                    { color: #008000; }
+span.esc_char                { color: #77dd77; }
+span.numeric                 { color: #FF0000; }
+span.ident                   { color: #2040a0; }
+span.predef_ident            { color: #2040a0; font-weight: bold; }
+span.type                    { color: #2040a0; font-weight: bold; }
+span.predef_type             { color: #2040a0; font-weight: bold; }
+span.keyword                 {                 font-weight: bold; }
+span.library_fn              { color: #a52a2a; font-weight: bold; }
+span.include                 { color: #0000ff; font-weight: bold; }
+span.preproc                 { color: #0000ff; font-weight: bold; }
+span.braces                  { color: #4444FF; font-weight: bold; }
+span.symbol                  { color: #4444FF; }
+span.fn_header               {                 font-weight: bold; }
+span.fn_header_name          { color: #ff0000; }
+span.fn_header_args          { color: #2040a0; }
+span.regex                   { color: #b000d0; }
+span.text                    {                 font-style: italic; }
+span.entity                  { color: #ff0000; }
+span.assignment              { color: #2040a0; }
+span.dep_line                { color: #8b2252; }
+span.dep_target              {                 font-weight: bold; }
+span.dep_cont                { color: #000000; font-weight: bold; }
+span.macro                   { color: #2040a0; }
+span.int_macro               { color: #4080ff; }
+span.esc_usd                 { color: #444444; }
+  -->
+  </style>
+</head>
+<body>
+<pre>
+<span class="doc_comment">/*
+ *  program2.c - the process to use ioctl's to control the kernel module
+ *
+ *  Until now we could have used cat for input and output.  But now
+ *  we need to do ioctl's, which require writing our own process.
+ *
+ *  Copyright © 2001, 2007 Peter Jay Salzman
+ *  http://tldp.org/LDP/lkmpg/2.6/html/lkmpg.html
+  *
+ *  DrAM cleaned up program to comply with C99 
+ *  Modifications above were made on 3/28/2012
+*/</span>
+
+<span class="doc_comment">/* 
+ * device specifics, such as ioctl numbers and the
+ * major device file. 
+ */</span>
+<span class="preproc">#include <span class="string">&quot;module2.h&quot;</span></span>
+
+<span class="preproc">#include <span class="string">&lt;stdio.h&gt;</span></span>
+<span class="preproc">#include <span class="string">&lt;stdlib.h&gt;</span></span>
+<span class="preproc">#include <span class="string">&lt;fcntl.h&gt;</span>     <span class="doc_comment"> /* open */</span></span>
+<span class="preproc">#include <span class="string">&lt;unistd.h&gt;</span>    <span class="doc_comment"> /* exit */</span></span>
+<span class="preproc">#include <span class="string">&lt;sys/ioctl.h&gt;</span> <span class="doc_comment"> /* ioctl */</span></span>
+
+<span class="doc_comment">/* 
+ * Functions for the ioctl calls 
+ */</span>
+
+<span class="keyword">void</span> <span class="ident">ioctl_set_msg</span><span class="symbol">(</span><span class="keyword">int</span> <span class="ident">file_desc</span>, <span class="keyword">const</span> <span class="keyword">char</span> <span class="symbol">*</span><span class="ident">message</span><span class="symbol">)</span>
+<span class="braces">{</span>
+    <span class="keyword">int</span> <span class="ident">ret_val</span><span class="symbol">;</span>
+
+    <span class="ident">ret_val</span> <span class="symbol">=</span> <span class="ident">ioctl</span><span class="symbol">(</span><span class="ident">file_desc</span>, <span class="ident">IOCTL_SET_MSG</span>, <span class="ident">message</span><span class="symbol">)</span><span class="symbol">;</span>
+
+    <span class="keyword">if</span> <span class="symbol">(</span><span class="ident">ret_val</span> <span class="symbol">&lt;</span> <span class="numeric">0</span><span class="symbol">)</span> <span class="braces">{</span>
+        <span class="ident">printf</span><span class="symbol">(</span><span class="string">&quot;ioctl_set_msg failed:%d<span class="esc_char">\n</span>&quot;</span>, <span class="ident">ret_val</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="ident">exit</span><span class="symbol">(</span><span class="symbol">-</span><span class="numeric">1</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="braces">}</span>
+<span class="braces">}</span>
+
+<span class="keyword">void</span> <span class="ident">ioctl_get_msg</span><span class="symbol">(</span><span class="keyword">int</span> <span class="ident">file_desc</span><span class="symbol">)</span>
+<span class="braces">{</span>
+    <span class="keyword">int</span> <span class="ident">ret_val</span><span class="symbol">;</span>
+    <span class="keyword">char</span> <span class="ident">message</span><span class="symbol">[</span><span class="numeric">100</span><span class="symbol">]</span><span class="symbol">;</span>
+
+    <span class="doc_comment">/* 
+     * Warning - this is dangerous because we don't tell
+     * the kernel how far it's allowed to write, so it
+     * might overflow the buffer. In a real production
+     * program, we would have used two ioctls - one to tell
+     * the kernel the buffer length and another to give
+     * it the buffer to fill
+     */</span>
+    <span class="ident">ret_val</span> <span class="symbol">=</span> <span class="ident">ioctl</span><span class="symbol">(</span><span class="ident">file_desc</span>, <span class="ident">IOCTL_GET_MSG</span>, <span class="ident">message</span><span class="symbol">)</span><span class="symbol">;</span>
+
+    <span class="keyword">if</span> <span class="symbol">(</span><span class="ident">ret_val</span> <span class="symbol">&lt;</span> <span class="numeric">0</span><span class="symbol">)</span> <span class="braces">{</span>
+        <span class="ident">printf</span><span class="symbol">(</span><span class="string">&quot;ioctl_get_msg failed:%d<span class="esc_char">\n</span>&quot;</span>, <span class="ident">ret_val</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="ident">exit</span><span class="symbol">(</span><span class="symbol">-</span><span class="numeric">1</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="braces">}</span>
+
+    <span class="ident">printf</span><span class="symbol">(</span><span class="string">&quot;get_msg message:%s<span class="esc_char">\n</span>&quot;</span>, <span class="ident">message</span><span class="symbol">)</span><span class="symbol">;</span>
+<span class="braces">}</span>
+
+<span class="keyword">void</span> <span class="ident">ioctl_get_nth_byte</span><span class="symbol">(</span><span class="keyword">int</span> <span class="ident">file_desc</span><span class="symbol">)</span>
+<span class="braces">{</span>
+    <span class="keyword">int</span> <span class="ident">i</span><span class="symbol">;</span>
+    <span class="keyword">char</span> <span class="ident">c</span><span class="symbol">;</span>
+
+    <span class="ident">printf</span><span class="symbol">(</span><span class="string">&quot;get_nth_byte message:&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+
+    <span class="ident">i</span> <span class="symbol">=</span> <span class="numeric">0</span><span class="symbol">;</span>
+    <span class="keyword">do</span> <span class="braces">{</span>
+        <span class="ident">c</span> <span class="symbol">=</span> <span class="ident">ioctl</span><span class="symbol">(</span><span class="ident">file_desc</span>, <span class="ident">IOCTL_GET_NTH_BYTE</span>, <span class="ident">i</span><span class="symbol">+</span><span class="symbol">+</span><span class="symbol">)</span><span class="symbol">;</span>
+
+        <span class="keyword">if</span> <span class="symbol">(</span><span class="ident">c</span> <span class="symbol">&lt;</span> <span class="numeric">0</span><span class="symbol">)</span> <span class="braces">{</span>
+            <span class="ident">printf</span>
+                <span class="symbol">(</span><span class="string">&quot;ioctl_get_nth_byte failed at the %d'th byte:<span class="esc_char">\n</span>&quot;</span>,
+                 <span class="ident">i</span><span class="symbol">)</span><span class="symbol">;</span>
+            <span class="ident">exit</span><span class="symbol">(</span><span class="symbol">-</span><span class="numeric">1</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="braces">}</span>
+
+        <span class="ident">putchar</span><span class="symbol">(</span><span class="ident">c</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="braces">}</span> <span class="keyword">while</span> <span class="symbol">(</span><span class="ident">c</span> <span class="symbol">!</span><span class="symbol">=</span> <span class="numeric">0</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="ident">putchar</span><span class="symbol">(</span><span class="char">'<span class="esc_char">\n</span>'</span><span class="symbol">)</span><span class="symbol">;</span>
+<span class="braces">}</span>
+
+<span class="doc_comment">/* 
+ * Main - Call the ioctl functions 
+ */</span>
+<span class="keyword">int</span> <span class="ident">main</span><span class="symbol">(</span><span class="symbol">)</span>
+<span class="braces">{</span>
+    <span class="keyword">int</span> <span class="ident">file_desc</span>, <span class="ident">ret_val</span><span class="symbol">;</span>
+    <span class="keyword">const</span> <span class="keyword">char</span> <span class="symbol">*</span><span class="ident">msg</span> <span class="symbol">=</span> <span class="string">&quot;Message passed by ioctl<span class="esc_char">\n</span>&quot;</span><span class="symbol">;</span>
+
+    <span class="ident">file_desc</span> <span class="symbol">=</span> <span class="ident">open</span><span class="symbol">(</span><span class="ident">DEVICE_FILE_NAME</span>, <span class="numeric">0</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="keyword">if</span> <span class="symbol">(</span><span class="ident">file_desc</span> <span class="symbol">&lt;</span> <span class="numeric">0</span><span class="symbol">)</span> <span class="braces">{</span>
+        <span class="ident">printf</span><span class="symbol">(</span><span class="string">&quot;Can't open device file: %s<span class="esc_char">\n</span>&quot;</span>, <span class="ident">DEVICE_FILE_NAME</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="ident">exit</span><span class="symbol">(</span><span class="symbol">-</span><span class="numeric">1</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="braces">}</span>
+
+    <span class="ident">ioctl_get_nth_byte</span><span class="symbol">(</span><span class="ident">file_desc</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="ident">ioctl_get_msg</span><span class="symbol">(</span><span class="ident">file_desc</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="ident">ioctl_set_msg</span><span class="symbol">(</span><span class="ident">file_desc</span>, <span class="ident">msg</span><span class="symbol">)</span><span class="symbol">;</span>
+
+    <span class="ident">close</span><span class="symbol">(</span><span class="ident">file_desc</span><span class="symbol">)</span><span class="symbol">;</span>
+
+    <span class="keyword">return</span><span class="symbol">(</span><span class="numeric">0</span><span class="symbol">)</span><span class="symbol">;</span>
+<span class="braces">}</span>
+
+
+
+</pre>
+<!-- <hr>syntax highlighted by <a href="http://www.palfrader.org/code2html/">Code2HTML</a>, v. 0.8.8b  -->
+</body>
+</html>

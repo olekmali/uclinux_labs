@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+  <title>A_kbleds10.c</title>
+  <style type="text/css">
+  <!--
+body { color: #000000; background: #ffffff; }
+h3.title_comment             { color: #F00000; }
+span.comment                 { color: #444444; }
+span.doc_comment             { color: #444444; font-style: italic; }
+span.string                  { color: #008000; }
+span.esc_string              { color: #77dd77; }
+span.char                    { color: #008000; }
+span.esc_char                { color: #77dd77; }
+span.numeric                 { color: #FF0000; }
+span.ident                   { color: #2040a0; }
+span.predef_ident            { color: #2040a0; font-weight: bold; }
+span.type                    { color: #2040a0; font-weight: bold; }
+span.predef_type             { color: #2040a0; font-weight: bold; }
+span.keyword                 {                 font-weight: bold; }
+span.library_fn              { color: #a52a2a; font-weight: bold; }
+span.include                 { color: #0000ff; font-weight: bold; }
+span.preproc                 { color: #0000ff; font-weight: bold; }
+span.braces                  { color: #4444FF; font-weight: bold; }
+span.symbol                  { color: #4444FF; }
+span.fn_header               {                 font-weight: bold; }
+span.fn_header_name          { color: #ff0000; }
+span.fn_header_args          { color: #2040a0; }
+span.regex                   { color: #b000d0; }
+span.text                    {                 font-style: italic; }
+span.entity                  { color: #ff0000; }
+span.assignment              { color: #2040a0; }
+span.dep_line                { color: #8b2252; }
+span.dep_target              {                 font-weight: bold; }
+span.dep_cont                { color: #000000; font-weight: bold; }
+span.macro                   { color: #2040a0; }
+span.int_macro               { color: #4080ff; }
+span.esc_usd                 { color: #444444; }
+  -->
+  </style>
+</head>
+<body>
+<pre>
+<span class="doc_comment">/* 
+ *  kbleds.c - Blink keyboard leds until the module is unloaded.
+ */</span>
+
+<span class="preproc">#include <span class="string">&lt;linux/module.h&gt;</span></span>
+<span class="doc_comment">//#include &lt;linux/config.h&gt;</span>
+<span class="preproc">#include <span class="string">&lt;linux/init.h&gt;</span></span>
+<span class="preproc">#include <span class="string">&lt;linux/tty.h&gt;</span>	<span class="doc_comment">	/* For fg_console, MAX_NR_CONSOLES */</span></span>
+<span class="preproc">#include <span class="string">&lt;linux/kd.h&gt;</span>	<span class="doc_comment">	/* For KDSETLED */</span></span>
+<span class="preproc">#include <span class="string">&lt;linux/vt.h&gt;</span></span>
+<span class="preproc">#include <span class="string">&lt;linux/console_struct.h&gt;</span><span class="doc_comment">	/* For vc_cons */</span></span>
+<span class="preproc">#include <span class="string">&lt;linux/vt_kern.h&gt;</span>  <span class="doc_comment">//for fg_console</span></span>
+
+<span class="ident">MODULE_DESCRIPTION</span><span class="symbol">(</span><span class="string">&quot;Example module illustrating the use of Keyboard LEDs.&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+<span class="ident">MODULE_AUTHOR</span><span class="symbol">(</span><span class="string">&quot;Daniele Paolo Scarpazza&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+<span class="ident">MODULE_LICENSE</span><span class="symbol">(</span><span class="string">&quot;GPL&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+
+<span class="keyword">struct</span> <span class="ident">timer_list</span> <span class="ident">my_timer</span><span class="symbol">;</span>
+<span class="keyword">struct</span> <span class="ident">tty_driver</span> <span class="symbol">*</span><span class="ident">my_driver</span><span class="symbol">;</span>
+<span class="keyword">char</span> <span class="ident">kbledstatus</span> <span class="symbol">=</span> <span class="numeric">0</span><span class="symbol">;</span>
+
+<span class="preproc">#define BLINK_DELAY   HZ/5</span>
+<span class="preproc">#define ALL_LEDS_ON   0x07</span>
+<span class="preproc">#define RESTORE_LEDS  0xFF</span>
+
+<span class="doc_comment">/*
+ * Function my_timer_func blinks the keyboard LEDs periodically by invoking
+ * command KDSETLED of ioctl() on the keyboard driver. To learn more on virtual 
+ * terminal ioctl operations, please see file:
+ *     /usr/src/linux/drivers/char/vt_ioctl.c, function vt_ioctl().
+ *
+ * The argument to KDSETLED is alternatively set to 7 (thus causing the led 
+ * mode to be set to LED_SHOW_IOCTL, and all the leds are lit) and to 0xFF
+ * (any value above 7 switches back the led mode to LED_SHOW_FLAGS, thus
+ * the LEDs reflect the actual keyboard status).  To learn more on this, 
+ * please see file:
+ *     /usr/src/linux/drivers/char/keyboard.c, function setledstate().
+ * 
+ */</span>
+
+<span class="keyword">static</span> <span class="keyword">void</span> <span class="ident">my_timer_func</span><span class="symbol">(</span><span class="keyword">unsigned</span> <span class="keyword">long</span> <span class="ident">ptr</span><span class="symbol">)</span>
+<span class="braces">{</span>
+	<span class="keyword">int</span> <span class="symbol">*</span><span class="ident">pstatus</span> <span class="symbol">=</span> <span class="symbol">(</span><span class="keyword">int</span> <span class="symbol">*</span><span class="symbol">)</span><span class="ident">ptr</span><span class="symbol">;</span>
+
+	<span class="keyword">if</span> <span class="symbol">(</span><span class="symbol">*</span><span class="ident">pstatus</span> <span class="symbol">=</span><span class="symbol">=</span> <span class="ident">ALL_LEDS_ON</span><span class="symbol">)</span>
+		<span class="symbol">*</span><span class="ident">pstatus</span> <span class="symbol">=</span> <span class="ident">RESTORE_LEDS</span><span class="symbol">;</span>
+	<span class="keyword">else</span>
+		<span class="symbol">*</span><span class="ident">pstatus</span> <span class="symbol">=</span> <span class="ident">ALL_LEDS_ON</span><span class="symbol">;</span>
+
+	<span class="symbol">(</span><span class="symbol">(</span><span class="ident">my_driver</span><span class="symbol">-</span><span class="symbol">&gt;</span><span class="ident">ops</span><span class="symbol">)</span><span class="symbol">-</span><span class="symbol">&gt;</span><span class="ident">ioctl</span><span class="symbol">)</span> <span class="symbol">(</span><span class="ident">vc_cons</span><span class="symbol">[</span><span class="ident">fg_console</span><span class="symbol">]</span>.<span class="ident">d</span><span class="symbol">-</span><span class="symbol">&gt;</span><span class="ident">vc_tty</span>, <span class="ident">NULL</span>, <span class="ident">KDSETLED</span>, <span class="symbol">*</span><span class="ident">pstatus</span><span class="symbol">)</span><span class="symbol">;</span> 
+
+	<span class="ident">my_timer</span>.<span class="ident">expires</span> <span class="symbol">=</span> <span class="ident">jiffies</span> <span class="symbol">+</span> <span class="ident">BLINK_DELAY</span><span class="symbol">;</span>
+	<span class="ident">add_timer</span><span class="symbol">(</span><span class="symbol">&amp;</span><span class="ident">my_timer</span><span class="symbol">)</span><span class="symbol">;</span>
+<span class="braces">}</span>
+
+<span class="keyword">static</span> <span class="keyword">int</span> <span class="ident">__init</span> <span class="ident">kbleds_init</span><span class="symbol">(</span><span class="keyword">void</span><span class="symbol">)</span>
+<span class="braces">{</span>
+	<span class="keyword">int</span> <span class="ident">i</span><span class="symbol">;</span>
+
+	<span class="ident">printk</span><span class="symbol">(</span><span class="ident">KERN_INFO</span> <span class="string">&quot;kbleds: loading<span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+	<span class="ident">printk</span><span class="symbol">(</span><span class="ident">KERN_INFO</span> <span class="string">&quot;kbleds: fgconsole is %x<span class="esc_char">\n</span>&quot;</span>, <span class="ident">fg_console</span><span class="symbol">)</span><span class="symbol">;</span>
+	<span class="keyword">for</span> <span class="symbol">(</span><span class="ident">i</span> <span class="symbol">=</span> <span class="numeric">0</span><span class="symbol">;</span> <span class="ident">i</span> <span class="symbol">&lt;</span> <span class="ident">MAX_NR_CONSOLES</span><span class="symbol">;</span> <span class="ident">i</span><span class="symbol">+</span><span class="symbol">+</span><span class="symbol">)</span> <span class="braces">{</span>
+		<span class="keyword">if</span> <span class="symbol">(</span><span class="symbol">!</span><span class="ident">vc_cons</span><span class="symbol">[</span><span class="ident">i</span><span class="symbol">]</span>.<span class="ident">d</span><span class="symbol">)</span>
+			<span class="keyword">break</span><span class="symbol">;</span>
+		<span class="ident">printk</span><span class="symbol">(</span><span class="ident">KERN_INFO</span> <span class="string">&quot;poet_atkm: console[%i/%i] #%i, tty %lx<span class="esc_char">\n</span>&quot;</span>, <span class="ident">i</span>,
+		       <span class="ident">MAX_NR_CONSOLES</span>, <span class="ident">vc_cons</span><span class="symbol">[</span><span class="ident">i</span><span class="symbol">]</span>.<span class="ident">d</span><span class="symbol">-</span><span class="symbol">&gt;</span><span class="ident">vc_num</span>,
+		       <span class="symbol">(</span><span class="keyword">unsigned</span> <span class="keyword">long</span><span class="symbol">)</span><span class="ident">vc_cons</span><span class="symbol">[</span><span class="ident">i</span><span class="symbol">]</span>.<span class="ident">d</span><span class="symbol">-</span><span class="symbol">&gt;</span><span class="ident">vc_tty</span><span class="symbol">)</span><span class="symbol">;</span>
+	<span class="braces">}</span>
+	<span class="ident">printk</span><span class="symbol">(</span><span class="ident">KERN_INFO</span> <span class="string">&quot;kbleds: finished scanning consoles<span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+
+	<span class="ident">my_driver</span> <span class="symbol">=</span> <span class="ident">vc_cons</span><span class="symbol">[</span><span class="ident">fg_console</span><span class="symbol">]</span>.<span class="ident">d</span><span class="symbol">-</span><span class="symbol">&gt;</span><span class="ident">vc_tty</span><span class="symbol">-</span><span class="symbol">&gt;</span><span class="ident">driver</span><span class="symbol">;</span>
+	<span class="ident">printk</span><span class="symbol">(</span><span class="ident">KERN_INFO</span> <span class="string">&quot;kbleds: tty driver magic %x<span class="esc_char">\n</span>&quot;</span>, <span class="ident">my_driver</span><span class="symbol">-</span><span class="symbol">&gt;</span><span class="ident">magic</span><span class="symbol">)</span><span class="symbol">;</span>
+
+	<span class="doc_comment">/*
+	 * Set up the LED blink timer the first time
+	 */</span>
+	<span class="ident">init_timer</span><span class="symbol">(</span><span class="symbol">&amp;</span><span class="ident">my_timer</span><span class="symbol">)</span><span class="symbol">;</span>
+	<span class="ident">my_timer</span>.<span class="ident">function</span> <span class="symbol">=</span> <span class="ident">my_timer_func</span><span class="symbol">;</span>
+	<span class="ident">my_timer</span>.<span class="ident">data</span> <span class="symbol">=</span> <span class="symbol">(</span><span class="keyword">unsigned</span> <span class="keyword">long</span><span class="symbol">)</span><span class="symbol">&amp;</span><span class="ident">kbledstatus</span><span class="symbol">;</span>
+	<span class="ident">my_timer</span>.<span class="ident">expires</span> <span class="symbol">=</span> <span class="ident">jiffies</span> <span class="symbol">+</span> <span class="ident">BLINK_DELAY</span><span class="symbol">;</span>
+	<span class="ident">add_timer</span><span class="symbol">(</span><span class="symbol">&amp;</span><span class="ident">my_timer</span><span class="symbol">)</span><span class="symbol">;</span>
+
+	<span class="keyword">return</span> <span class="numeric">0</span><span class="symbol">;</span>
+<span class="braces">}</span>
+
+<span class="keyword">static</span> <span class="keyword">void</span> <span class="ident">__exit</span> <span class="ident">kbleds_cleanup</span><span class="symbol">(</span><span class="keyword">void</span><span class="symbol">)</span>
+<span class="braces">{</span>
+	<span class="keyword">int</span> <span class="symbol">*</span><span class="ident">pstatus</span> <span class="symbol">=</span> <span class="symbol">(</span><span class="keyword">int</span> <span class="symbol">*</span><span class="symbol">)</span><span class="numeric">0</span><span class="symbol">;</span>
+	<span class="ident">printk</span><span class="symbol">(</span><span class="ident">KERN_INFO</span> <span class="string">&quot;kbleds: unloading...<span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+	<span class="ident">del_timer</span><span class="symbol">(</span><span class="symbol">&amp;</span><span class="ident">my_timer</span><span class="symbol">)</span><span class="symbol">;</span>
+	<span class="symbol">(</span><span class="symbol">(</span><span class="ident">my_driver</span><span class="symbol">-</span><span class="symbol">&gt;</span><span class="ident">ops</span><span class="symbol">)</span><span class="symbol">-</span><span class="symbol">&gt;</span><span class="ident">ioctl</span><span class="symbol">)</span> <span class="symbol">(</span><span class="ident">vc_cons</span><span class="symbol">[</span><span class="ident">fg_console</span><span class="symbol">]</span>.<span class="ident">d</span><span class="symbol">-</span><span class="symbol">&gt;</span><span class="ident">vc_tty</span>, <span class="ident">NULL</span>, <span class="ident">KDSETLED</span>, <span class="symbol">*</span><span class="ident">pstatus</span><span class="symbol">)</span><span class="symbol">;</span> 
+<span class="braces">}</span>
+
+<span class="ident">module_init</span><span class="symbol">(</span><span class="ident">kbleds_init</span><span class="symbol">)</span><span class="symbol">;</span>
+<span class="ident">module_exit</span><span class="symbol">(</span><span class="ident">kbleds_cleanup</span><span class="symbol">)</span><span class="symbol">;</span>
+
+</pre>
+<!-- <hr>syntax highlighted by <a href="http://www.palfrader.org/code2html/">Code2HTML</a>, v. 0.8.8b  -->
+</body>
+</html>

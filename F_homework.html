@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8" />
+<title>ECE472/572 (UCLX) Lab Assignments</title>
+<!-- meta http-equiv="Pragma" content="no-cache" -->
+<meta name="robots" content="index,follow" />
+<!-- meta name="robots" content="noarchive" -->
+<link rel="shortcut icon" href="../../../icons/mopsys.ico" type="image/x-icon" />
+<script type="text/JavaScript" src="../../../default.js"></script>
+<link rel="stylesheet" href="../../../default.css" type="text/css" />
+<style type="text/css" />
+<!--
+.s_command {font-family: "Courier New", Courier, mono; }
+.s_tograde {color: #006600; }
+.s_tosee {color: #0000FF; }
+.s_optional { font-weight: lighter; color: #3F3FFF; }
+.s_warning {font-weight: bold; color: #7F0000; }
+.s_cmd_choice {color: #FF0000; font-family: "Courier New", Courier, mono; }
+.s_cmd_4grade {color: #006600; font-family: "Courier New", Courier, mono; }
+.s_code_fragment {font-family: "Courier New", Courier, mono; color: #0000FF; }
+-->
+</style>
+</head>
+<body>
+
+<h1>ECE 472/572 Extra Credit Assignment F</h1>
+
+
+
+<h2>Prepare for the lab</h2>
+
+<p>Answer these questions while doing this lab &ndash; they will help you understand the procedure and better prepare for the tests.</p>
+<ul>
+  <li>What does chroot command do?</li>
+  <li>What is squash file system and why it is useful?</li>
+</ul>
+
+<h2>Extra Credit Activity (Up to 20 pts.)</h2>
+<p>This activity is based on the tutorial published at <a href="https://help.ubuntu.com/community/LiveCDCustomization">https://help.ubuntu.com/community/LiveCDCustomization</a>.</p>
+
+<h3>Remaster live CD with our &quot;corporate&quot; version of Ubuntu</h3>
+
+<p>This tutorial covers adding and removing 
+the default applications on the Ubuntu Desktop LiveCD, 
+thereby creating your own customized (remastered) LiveCD. 
+You will be left with an ISO file capable of being burned, 
+or run under a virtual machine such as VMware, VirtualBox, or QEMU.</p>
+
+<p>Remastering a LiveCD has many uses. For more information on further accomplishing the tasks below, 
+please see the &ldquo;sources&rdquo; and &ldquo;further reading&rdquo; sections at the end of this document.</p>
+
+<h3>LiveCD customization uses:</h3>
+
+<ul>
+    <li>make your own Linux / Ubuntu distribution </li>
+    <li>show off a particular application </li>
+    <li>localize to a certain language </li>
+    <li>remove software packages </li>
+    <li>add software packages </li>
+    <li>update software packages </li>
+    <li>change system defaults (theme, icons, <strong>desktop background - required</strong>, panels, browser homepage, etc) </li>
+</ul>
+
+<h3>System Requirements:</h3>
+
+<p>Host computer must run an installed the same version of Ubuntu Linux as host OS</p>
+
+<ul>
+    <li>Host OS may be installed natively or installed under a virtual machine. </li>
+    <li><strong>Do not attempt this assignment using a LiveCD as the host OS!</strong>
+        <br>This method quickly presents headaches, and was an unfortunate stumbling block during initial tests.
+    </li>
+    <li>The architecture (Amd64 or i386) to be stored on the LiveCD should be 
+        the same as the architecture used to perform the customization, 
+        or the LiveCD may not run. For example, it is not trivial to customize 
+        an AMD64 LiveCD using an i386 operating system.
+   </li>
+    <li>Remastering from within a host Linux distribution other than Ubuntu is not recommended nor tested. 
+        Do so at your own risk!</li>
+    <li>At least 10 GB of free space, and possibly more than that.</li>
+    <li>At least 1GB RAM, and a swap partition recommended</li>
+</ul>
+
+<h3>0. Things to know:</h3>
+
+<ul>
+    <li>The <strong>host</strong> OS is the version of Ubuntu installed on your computer. This is where you will be working.</li>
+    <li>The <strong>custom</strong> OS is the version of Ubuntu you will be modifying. It begins and ends its life as an ISO file &ndash; basically, a single file containing the entire contents (the &ldquo;image&rdquo;) of a CD-ROM.</li>
+</ul>
+
+<h3>1. Preparation:</h3>
+
+<ul>
+    <li>Boot into the <strong>host</strong> OS (installed version of Ubuntu)</li>
+    <li>Install the necessary tools 
+        <ul>
+            <li><span class="s_command">sudo apt-get update &amp;&amp; 
+                sudo apt-get install binwalk casper genisoimage live-boot live-boot-initramfs-tools squashfs-tools</span>
+            </li>
+        </ul>
+    </li>
+    <li>Load the <em>squashfs</em> module
+        <ul>
+            <li><span class="s_command">sudo modprobe squashfs</span> </li>
+        </ul>
+    </li>
+    <li>Create working directories for this assignment (in this case <em>/home/your_username/live</em>) 
+        <ul>
+            <li><span class="s_command">mkdir ~/live &amp;&amp; cd ~/live</span></li>
+        </ul>
+    </li>
+    <li>Download ONE of the official Ubuntu LiveCD images for our custom image to the working directory. 
+        Just use the commands below. <strong>Please use the version of LiveCD that corresponds to the version 
+        of Ubuntu that you are running.</strong>
+    </li>
+</ul>
+
+<h3>2. Extract the CD contents:</h3>
+
+<ul>
+    <li>Mount the .iso (CD-ROM image) file </li>
+        <ul>
+            <li><span class="s_command">mkdir mnt</span></li>
+            <li><span class="s_command">sudo mount -o loop <span class="s_cmd_choice">ubuntu-xxx.iso</span> mnt</span></li>
+        </ul>
+    <li>Extract the .iso contents into ./extract-cd except for filesystem.squashfs <br>
+        (we will be mounting and extract it separately in step 3) </li>
+        <ul>
+            <li><span class="s_command">mkdir extract-cd</span></li>
+            <li><span class="s_command">rsync --exclude=/casper/filesystem.squashfs -a mnt/ extract-cd</span></li>
+        </ul>
+</ul>
+
+<h3>3. Extract The Desktop System:</h3>
+
+<ul>
+    <li>Mount the squashfs file system </li>
+        <ul>
+            <li><span class="s_command">mkdir squashfs</span></li>
+            <li><span class="s_command">sudo mount -t squashfs -o loop mnt/casper/filesystem.squashfs squashfs</span></li>
+        </ul>
+    <li>Extract squashfs contents into ./edit<br>
+        (Note: The second command takes a couple of minutes to finish... please be patient.)
+        <ul>
+            <li><span class="s_command">mkdir edit</span></li>
+            <li><span class="s_command">sudo cp -a squashfs/* edit/</span></li>
+        </ul>
+    </li>
+</ul>
+
+<h3>4. Configure the network connection:</h3>
+
+<ul>
+    <li>You&rsquo;ll be using the network from within chroot in the next step 
+        so we should copy these configuration files to our custom image temporarily. 
+        These commands weren&rsquo;t necessary for me, but you never know.
+        <ul>
+            <li><span class="s_command">sudo cp /etc/resolv.conf edit/etc/</span></li>
+            <li><span class="s_command">sudo cp /etc/hosts edit/etc/</span></li>
+        </ul>
+    </li>
+</ul>
+
+<h3>5. The <em>chroot</em> System Call:</h3>
+
+<ul>
+    <li>The chroot command changes the apparent disk root directory. Once chroot-ed into our custom OS, it will be as if you were sitting at a terminal at a running the custom LiveCD. The commands you type will execute the binaries on the custom image and effect the files and devices within the custom OS. Note that the kernel, GUI, and all other terminals still come from the original host system.
+        <ul>
+            <li><span class="s_command">sudo mount --bind /dev/ edit/dev</span></li>
+            <li><span class="s_command">sudo chroot edit</span></li>
+        </ul>
+    </li>
+    <li>You should have been dropped into a root prompt in the <strong>custom</strong> OS. 
+        Mount the <em>/proc</em> and <em>/sys </em>file systems.
+        <ul>
+            <li><span class="s_command">mount -t proc none /proc</span></li>
+            <li><span class="s_command">mount -t sysfs none /sys</span></li>
+            <li><span class="s_command">mount -t devpts none /dev/pts</span></li>
+        </ul>
+    </li>
+</ul>
+
+<h3>6. Timezone Customizations:</h3>
+
+<ul>
+    <li>Let&rsquo;s make a simple modification by changing the timezone. 
+        Choose &ldquo;<em>America &gt; Chicago</em>&rdquo; for Central time (UTC-6), or whatever you want.
+        <ul>
+            <li><span class="s_command">dpkg-reconfigure tzdata</span></li>
+        </ul>
+    </li>
+</ul>
+
+<h3>7. package Customizations:</h3>
+
+<ul>
+    <li>Let&rsquo;s install a small application (<em>Lincity</em> in this example) </li>
+    <li>First edit <em>apt-get</em>&rsquo;s source file, <em>sources.list</em></li>
+        <ul>
+            <li><span class="s_command">nano /etc/apt/sources.list</span></li>
+        </ul>
+    <li>Add the &quot;universe&quot; repository. Substitute xxx for the name of your Ubuntu distribution. 
+        Check release names at <a href="https://wiki.ubuntu.com/Releases">https://wiki.ubuntu.com/Releases</a> .
+    </li>
+    <li>Uncomment (remove the &lsquo;#&rsquo;) the line or group of lines that reads 
+        <span class="s_command"><em># deb http://us.archive.ubuntu.com/ubuntu/ <span class="s_cmd_choice">xxxxx</span> universe</em></span> .
+    </li>
+    <li>Save and exit <em>nano</em>: Hold CTRL-X to exit <em>nano</em>. 
+        When it ask whether you want to save, type &ldquo;<em>y</em>&rdquo; for yes. 
+        Press ENTER to continue saving as the default name &ldquo;<em>/etc/apt/sources.list</em>&rdquo;
+    </li>
+    <li>Prepare and update apt-get.
+        <ul>
+            <li><span class="s_command">dbus-uuidgen &gt; /var/lib/dbus/`hostid`</span></li>
+            <li><span class="s_command">dpkg-divert --local --rename --add /sbin/initctl</span></li>
+            <li><span class="s_command">ln -s /bin/true /sbin/initctl</span></li>
+            <li><span class="s_command">apt-get update</span></li>
+            <li>Find out how and perform the system update from console. Hint: read manual for apt-get: <span class="s_command">man apt-get</span> and then run the appropriate command.</li>
+        </ul>
+    </li>
+    <li>Install some of the tools and development packages used in most of Assignments both for Ubuntu and ucLinux.
+        <ul>
+            <li><span class="s_command">apt-get install smartmontools grub2 syslinux gparted</span></li>
+            <li><span class="s_command">apt-get install gedit gedit-plugins htop p7zip</span></li>
+            <li><span class="s_command">apt-get install build-essential g++ gcc gcc-doc</span></li>
+            <li><span class="s_command">apt-get install git git-gui screen wget</span></li>
+            <li><span class="s_command">apt-get install autoconf automake binutils bison bzip2 diff fakeroot flex gettext libtool make patch patchutils sed texinfo</span></li>
+            <li><span class="s_command">apt-get install libacl1-dev liblzo2-dev libncurses5-dev zlib1g-dev</span></li>
+            <li><span class="s_command">apt-get install linux-headers-generic xinetd linux-headers-$(uname -r) dh-make devscripts</span></li>
+            <li><span class="s_command">apt-get install openssh-server xrdp freerdp2-x11</span></li>
+            <li><span class="s_command">apt-get install <span class="s_cmd_choice">kernel-package</span></span>
+                <ul>
+                    <li>Note that starting with Ubuntu 12 <span class="s_command"><span class="s_cmd_choice">kernel-package </span></span>was replaced by <span class="s_command"><span class="s_cmd_choice">linux-meta</span></span>.</li>
+                    <li>Note that before Ubuntu 9 <span class="s_command">grub</span><span class="s_cmd_choice">2</span> was replaced by <span class="s_command">grub</span></li>
+                    <li>Note that before Ubuntu 9  package <span class="s_command"><span class="s_cmd_choice">kernel-package </span></span>was replaced by <span class="s_command"><span class="s_cmd_choice">linux-kernel-devel</span></span>.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li>(Re)Install your favorite lightweight text editor, Web browser, and image editor
+        <ul>
+            <li><span class="s_command">apt-get install gedit gedit-plugins midori  gimp</span></li>
+        </ul>
+    </li>
+    <li>Install a simple game and a few more small programs requested by the instructor
+        <ul>
+            <li><span class="s_command">apt-get install lincity lincity-ng</span></li>
+        </ul>
+    </li>
+    <li>Some space needs to be freed up if this .iso is ever going to fit on a DVD. 
+        The simplest way is to uninstall something big that we won&rsquo;t need.</li>
+    <li>Use <em>dpkg</em> (the Debian package handler) to view a list of every packages installed, by size, one page at a time. In less, the arrow keys scroll up and down, &lsquo;space&rsquo; jumps full pages, and &lsquo;<em>q</em>&rsquo; quits
+        <ul>
+            <li><span class="s_command">dpkg-query -W --showformat=&rsquo;${Installed-Size} ${Package}\n&rsquo; | sort -nr | less</span></li>
+        </ul>
+    </li>
+    <li>It looks like  <em>openoffice.org-core</em> is quite large (over 200MB). 
+        Optionally remove it <strong>but only in the case</strong> you are going to use a low capacity USB flash drive 
+        to store the bootable system.
+        <ul>
+            <li><span class="s_command">apt-get remove --purge openoffice.org-core</span></li>
+        </ul>
+    </li>
+    <li>In case you did remove Openoffice but you still would like to still have 
+        the core of word processing and spreadsheet functionality, we would suggest installing 
+        <em>abiword</em> and <em>gnumeric</em>.
+        <ul>
+            <li><span class="s_command">apt-get install abiword gnumeric</span></li>
+        </ul>
+    </li>
+</ul>
+
+<h3>8. Individual Customizations:</h3>
+
+<p>This step in the process will require working from the different console window or file manager GUI 
+that is outside of chroot-altered environment.</p>
+
+<ul>
+    <li>Research and locate the default background image for the Live CD user, copy it to your Ubuntu or Windows. 
+        Hint: <strong>it is not</strong> the folder <span class="s_command">/usr/share/backgrounds</span> !
+    </li>
+    <li>Edit the image using a graphics editor (GIMP on Ubuntu or Windows) and put your name on the image. 
+        Alternatively, use your own favorite image instead of the default one but remember to put your name on it.
+    </li>
+    <li>Copy the modified the image on the file system that you are editing</li>
+    <li>See the course instructor if you want to perform a different modification.</li>
+</ul>
+
+<h3>9. Cleanup:</h3>
+
+<ul>
+    <li>Tidy up by erasing the archive files downloaded during our update
+        <ul>
+            <li><span class="s_command">apt-get clean</span></li>
+            <li><span class="s_command">apt-get autoremove</span></li>
+        </ul>
+    </li>
+    <li>Delete the files needed during package installation
+        <ul>
+            <li><span class="s_command">rm /etc/resolv.conf</span></li>
+            <li><span class="s_command">rm /var/lib/dbus/`hostid`</span></li>
+            <li><span class="s_command">rm /sbin/initctl</span></li>
+            <li><span class="s_command">dpkg-divert --rename --remove /sbin/initctl</span></li>
+        </ul>
+    </li>
+    <li>Delete some temporary files (everything in <em>/tmp</em> as well as the our bash history)
+        <ul>
+            <li><span class="s_command">history -c</span> </li>
+            <li><span class="s_command">rm -rf /tmp/* ~/.bash_history</span></li>
+        </ul>
+    </li>
+    <li>Unmount some of the special filesystems and exit <em>chroot</em>
+        <ul>
+            <li><span class="s_command">umount /proc</span></li>
+            <li><span class="s_command">umount /sys</span></li>
+            <li><span class="s_command">umount /dev/pts</span>
+                <br>If any of the umount commands above fail, 
+                run it again with option <span class="s_command">-lf</span>
+            </li>
+            <li><span class="s_command">exit</span></li>
+        </ul>
+    </li>
+    <li>You should have been tossed back into <em class="s_command">~/live</em> on the <strong>host</strong> OS. 
+        Verify it by typing: 
+        <ul>
+            <li><span class="s_command">pwd</span></li>
+        </ul>
+    </li>
+    <li>Finish unmounting the special file systems (<em>/dev</em>)
+        <ul>
+            <li><span class="s_command">sudo umount edit/dev </span></li>
+        </ul>
+    </li>
+</ul>
+
+<h3>10. Packing Up:</h3>
+
+<ul>
+    <li>Regenerate the manifest file, which contains meta-data about the file system 
+        <ul>
+            <li><span class="s_command">chmod +w extract-cd/casper/filesystem.manifest</span></li>
+            <li><span class="s_command">sudo chroot edit dpkg-query -W --showformat='${Package} ${Version}\n'&gt; extract-cd/casper/filesystem.manifest</span></li>
+            <li><span class="s_command">sudo cp extract-cd/casper/filesystem.manifest extract-cd/casper/filesystem.manifest-desktop</span></li>
+            <li><span class="s_command">sudo sed -i '/ubiquity/d' extract-cd/casper/filesystem.manifest-desktop</span></li>
+            <li><span class="s_command">sudo sed -i '/casper/d' extract-cd/casper/filesystem.manifest-desktop</span></li>
+        </ul>
+    </li>
+    <li>Compress the file system. This will take a few minutes. 
+        <ul>
+            <li><span class="s_command">sudo mksquashfs edit extract-cd/casper/filesystem.squashfs</span></li>
+        </ul>
+    </li>
+    <li>Give your remastered image a cool name in <em class="s_command">./extract-cd/README.diskdefines</em> 
+        (E.g. &ldquo;<em class="s_command">#define DISKNAME Ubuntu <span class="s_cmd_choice">1X.04</span> - <span class="s_tograde">Your Name&rsquo;s</span> Custom Edition!</em>&rdquo;)
+    </li>
+        <ul>
+            <li><span class="s_command">sudo nano extract-cd/README.diskdefines </span></li>
+        </ul>
+    <li>Remove the old md5sum.txt and calculate new md5 sums 
+        (the second command takes a minute to calculate... please be patient.)
+        <ul>
+            <li><span class="s_command">cd extract-cd</span></li>
+            <li><span class="s_command">sudo rm md5sum.txt</span></li>
+            <li><span class="s_command">find -type f -print0 | sudo xargs -0 md5sum | grep -v isolinux/boot.cat | sudo tee md5sum.txt</span></li>
+            <li><span class="s_command">cd ..</span> </li>
+        </ul>
+    </li>
+</ul>
+
+<h3>11. Finish The LiveCD:</h3>
+
+<ul>
+    <li>Create the .iso from the contents of <em>./extract-cd</em>
+        (Note: In the second command give your custom .iso file a cool name, and do not forget the period &ldquo;.&rdquo; at the end of the command which refers to the current folder) </li>
+        <ul>
+            <li><span class="s_command">cd extract-cd</span></li>
+            <li><span class="s_command">sudo mkisofs -D -r -V &quot;$IMAGE_NAME&quot; -cache-inodes -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o ../ubuntu-<span class="s_cmd_choice">xxx</span>-custom-<span class="s_tograde">yourname</span>.iso .</span></li>
+            <li><span class="s_command">cd .. </span></li>
+        </ul>
+</ul>
+
+<h3>12. Creating LiveCD, LiveDVD on a Bootable USB Flash Drive:</h3>
+
+<ul>
+    <li>Transfer the <span class="s_command">.iso</span> file to windows and set up a new virtual machine
+        with the ISO file as a live DVD and no hard drive. Test if it boots. Record the video and submit it</li>
+    <li>Optional exercises:
+        <ul>
+            <li>If you desire to create a physical DVD recordable, to burn it run: 
+                <ul>
+                    <li><span class="s_command">cdrecord dev=/dev/cdrom ubuntu-<span class="s_cmd_choice">xxx</span>-custom-<span class="s_tograde">yourname</span>.iso</span></li>
+                </ul>
+            </li>
+            <li>If you desire to create a physical flash drive use software provided at
+                <a href="http://www.pendrivelinux.com/universal-usb-installer-easy-as-1-2-3/#button">http://www.pendrivelinux.com/universal-usb-installer-easy-as-1-2-3/#button</a> .
+                <br>Note: an administrative account on the Windows machine is required 
+                    to create a bootable USB Flash Drive. You cannot do it in the lab.
+            </li>
+            <li>Alternatively:&nbsp; find similar tool that works on Linux and create the bootable USB Flash Drive.</li>
+            <li>Test the bootable USB Flash Drive on your own computer.
+                It is not possible to test it&nbsp; on any of the lab computers or using a virtual machine.
+            </li>
+        </ul>
+    </li>
+</ul>
+
+<h3>Sources and Further Reading:</h3>
+
+<ul>
+  <li>Live CD Customization: How to Customize the Ubuntu Desktop CD/DVD -- <a href="https://help.ubuntu.com/community/LiveCDCustomization">https://help.ubuntu.com/community/LiveCDCustomization</a></li>
+  <li>Install CD Customization (How to Customize the Ubuntu Install CD/DVD) -- <a href="https://help.ubuntu.com/community/InstallCDCustomization">https://help.ubuntu.com/community/InstallCDCustomization</a></li>
+</ul>
+
+
+
+<h2>Submission</h2>
+
+<p><span class="s_tograde">Record a video of the entire boot process including the choice 
+of whether to install Linux or run Live Linux, choose run Live Linux.
+Then at a minimum show both the customized background of Live Linux desktop
+and the presence of the Lincity game in the menu of preinstalled software.</span></p>
+
+<p>Drop the requested movie in the corresponding assignment drop box on Canvas.</p>
+
+
+<p>Thank you.</p>
+
+
+
+<p>
+<a href="../../../index.html"><img src="../../../icons/main.gif" class="menu32x32" alt="web site front" /></a>
+<a href="../index.html"><img src="../../../icons/menu.gif" class="menu32x32" alt="local main page" /></a>
+<a href="index.html"><img src="../../../icons/mmisc.gif" class="menu32x32" alt="local list page" /></a>
+<a href="../../../bookmark/index.html"><img src="../../../icons/mbookmark.gif" class="menu32x32" alt="general bookmarks" /></a>
+<a href="../../../bookmark/software.html"><img src="../../../icons/mbookabcd.gif" class="menu32x32" alt="software bookmarks" /></a>
+<a href="javascript:void(window.history.back());"><img src="../../../icons/maleft.gif" class="menu32x32" alt="go back" /></a>
+<a href="javascript:void(window.open('../../../copyright.html','C','toolbar=no,status=no,menubar=no,directories=no,location=no,width=600,height=500,resizable=no'));"><img src="../../../icons/mchecked.gif" class="menu32x32" alt="copyright info" /></a>
+</p>
+
+</body>
+</html>

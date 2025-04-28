@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+  <title>D_http-counted.cpp</title>
+  <style type="text/css">
+  <!--
+body { color: #000000; background: #ffffff; }
+h3.title_comment             { color: #F00000; }
+span.comment                 { color: #444444; }
+span.doc_comment             { color: #444444; font-style: italic; }
+span.string                  { color: #008000; }
+span.esc_string              { color: #77dd77; }
+span.char                    { color: #008000; }
+span.esc_char                { color: #77dd77; }
+span.numeric                 { color: #FF0000; }
+span.ident                   { color: #2040a0; }
+span.predef_ident            { color: #2040a0; font-weight: bold; }
+span.type                    { color: #2040a0; font-weight: bold; }
+span.predef_type             { color: #2040a0; font-weight: bold; }
+span.keyword                 {                 font-weight: bold; }
+span.library_fn              { color: #a52a2a; font-weight: bold; }
+span.include                 { color: #0000ff; font-weight: bold; }
+span.preproc                 { color: #0000ff; font-weight: bold; }
+span.braces                  { color: #4444FF; font-weight: bold; }
+span.symbol                  { color: #4444FF; }
+span.fn_header               {                 font-weight: bold; }
+span.fn_header_name          { color: #ff0000; }
+span.fn_header_args          { color: #2040a0; }
+span.regex                   { color: #b000d0; }
+span.text                    {                 font-style: italic; }
+span.entity                  { color: #ff0000; }
+span.assignment              { color: #2040a0; }
+span.dep_line                { color: #8b2252; }
+span.dep_target              {                 font-weight: bold; }
+span.dep_cont                { color: #000000; font-weight: bold; }
+span.macro                   { color: #2040a0; }
+span.int_macro               { color: #4080ff; }
+span.esc_usd                 { color: #444444; }
+  -->
+  </style>
+</head>
+<body>
+<pre>
+<h3 class="title_comment">//* Dr. Malinowski's demo Web Server Daemon for Docker Container on port 88 *</h3>
+<span class="comment">// v. 2023 with enforced security and updated to the current C++ standard</span>
+<span class="preproc">#include <span class="string">&quot;tnplib.h&quot;</span></span>
+
+<span class="preproc">#include <span class="string">&lt;signal.h&gt;</span></span>
+<span class="preproc">#include <span class="string">&lt;unistd.h&gt;</span></span>
+<span class="preproc">#include <span class="string">&lt;stdlib.h&gt;</span></span>
+<span class="preproc">#include <span class="string">&lt;stdio.h&gt;</span></span>
+<span class="preproc">#include <span class="string">&lt;string.h&gt;</span></span>
+<span class="preproc">#include <span class="string">&lt;sys/types.h&gt;</span></span>
+<span class="preproc">#include <span class="string">&lt;pwd.h&gt;</span>        <span class="comment">// getpwnam(const char*)</span></span>
+<span class="preproc">#include <span class="string">&lt;grp.h&gt;</span>        <span class="comment">// getgrnam(const char*)</span></span>
+<span class="preproc">#include <span class="string">&lt;unistd.h&gt;</span>     <span class="comment">// setuid(.), setgid(.)</span></span>
+
+<span class="preproc">#include <span class="string">&lt;iostream&gt;</span></span>
+<span class="keyword">using</span> <span class="keyword">namespace</span> <span class="ident">std</span><span class="symbol">;</span>
+
+<span class="preproc">#define _DEBUG 1</span>
+
+
+<span class="keyword">inline</span> <span class="keyword">void</span> <span class="ident">D</span><span class="symbol">(</span><span class="keyword">const</span> <span class="keyword">char</span> <span class="symbol">*</span><span class="ident">errormessage</span><span class="symbol">)</span> <span class="braces">{</span>
+<span class="preproc">#ifdef _DEBUG</span>
+    <span class="ident">cerr</span> <span class="symbol">&lt;</span><span class="symbol">&lt;</span> <span class="ident">errormessage</span> <span class="symbol">&lt;</span><span class="symbol">&lt;</span> <span class="ident">endl</span><span class="symbol">;</span>
+<span class="preproc">#endif</span>
+<span class="braces">}</span>
+
+<span class="keyword">const</span> <span class="keyword">unsigned</span> <span class="keyword">short</span>    <span class="ident">SERVER_PORT_NR</span> <span class="symbol">=</span> <span class="numeric">88</span><span class="symbol">;</span>
+<span class="keyword">const</span> <span class="keyword">unsigned</span> <span class="keyword">short</span>    <span class="ident">SERVER_QLEN</span>    <span class="symbol">=</span> <span class="numeric">10</span><span class="symbol">;</span>
+<span class="keyword">const</span> <span class="keyword">char</span>              <span class="ident">SERVER_FILE_NM</span><span class="symbol">[</span><span class="symbol">]</span> <span class="symbol">=</span> <span class="string">&quot;/var/log/http-counter/counter.txt&quot;</span><span class="symbol">;</span>
+<span class="keyword">const</span> <span class="keyword">char</span>              <span class="ident">SERVER_UNAME</span><span class="symbol">[</span><span class="symbol">]</span> <span class="symbol">=</span> <span class="string">&quot;counter&quot;</span><span class="symbol">;</span>
+<span class="keyword">const</span> <span class="keyword">char</span>              <span class="ident">SERVER_GNAME</span><span class="symbol">[</span><span class="symbol">]</span> <span class="symbol">=</span> <span class="string">&quot;counter&quot;</span><span class="symbol">;</span>
+
+<span class="keyword">static</span> <span class="keyword">unsigned</span> <span class="keyword">long</span>    <span class="ident">counter</span> <span class="symbol">=</span>  <span class="numeric">0</span><span class="symbol">;</span>
+<span class="keyword">static</span> <span class="ident">SOCKET</span>           <span class="ident">serve</span>   <span class="symbol">=</span> <span class="symbol">-</span><span class="numeric">1</span><span class="symbol">;</span>
+
+
+<span class="comment">/* the signal handler function */</span>
+<span class="keyword">void</span> <span class="ident">handle_shutdown</span><span class="symbol">(</span><span class="keyword">int</span><span class="symbol">)</span> <span class="braces">{</span>
+    <span class="ident">FILE</span><span class="symbol">*</span> <span class="ident">cntfile</span><span class="symbol">;</span>
+    <span class="ident">D</span><span class="symbol">(</span><span class="string">&quot;INFO:  Stopping http-counter server&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="keyword">if</span> <span class="symbol">(</span><span class="ident">isValidSocket</span><span class="symbol">(</span><span class="ident">serve</span><span class="symbol">)</span><span class="symbol">)</span> <span class="braces">{</span>
+        <span class="ident">TCPStopServerTCP</span><span class="symbol">(</span><span class="ident">serve</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="ident">SocketLibEnd</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="ident">D</span><span class="symbol">(</span><span class="string">&quot;INFO:  Server http-counter stopped&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="braces">}</span>
+    <span class="ident">D</span><span class="symbol">(</span><span class="string">&quot;INFO:  Saving the counter state&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="ident">cntfile</span> <span class="symbol">=</span> <span class="ident">fopen</span><span class="symbol">(</span><span class="ident">SERVER_FILE_NM</span>, <span class="string">&quot;w&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="keyword">if</span> <span class="symbol">(</span><span class="ident">cntfile</span><span class="symbol">!</span><span class="symbol">=</span><span class="numeric">0</span><span class="symbol">)</span> <span class="braces">{</span>
+        <span class="keyword">int</span> <span class="ident">status</span> <span class="symbol">=</span> <span class="ident">fprintf</span><span class="symbol">(</span><span class="ident">cntfile</span>,<span class="string">&quot;%lu<span class="esc_char">\n</span>&quot;</span>, <span class="ident">counter</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="keyword">if</span> <span class="symbol">(</span><span class="ident">status</span><span class="symbol">&lt;</span><span class="symbol">=</span><span class="numeric">0</span><span class="symbol">)</span> <span class="ident">D</span><span class="symbol">(</span><span class="string">&quot;ERROR: Unable to store the current count&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="ident">fclose</span><span class="symbol">(</span><span class="ident">cntfile</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="braces">}</span> <span class="keyword">else</span> <span class="braces">{</span>
+        <span class="ident">D</span><span class="symbol">(</span><span class="string">&quot;ERROR: Unable to create a file to store the current count&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="braces">}</span>
+    <span class="ident">exit</span><span class="symbol">(</span><span class="numeric">0</span><span class="symbol">)</span><span class="symbol">;</span>
+<span class="braces">}</span>
+
+<span class="keyword">void</span> <span class="ident">SimpleHTTPServer</span><span class="symbol">(</span><span class="keyword">unsigned</span> <span class="keyword">short</span> <span class="keyword">int</span> <span class="ident">port</span>, <span class="keyword">unsigned</span> <span class="keyword">short</span> <span class="keyword">int</span> <span class="ident">qlen</span>, <span class="keyword">const</span> <span class="keyword">char</span> <span class="ident">cntfname</span><span class="symbol">[</span><span class="symbol">]</span><span class="symbol">)</span> <span class="braces">{</span>
+    <span class="keyword">char</span> <span class="ident">buffer</span><span class="symbol">[</span><span class="numeric">16</span><span class="symbol">]</span><span class="symbol">;</span>    <span class="comment">// buffer for converting numerical data to string</span>
+    <span class="keyword">char</span> <span class="ident">webpage</span><span class="symbol">[</span><span class="numeric">4096</span><span class="symbol">]</span><span class="symbol">;</span> <span class="comment">// make sure that the HTTP reply and the Web page fits inside</span>
+    <span class="keyword">int</span>  <span class="ident">status</span><span class="symbol">;</span>
+    <span class="ident">FILE</span><span class="symbol">*</span> <span class="ident">cntfile</span><span class="symbol">;</span>
+
+    <span class="comment">// set up graceful termination of the server socket</span>
+    <span class="braces">{</span>
+        <span class="keyword">struct</span> <span class="ident">sigaction</span> <span class="ident">handler</span><span class="symbol">;</span>
+        <span class="ident">handler</span>.<span class="ident">sa_handler</span> <span class="symbol">=</span> <span class="ident">handle_shutdown</span><span class="symbol">;</span> 
+        <span class="ident">handler</span>.<span class="ident">sa_flags</span> <span class="symbol">=</span> <span class="numeric">0</span><span class="symbol">;</span>
+        <span class="ident">sigemptyset</span><span class="symbol">(</span><span class="symbol">&amp;</span><span class="ident">handler</span>.<span class="ident">sa_mask</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="ident">sigaction</span><span class="symbol">(</span><span class="ident">SIGKILL</span>, <span class="symbol">&amp;</span><span class="ident">handler</span>, <span class="ident">NULL</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="ident">sigaction</span><span class="symbol">(</span><span class="ident">SIGTERM</span>, <span class="symbol">&amp;</span><span class="ident">handler</span>, <span class="ident">NULL</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="ident">sigaction</span><span class="symbol">(</span><span class="ident">SIGINT</span>,  <span class="symbol">&amp;</span><span class="ident">handler</span>, <span class="ident">NULL</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="braces">}</span>
+
+    <span class="ident">SocketLibStart</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">;</span>
+
+    <span class="comment">// start the server on a port below 1024 as root</span>
+    <span class="ident">D</span><span class="symbol">(</span><span class="string">&quot;INFO:  Starting http-counter server&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="ident">serve</span> <span class="symbol">=</span> <span class="ident">TCPStartServer</span><span class="symbol">(</span><span class="ident">port</span>, <span class="ident">qlen</span>, <span class="numeric">1</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="keyword">if</span> <span class="symbol">(</span><span class="symbol">!</span><span class="ident">isValidSocket</span><span class="symbol">(</span><span class="ident">serve</span><span class="symbol">)</span><span class="symbol">)</span> <span class="braces">{</span>
+        <span class="ident">D</span><span class="symbol">(</span><span class="string">&quot;ERROR: Cannot start the server&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="ident">D</span><span class="symbol">(</span><span class="string">&quot;STOP:  Am I running as root?&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="ident">D</span><span class="symbol">(</span><span class="string">&quot;STOP:  Is another copy of the server running?&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="ident">SocketLibEnd</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="ident">exit</span><span class="symbol">(</span><span class="numeric">1</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="braces">}</span>
+    <span class="ident">D</span><span class="symbol">(</span><span class="string">&quot;Server http-counter started&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+
+    <span class="comment">// and now limit the server ability to act as a root</span>
+    <span class="comment">// in case the service is attacked and compromised</span>
+    <span class="comment">// first change the group as you still need to be root to do it</span>
+    <span class="keyword">struct</span> <span class="ident">group</span> <span class="symbol">*</span><span class="ident">grp</span> <span class="symbol">=</span> <span class="ident">getgrnam</span><span class="symbol">(</span><span class="ident">SERVER_GNAME</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="keyword">if</span> <span class="symbol">(</span><span class="ident">grp</span> <span class="symbol">&amp;</span><span class="symbol">&amp;</span> <span class="ident">setgid</span><span class="symbol">(</span><span class="ident">grp</span><span class="symbol">-</span><span class="symbol">&gt;</span><span class="ident">gr_gid</span><span class="symbol">)</span> <span class="symbol">&lt;</span><span class="numeric">0</span><span class="symbol">)</span> <span class="braces">{</span>
+        <span class="ident">D</span><span class="symbol">(</span><span class="string">&quot;ERROR: Server http-counter failed to change its group ID&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="ident">D</span><span class="symbol">(</span><span class="string">&quot;STOP:  Am I running as root?&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="ident">D</span><span class="symbol">(</span><span class="string">&quot;STOP:  Is the counter group set up?&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="ident">SocketLibEnd</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="ident">exit</span><span class="symbol">(</span><span class="numeric">1</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="braces">}</span> <span class="keyword">else</span> <span class="braces">{</span>
+        <span class="ident">D</span><span class="symbol">(</span><span class="string">&quot;Server http-counter changed its group ID to counter&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="braces">}</span>
+    <span class="comment">// now give up the root privileges</span>
+    <span class="keyword">struct</span> <span class="ident">passwd</span> <span class="symbol">*</span><span class="ident">pwd</span> <span class="symbol">=</span> <span class="ident">getpwnam</span><span class="symbol">(</span><span class="ident">SERVER_UNAME</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="keyword">if</span> <span class="symbol">(</span><span class="ident">pwd</span> <span class="symbol">&amp;</span><span class="symbol">&amp;</span> <span class="ident">setuid</span><span class="symbol">(</span><span class="ident">pwd</span><span class="symbol">-</span><span class="symbol">&gt;</span><span class="ident">pw_uid</span><span class="symbol">)</span> <span class="symbol">&lt;</span><span class="numeric">0</span><span class="symbol">)</span> <span class="braces">{</span>
+        <span class="ident">D</span><span class="symbol">(</span><span class="string">&quot;ERROR: Server http-counter failed to change its user ID&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="ident">D</span><span class="symbol">(</span><span class="string">&quot;STOP:  Am I running as root?&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="ident">D</span><span class="symbol">(</span><span class="string">&quot;STOP:  Is the counter user set up?&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="ident">SocketLibEnd</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="ident">exit</span><span class="symbol">(</span><span class="numeric">1</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="braces">}</span> <span class="keyword">else</span> <span class="braces">{</span>
+        <span class="ident">D</span><span class="symbol">(</span><span class="string">&quot;Server http-counter changed its user ID to counter&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="braces">}</span>
+
+
+
+    <span class="ident">cntfile</span> <span class="symbol">=</span> <span class="ident">fopen</span><span class="symbol">(</span><span class="ident">cntfname</span>, <span class="string">&quot;r&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="keyword">if</span> <span class="symbol">(</span><span class="ident">cntfile</span><span class="symbol">!</span><span class="symbol">=</span><span class="numeric">0</span><span class="symbol">)</span> <span class="braces">{</span>
+        <span class="ident">status</span> <span class="symbol">=</span> <span class="ident">fscanf</span><span class="symbol">(</span><span class="ident">cntfile</span>,<span class="string">&quot; %lu&quot;</span>, <span class="symbol">&amp;</span><span class="ident">counter</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="keyword">if</span> <span class="symbol">(</span><span class="ident">status</span><span class="symbol">&lt;</span><span class="symbol">=</span><span class="numeric">0</span><span class="symbol">)</span> <span class="braces">{</span>
+            <span class="ident">D</span><span class="symbol">(</span><span class="string">&quot;INFO:  Unable to read the previous count&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+            <span class="ident">D</span><span class="symbol">(</span><span class="string">&quot;INFO:  Count restarts at 0&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+            <span class="ident">counter</span><span class="symbol">=</span><span class="numeric">0</span><span class="symbol">;</span>
+        <span class="braces">}</span> <span class="keyword">else</span> <span class="braces">{</span>
+            <span class="ident">D</span><span class="symbol">(</span><span class="string">&quot;INFO:  Count value restored&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="braces">}</span>
+        <span class="ident">fclose</span><span class="symbol">(</span><span class="ident">cntfile</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="braces">}</span> <span class="keyword">else</span> <span class="braces">{</span>
+        <span class="ident">counter</span><span class="symbol">=</span><span class="numeric">0</span><span class="symbol">;</span>
+        <span class="ident">D</span><span class="symbol">(</span><span class="string">&quot;INFO:  Count starts at 0&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="braces">}</span>
+
+    <span class="ident">D</span><span class="symbol">(</span><span class="string">&quot;INFO:  Daemon started&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+
+    <span class="keyword">for</span> <span class="symbol">(</span><span class="symbol">;</span><span class="symbol">;</span><span class="symbol">)</span> <span class="braces">{</span>
+        <span class="ident">SOCKET</span> <span class="ident">visitor</span> <span class="symbol">=</span> <span class="ident">TCPWaitForConnection</span><span class="symbol">(</span><span class="ident">serve</span><span class="symbol">)</span><span class="symbol">;</span>
+<span class="comment">//      TCPSetNoDelay(visitor, true); // send each data chunk immediately</span>
+
+        <span class="comment">// In this simple server we do not care about the request header</span>
+        <span class="comment">// but may want to display it for demonstration and debugging purposes</span>
+        <span class="ident">status</span> <span class="symbol">=</span> <span class="ident">TCPRecvLine</span><span class="symbol">(</span><span class="ident">visitor</span>, <span class="ident">buffer</span>, <span class="keyword">sizeof</span><span class="symbol">(</span><span class="ident">buffer</span><span class="symbol">)</span> <span class="symbol">)</span><span class="symbol">;</span>
+        <span class="keyword">if</span> <span class="symbol">(</span><span class="ident">status</span><span class="symbol">&lt;</span><span class="numeric">0</span><span class="symbol">)</span> <span class="keyword">continue</span><span class="symbol">;</span>
+        <span class="ident">D</span><span class="symbol">(</span><span class="ident">buffer</span><span class="symbol">)</span><span class="symbol">;</span>
+
+        <span class="comment">// In this simple server we do not care about the reminder of the request header</span>
+        <span class="keyword">do</span> <span class="braces">{</span>
+            <span class="ident">status</span> <span class="symbol">=</span> <span class="ident">TCPRecvDumpLine</span><span class="symbol">(</span><span class="ident">visitor</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="braces">}</span> <span class="keyword">while</span> <span class="symbol">(</span><span class="ident">status</span><span class="symbol">&gt;</span><span class="numeric">0</span><span class="symbol">)</span><span class="symbol">;</span>
+
+        <span class="ident">webpage</span><span class="symbol">[</span><span class="numeric">0</span><span class="symbol">]</span><span class="symbol">=</span><span class="char">'<span class="esc_char">\0</span>'</span><span class="symbol">;</span>
+        <span class="comment">// HTTP Header</span>
+        <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">webpage</span>, <span class="string">&quot;HTTP/1.1 200 Ok<span class="esc_char">\r</span><span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">webpage</span>, <span class="string">&quot;Server: AVR32 NGW Simple Demo Server<span class="esc_char">\r</span><span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="comment">// Date: must be provided unless the server has no reliable clock - then it must not be provided</span>
+        <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">webpage</span>, <span class="string">&quot;Connection: close<span class="esc_char">\r</span><span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">webpage</span>, <span class="string">&quot;Cache-Control: no-cache<span class="esc_char">\r</span><span class="esc_char">\n</span>Expires: 0<span class="esc_char">\r</span><span class="esc_char">\n</span>ETag: <span class="esc_char">\&quot;</span><span class="esc_char">\&quot;</span><span class="esc_char">\r</span><span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">webpage</span>, <span class="string">&quot;Content-Type: text/html; charset=ISO-8859-1<span class="esc_char">\r</span><span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">webpage</span>, <span class="string">&quot;<span class="esc_char">\r</span><span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+
+        <span class="comment">// HTML Page header</span>
+        <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">webpage</span>, <span class="string">&quot;&lt;!DOCTYPE html PUBLIC <span class="esc_char">\&quot;</span>-//W3C//DTD HTML 4.01//EN<span class="esc_char">\&quot;</span>&gt;<span class="esc_char">\r</span><span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">webpage</span>, <span class="string">&quot;&lt;html&gt;<span class="esc_char">\r</span><span class="esc_char">\n</span>&lt;head&gt;<span class="esc_char">\r</span><span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">webpage</span>, <span class="string">&quot;&lt;meta http-equiv=<span class="esc_char">\&quot;</span>Content-type<span class="esc_char">\&quot;</span> content=<span class="esc_char">\&quot;</span>text/html; charset=iso-8859-1<span class="esc_char">\&quot;</span>&gt;<span class="esc_char">\r</span><span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">webpage</span>, <span class="string">&quot;&lt;title&gt;A simple dynamic Web page&lt;/title&gt;&lt;/head&gt;<span class="esc_char">\r</span><span class="esc_char">\n</span>&lt;body&gt;<span class="esc_char">\r</span><span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+
+        <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">webpage</span>, <span class="string">&quot;&lt;p&gt;&quot;</span><span class="symbol">)</span><span class="symbol">;</span> 
+        <span class="ident">counter</span><span class="symbol">+</span><span class="symbol">+</span><span class="symbol">;</span> <span class="ident">sprintf</span><span class="symbol">(</span><span class="ident">buffer</span>, <span class="string">&quot;%lu&quot;</span>, <span class="ident">counter</span><span class="symbol">)</span><span class="symbol">;</span> <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">webpage</span>, <span class="ident">buffer</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">webpage</span>, <span class="string">&quot;&lt;/p&gt;<span class="esc_char">\r</span><span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+
+        <span class="comment">// HTML Page footer</span>
+        <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">webpage</span>, <span class="string">&quot;&lt;/body&gt;<span class="esc_char">\r</span><span class="esc_char">\n</span>&lt;/html&gt;<span class="esc_char">\r</span><span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+
+        <span class="ident">TCPSendLine</span><span class="symbol">(</span><span class="ident">visitor</span>, <span class="ident">webpage</span><span class="symbol">)</span><span class="symbol">;</span>
+
+        <span class="ident">TCPPrepClose</span><span class="symbol">(</span><span class="ident">visitor</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="ident">TCPStopClient</span><span class="symbol">(</span><span class="ident">visitor</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="ident">D</span><span class="symbol">(</span><span class="string">&quot;INFO:  Counted ++&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+
+        <span class="comment">// Save the state every that many counts, in case power went off suddenly</span>
+        <span class="keyword">if</span> <span class="symbol">(</span><span class="numeric">0</span><span class="symbol">=</span><span class="symbol">=</span><span class="ident">counter</span><span class="symbol">%</span><span class="numeric">1000</span><span class="symbol">)</span> <span class="braces">{</span>
+            <span class="ident">cntfile</span> <span class="symbol">=</span> <span class="ident">fopen</span><span class="symbol">(</span><span class="ident">cntfname</span>, <span class="string">&quot;w&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+            <span class="keyword">if</span> <span class="symbol">(</span><span class="ident">cntfile</span><span class="symbol">!</span><span class="symbol">=</span><span class="numeric">0</span><span class="symbol">)</span> <span class="braces">{</span>
+                <span class="ident">status</span> <span class="symbol">=</span> <span class="ident">fprintf</span><span class="symbol">(</span><span class="ident">cntfile</span>,<span class="string">&quot;%lu<span class="esc_char">\n</span>&quot;</span>, <span class="ident">counter</span><span class="symbol">)</span><span class="symbol">;</span>
+                <span class="ident">fclose</span><span class="symbol">(</span><span class="ident">cntfile</span><span class="symbol">)</span><span class="symbol">;</span>
+                <span class="keyword">if</span> <span class="symbol">(</span><span class="ident">status</span><span class="symbol">&lt;</span><span class="symbol">=</span><span class="numeric">0</span><span class="symbol">)</span> <span class="braces">{</span>
+                    <span class="ident">D</span><span class="symbol">(</span><span class="string">&quot;ERROR: Updating persistent coutner failed!&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+                <span class="braces">}</span>
+            <span class="braces">}</span> <span class="keyword">else</span> <span class="braces">{</span>
+                <span class="ident">D</span><span class="symbol">(</span><span class="string">&quot;ERROR: Updating persistent coutner failed!&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+            <span class="braces">}</span>
+        <span class="braces">}</span>
+    <span class="braces">}</span> <span class="comment">/* server loop */</span>
+
+    <span class="ident">SocketLibEnd</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">;</span>
+<span class="braces">}</span>
+
+
+
+<span class="keyword">int</span> <span class="ident">main</span><span class="symbol">(</span><span class="symbol">)</span>
+<span class="braces">{</span>
+    <span class="ident">SimpleHTTPServer</span><span class="symbol">(</span><span class="ident">SERVER_PORT_NR</span>, <span class="ident">SERVER_QLEN</span>, <span class="ident">SERVER_FILE_NM</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="keyword">return</span><span class="symbol">(</span><span class="numeric">0</span><span class="symbol">)</span><span class="symbol">;</span>
+<span class="braces">}</span>
+
+</pre>
+<!-- <hr>syntax highlighted by <a href="https://www.palfrader.org/code/code2html/">Code2HTML</a>, v. 0.9.1  -->
+</body>
+</html>

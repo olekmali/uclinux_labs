@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+  <title>B_module2.h</title>
+  <style type="text/css">
+  <!--
+body { color: #000000; background: #ffffff; }
+h3.title_comment             { color: #F00000; }
+span.comment                 { color: #444444; }
+span.doc_comment             { color: #444444; font-style: italic; }
+span.string                  { color: #008000; }
+span.esc_string              { color: #77dd77; }
+span.char                    { color: #008000; }
+span.esc_char                { color: #77dd77; }
+span.numeric                 { color: #FF0000; }
+span.ident                   { color: #2040a0; }
+span.predef_ident            { color: #2040a0; font-weight: bold; }
+span.type                    { color: #2040a0; font-weight: bold; }
+span.predef_type             { color: #2040a0; font-weight: bold; }
+span.keyword                 {                 font-weight: bold; }
+span.library_fn              { color: #a52a2a; font-weight: bold; }
+span.include                 { color: #0000ff; font-weight: bold; }
+span.preproc                 { color: #0000ff; font-weight: bold; }
+span.braces                  { color: #4444FF; font-weight: bold; }
+span.symbol                  { color: #4444FF; }
+span.fn_header               {                 font-weight: bold; }
+span.fn_header_name          { color: #ff0000; }
+span.fn_header_args          { color: #2040a0; }
+span.regex                   { color: #b000d0; }
+span.text                    {                 font-style: italic; }
+span.entity                  { color: #ff0000; }
+span.assignment              { color: #2040a0; }
+span.dep_line                { color: #8b2252; }
+span.dep_target              {                 font-weight: bold; }
+span.dep_cont                { color: #000000; font-weight: bold; }
+span.macro                   { color: #2040a0; }
+span.int_macro               { color: #4080ff; }
+span.esc_usd                 { color: #444444; }
+  -->
+  </style>
+</head>
+<body>
+<pre>
+<span class="comment">/*
+ *  module2.h - the header file with the ioctl definitions.
+ *
+ *  The declarations here have to be in a header file, because
+ *  they need to be known both to the kernel module
+ *  (in module2.c) and the process calling ioctl (ioctl.c)
+ *
+ *  Copyright © 2001, 2007 Peter Jay Salzman
+ *  http://tldp.org/LDP/lkmpg/2.6/html/lkmpg.html
+ */</span>
+
+<span class="preproc">#ifndef MODULE2_H</span>
+<span class="preproc">#define MODULE2_H</span>
+
+<span class="preproc">#include <span class="string">&lt;linux/ioctl.h&gt;</span></span>
+
+<span class="comment">/* 
+ * The major device number. If you are not sure whether 
+ * the major number is already taken, use 0 and inspect
+ * the log file. 
+ * WARNIG: The module2.c code does not use 123,
+ *         Inspect the log to see the actual number
+ */</span>
+<span class="preproc">#define MAGIC_NUM 123</span>
+
+<span class="comment">/* 
+ * Set the message of the device driver 
+ */</span>
+<span class="preproc">#define IOCTL_SET_MSG _IOR(MAGIC_NUM, 0, char *)</span>
+<span class="comment">/*
+ * _IOR means that we're creating an ioctl command 
+ * number for passing information from a user process
+ * to the kernel module. 
+ *
+ * The first arguments, MAGIC_NUM, is the major device 
+ * number we're using.
+ *
+ * The second argument is the number of the command 
+ * (there could be several with different meanings).
+ *
+ * The third argument is the type we want to get from 
+ * the process to the kernel.
+ */</span>
+
+<span class="comment">/* 
+ * Get the message of the device driver 
+ */</span>
+<span class="preproc">#define IOCTL_GET_MSG _IOR(MAGIC_NUM, 1, char *)</span>
+<span class="comment">/* 
+ * This IOCTL is used for output, to get the message 
+ * of the device driver. However, we still need the 
+ * buffer to place the message in to be input, 
+ * as it is allocated by the process.
+ */</span>
+
+<span class="comment">/* 
+ * Get the n'th byte of the message 
+ */</span>
+<span class="preproc">#define IOCTL_GET_NTH_BYTE _IOWR(MAGIC_NUM, 2, int)</span>
+<span class="comment">/* 
+ * The IOCTL is used for both input and output. It 
+ * receives from the user a number, n, and returns 
+ * Message[n]. 
+ */</span>
+
+<span class="comment">/* 
+ * The name of the device file 
+ */</span>
+<span class="preproc">#define DEVICE_FILE_NAME <span class="string">&quot;/dev/mydevice&quot;</span></span>
+
+<span class="preproc">#endif</span>
+
+</pre>
+<!-- <hr>syntax highlighted by <a href="https://www.palfrader.org/code/code2html/">Code2HTML</a>, v. 0.9.1  -->
+</body>
+</html>

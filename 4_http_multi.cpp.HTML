@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+  <title>4_http_multi.cpp</title>
+  <style type="text/css">
+  <!--
+body { color: #000000; background: #ffffff; }
+h3.title_comment             { color: #F00000; }
+span.comment                 { color: #444444; }
+span.doc_comment             { color: #444444; font-style: italic; }
+span.string                  { color: #008000; }
+span.esc_string              { color: #77dd77; }
+span.char                    { color: #008000; }
+span.esc_char                { color: #77dd77; }
+span.numeric                 { color: #FF0000; }
+span.ident                   { color: #2040a0; }
+span.predef_ident            { color: #2040a0; font-weight: bold; }
+span.type                    { color: #2040a0; font-weight: bold; }
+span.predef_type             { color: #2040a0; font-weight: bold; }
+span.keyword                 {                 font-weight: bold; }
+span.library_fn              { color: #a52a2a; font-weight: bold; }
+span.include                 { color: #0000ff; font-weight: bold; }
+span.preproc                 { color: #0000ff; font-weight: bold; }
+span.braces                  { color: #4444FF; font-weight: bold; }
+span.symbol                  { color: #4444FF; }
+span.fn_header               {                 font-weight: bold; }
+span.fn_header_name          { color: #ff0000; }
+span.fn_header_args          { color: #2040a0; }
+span.regex                   { color: #b000d0; }
+span.text                    {                 font-style: italic; }
+span.entity                  { color: #ff0000; }
+span.assignment              { color: #2040a0; }
+span.dep_line                { color: #8b2252; }
+span.dep_target              {                 font-weight: bold; }
+span.dep_cont                { color: #000000; font-weight: bold; }
+span.macro                   { color: #2040a0; }
+span.int_macro               { color: #4080ff; }
+span.esc_usd                 { color: #444444; }
+  -->
+  </style>
+</head>
+<body>
+<pre>
+<h3 class="title_comment">//* A simple Web Server with a controller *</h3>
+<span class="preproc">#include <span class="string">&quot;tnplib.h&quot;</span></span>
+
+<span class="preproc">#include <span class="string">&lt;iostream&gt;</span></span>
+<span class="preproc">#include <span class="string">&lt;cstdio&gt;</span></span>
+<span class="preproc">#include <span class="string">&lt;cstring&gt;</span></span>
+<span class="keyword">using</span> <span class="keyword">namespace</span> <span class="ident">std</span><span class="symbol">;</span>
+
+<span class="keyword">inline</span> <span class="keyword">void</span> <span class="ident">D</span><span class="symbol">(</span><span class="keyword">const</span> <span class="keyword">char</span> <span class="symbol">*</span><span class="ident">errormessage</span><span class="symbol">)</span> <span class="braces">{</span>
+<span class="preproc">#ifdef _DEBUG</span>
+    <span class="ident">cerr</span> <span class="symbol">&lt;</span><span class="symbol">&lt;</span> <span class="ident">errormessage</span> <span class="symbol">&lt;</span><span class="symbol">&lt;</span> <span class="ident">endl</span><span class="symbol">;</span>
+<span class="preproc">#endif</span>
+<span class="braces">}</span>
+
+<span class="keyword">const</span> <span class="keyword">unsigned</span> <span class="keyword">int</span> <span class="ident">SERVER_TCP_PORT</span> <span class="symbol">=</span> <span class="numeric">8083</span><span class="symbol">;</span>
+
+<span class="keyword">void</span> <span class="ident">CreateReply</span><span class="symbol">(</span><span class="keyword">const</span> <span class="keyword">char</span> <span class="symbol">*</span> <span class="ident">status</span>, <span class="keyword">const</span> <span class="keyword">char</span> <span class="symbol">*</span> <span class="ident">title</span>, <span class="keyword">const</span> <span class="keyword">char</span> <span class="symbol">*</span> <span class="ident">message</span>, <span class="keyword">char</span> <span class="symbol">*</span> <span class="ident">buffer</span><span class="symbol">)</span> <span class="braces">{</span>
+    <span class="ident">strcpy</span><span class="symbol">(</span><span class="ident">buffer</span>, <span class="string">&quot;HTTP/1.0 &quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">buffer</span>, <span class="ident">status</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">buffer</span>, <span class="string">&quot;<span class="esc_char">\r</span><span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">buffer</span>, <span class="string">&quot;Server: uCLx Course Multipage Demo Server<span class="esc_char">\r</span><span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="comment">// Date: must be provided unless the server has no reliable clock - then it must not be provided</span>
+    <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">buffer</span>, <span class="string">&quot;Connection: close<span class="esc_char">\r</span><span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">buffer</span>, <span class="string">&quot;Cache-Control: no-cache<span class="esc_char">\r</span><span class="esc_char">\n</span>Expires: 0<span class="esc_char">\r</span><span class="esc_char">\n</span>ETag: <span class="esc_char">\&quot;</span><span class="esc_char">\&quot;</span><span class="esc_char">\r</span><span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">buffer</span>, <span class="string">&quot;Content-Type: text/html; charset=ISO-8859-1<span class="esc_char">\r</span><span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">buffer</span>, <span class="string">&quot;<span class="esc_char">\r</span><span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+
+    <span class="comment">// HTML Page header</span>
+    <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">buffer</span>, <span class="string">&quot;&lt;!DOCTYPE html&gt;<span class="esc_char">\r</span><span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">buffer</span>, <span class="string">&quot;&lt;meta http-equiv=<span class="esc_char">\&quot;</span>Content-type<span class="esc_char">\&quot;</span> content=<span class="esc_char">\&quot;</span>text/html; charset=iso-8859-1<span class="esc_char">\&quot;</span>&gt;<span class="esc_char">\r</span><span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">buffer</span>, <span class="string">&quot;&lt;html&gt;<span class="esc_char">\r</span><span class="esc_char">\n</span>&lt;head&gt;&lt;title&gt;&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">buffer</span>, <span class="ident">title</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">buffer</span>, <span class="string">&quot;&lt;/title&gt;&lt;/head&gt;<span class="esc_char">\r</span><span class="esc_char">\n</span>&lt;body&gt;<span class="esc_char">\r</span><span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+
+    <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">buffer</span>, <span class="ident">message</span><span class="symbol">)</span><span class="symbol">;</span>
+
+    <span class="comment">// HTML Page footer</span>
+    <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">buffer</span>, <span class="string">&quot;<span class="esc_char">\r</span><span class="esc_char">\n</span>&lt;/body&gt;<span class="esc_char">\r</span><span class="esc_char">\n</span>&lt;/html&gt;<span class="esc_char">\r</span><span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+<span class="braces">}</span>
+
+<span class="keyword">void</span> <span class="ident">CreateStatusReply</span><span class="symbol">(</span><span class="keyword">const</span> <span class="keyword">char</span> <span class="symbol">*</span> <span class="ident">status</span>, <span class="keyword">char</span> <span class="symbol">*</span> <span class="ident">buffer</span><span class="symbol">)</span> <span class="braces">{</span>
+    <span class="keyword">char</span> <span class="ident">tit</span><span class="symbol">[</span><span class="numeric">128</span><span class="symbol">]</span><span class="symbol">;</span>
+    <span class="keyword">char</span> <span class="ident">msg</span><span class="symbol">[</span><span class="numeric">128</span><span class="symbol">]</span><span class="symbol">;</span>
+
+    <span class="ident">strcpy</span><span class="symbol">(</span><span class="ident">tit</span>, <span class="string">&quot;Error &quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">tit</span>, <span class="ident">status</span><span class="symbol">)</span><span class="symbol">;</span>
+
+    <span class="ident">strcpy</span><span class="symbol">(</span><span class="ident">msg</span>, <span class="string">&quot;&lt;h1&gt;Error ---&lt;/h1&gt;&lt;p&gt;&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="ident">msg</span><span class="symbol">[</span><span class="numeric">10</span><span class="symbol">]</span><span class="symbol">=</span><span class="ident">status</span><span class="symbol">[</span><span class="numeric">0</span><span class="symbol">]</span><span class="symbol">;</span>
+    <span class="ident">msg</span><span class="symbol">[</span><span class="numeric">11</span><span class="symbol">]</span><span class="symbol">=</span><span class="ident">status</span><span class="symbol">[</span><span class="numeric">1</span><span class="symbol">]</span><span class="symbol">;</span>
+    <span class="ident">msg</span><span class="symbol">[</span><span class="numeric">12</span><span class="symbol">]</span><span class="symbol">=</span><span class="ident">status</span><span class="symbol">[</span><span class="numeric">2</span><span class="symbol">]</span><span class="symbol">;</span>
+    <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">msg</span>, <span class="ident">status</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">msg</span>, <span class="string">&quot;&lt;/p&gt;&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="ident">CreateReply</span><span class="symbol">(</span><span class="ident">status</span>, <span class="ident">tit</span>, <span class="ident">msg</span>, <span class="ident">buffer</span><span class="symbol">)</span><span class="symbol">;</span>
+<span class="braces">}</span>
+
+<span class="keyword">void</span> <span class="ident">CreateErrorReply</span><span class="symbol">(</span><span class="keyword">int</span> <span class="ident">error</span>, <span class="keyword">char</span> <span class="symbol">*</span> <span class="ident">buffer</span><span class="symbol">)</span> <span class="braces">{</span>
+    <span class="keyword">switch</span><span class="symbol">(</span><span class="ident">error</span><span class="symbol">)</span> <span class="braces">{</span>
+        <span class="keyword">case</span> <span class="numeric">400</span><span class="symbol">:</span> <span class="ident">CreateStatusReply</span><span class="symbol">(</span> <span class="string">&quot;400 Bad Request&quot;</span>,           <span class="ident">buffer</span><span class="symbol">)</span><span class="symbol">;</span> <span class="keyword">break</span><span class="symbol">;</span>
+        <span class="keyword">case</span> <span class="numeric">401</span><span class="symbol">:</span> <span class="ident">CreateStatusReply</span><span class="symbol">(</span> <span class="string">&quot;401 Unauthorized&quot;</span>,          <span class="ident">buffer</span><span class="symbol">)</span><span class="symbol">;</span> <span class="keyword">break</span><span class="symbol">;</span>
+        <span class="keyword">case</span> <span class="numeric">402</span><span class="symbol">:</span> <span class="ident">CreateStatusReply</span><span class="symbol">(</span> <span class="string">&quot;402 Payment Required&quot;</span>,      <span class="ident">buffer</span><span class="symbol">)</span><span class="symbol">;</span> <span class="keyword">break</span><span class="symbol">;</span>
+        <span class="keyword">case</span> <span class="numeric">403</span><span class="symbol">:</span> <span class="ident">CreateStatusReply</span><span class="symbol">(</span> <span class="string">&quot;403 Forbidden&quot;</span>,             <span class="ident">buffer</span><span class="symbol">)</span><span class="symbol">;</span> <span class="keyword">break</span><span class="symbol">;</span>
+        <span class="keyword">case</span> <span class="numeric">404</span><span class="symbol">:</span> <span class="ident">CreateStatusReply</span><span class="symbol">(</span> <span class="string">&quot;404 Not Found&quot;</span>,             <span class="ident">buffer</span><span class="symbol">)</span><span class="symbol">;</span> <span class="keyword">break</span><span class="symbol">;</span>
+        <span class="keyword">case</span> <span class="numeric">405</span><span class="symbol">:</span> <span class="ident">CreateStatusReply</span><span class="symbol">(</span> <span class="string">&quot;405 Method Not Allowed&quot;</span>,    <span class="ident">buffer</span><span class="symbol">)</span><span class="symbol">;</span> <span class="keyword">break</span><span class="symbol">;</span>
+        <span class="keyword">case</span> <span class="numeric">406</span><span class="symbol">:</span> <span class="ident">CreateStatusReply</span><span class="symbol">(</span> <span class="string">&quot;406 Not Acceptable&quot;</span>,        <span class="ident">buffer</span><span class="symbol">)</span><span class="symbol">;</span> <span class="keyword">break</span><span class="symbol">;</span>
+        <span class="keyword">case</span> <span class="numeric">407</span><span class="symbol">:</span> <span class="ident">CreateStatusReply</span><span class="symbol">(</span> <span class="string">&quot;407 Proxy Authentication Required&quot;</span>, <span class="ident">buffer</span><span class="symbol">)</span><span class="symbol">;</span> <span class="keyword">break</span><span class="symbol">;</span>
+        <span class="keyword">case</span> <span class="numeric">411</span><span class="symbol">:</span> <span class="ident">CreateStatusReply</span><span class="symbol">(</span> <span class="string">&quot;411 Length Required&quot;</span>,       <span class="ident">buffer</span><span class="symbol">)</span><span class="symbol">;</span> <span class="keyword">break</span><span class="symbol">;</span>
+        <span class="keyword">case</span> <span class="numeric">414</span><span class="symbol">:</span> <span class="ident">CreateStatusReply</span><span class="symbol">(</span> <span class="string">&quot;414 Request-URI Too Large&quot;</span>, <span class="ident">buffer</span><span class="symbol">)</span><span class="symbol">;</span> <span class="keyword">break</span><span class="symbol">;</span>
+        <span class="keyword">case</span> <span class="numeric">500</span><span class="symbol">:</span> <span class="ident">CreateStatusReply</span><span class="symbol">(</span> <span class="string">&quot;500 Internal Server Error&quot;</span>, <span class="ident">buffer</span><span class="symbol">)</span><span class="symbol">;</span> <span class="keyword">break</span><span class="symbol">;</span>
+        <span class="keyword">case</span> <span class="numeric">501</span><span class="symbol">:</span> <span class="ident">CreateStatusReply</span><span class="symbol">(</span> <span class="string">&quot;501 Not Implemented&quot;</span>,       <span class="ident">buffer</span><span class="symbol">)</span><span class="symbol">;</span> <span class="keyword">break</span><span class="symbol">;</span>
+        <span class="keyword">case</span> <span class="numeric">503</span><span class="symbol">:</span> <span class="ident">CreateStatusReply</span><span class="symbol">(</span> <span class="string">&quot;503 Service Unavailable&quot;</span>,   <span class="ident">buffer</span><span class="symbol">)</span><span class="symbol">;</span> <span class="keyword">break</span><span class="symbol">;</span>
+        <span class="keyword">default</span><span class="symbol">:</span>  <span class="ident">CreateReply</span><span class="symbol">(</span>       <span class="string">&quot;500 Internal Server Error&quot;</span>, <span class="string">&quot;500 Internal Server Error&quot;</span>,
+                                     <span class="string">&quot;500 Internal Server Error: Out of range error message&quot;</span>, <span class="ident">buffer</span><span class="symbol">)</span><span class="symbol">;</span>
+                                                                           <span class="keyword">break</span><span class="symbol">;</span>
+    <span class="braces">}</span>
+<span class="braces">}</span>
+
+<span class="keyword">void</span> <span class="ident">CreateContentReply</span><span class="symbol">(</span><span class="keyword">const</span> <span class="keyword">char</span> <span class="symbol">*</span> <span class="ident">title</span>, <span class="keyword">const</span> <span class="keyword">char</span> <span class="symbol">*</span> <span class="ident">message</span>, <span class="keyword">char</span> <span class="symbol">*</span> <span class="ident">buffer</span><span class="symbol">)</span> <span class="braces">{</span>
+    <span class="ident">CreateReply</span><span class="symbol">(</span><span class="string">&quot;200 Ok&quot;</span>, <span class="ident">title</span>, <span class="ident">message</span>, <span class="ident">buffer</span><span class="symbol">)</span><span class="symbol">;</span>
+<span class="braces">}</span>
+
+<span class="keyword">void</span> <span class="ident">CreateRedirection</span><span class="symbol">(</span><span class="keyword">const</span> <span class="keyword">char</span> <span class="symbol">*</span> <span class="ident">whereto</span>, <span class="keyword">char</span> <span class="symbol">*</span> <span class="ident">buffer</span><span class="symbol">)</span> <span class="braces">{</span>
+    <span class="ident">strcpy</span><span class="symbol">(</span><span class="ident">buffer</span>, <span class="string">&quot;HTTP/1.1 301 Moved Permanently<span class="esc_char">\r</span><span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">buffer</span>, <span class="string">&quot;Location: &quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">buffer</span>, <span class="ident">whereto</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">buffer</span>, <span class="string">&quot;<span class="esc_char">\r</span><span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">buffer</span>, <span class="string">&quot;Server: uCLx Course Multipage Demo Server<span class="esc_char">\r</span><span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">buffer</span>, <span class="string">&quot;Connection: close<span class="esc_char">\r</span><span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">buffer</span>, <span class="string">&quot;<span class="esc_char">\r</span><span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+<span class="braces">}</span>
+
+
+<span class="keyword">void</span> <span class="ident">ParseURL</span><span class="symbol">(</span><span class="keyword">const</span> <span class="keyword">char</span> <span class="symbol">*</span> <span class="ident">buffer</span>, <span class="keyword">char</span> <span class="symbol">*</span> <span class="ident">method</span>, <span class="keyword">char</span> <span class="symbol">*</span> <span class="ident">localurl</span>, <span class="keyword">char</span> <span class="symbol">*</span> <span class="ident">params</span><span class="symbol">)</span> <span class="braces">{</span>
+    <span class="keyword">const</span> <span class="keyword">char</span> <span class="symbol">*</span> <span class="ident">s</span><span class="symbol">;</span>
+    <span class="keyword">int</span>    <span class="ident">j</span><span class="symbol">;</span>
+
+    <span class="ident">method</span><span class="symbol">[</span><span class="numeric">0</span><span class="symbol">]</span><span class="symbol">=</span><span class="char">'<span class="esc_char">\0</span>'</span><span class="symbol">;</span>
+    <span class="ident">localurl</span><span class="symbol">[</span><span class="numeric">0</span><span class="symbol">]</span><span class="symbol">=</span><span class="char">'<span class="esc_char">\0</span>'</span><span class="symbol">;</span>
+    <span class="ident">params</span><span class="symbol">[</span><span class="numeric">0</span><span class="symbol">]</span><span class="symbol">=</span><span class="char">'<span class="esc_char">\0</span>'</span><span class="symbol">;</span>
+
+    <span class="ident">s</span><span class="symbol">=</span><span class="ident">buffer</span><span class="symbol">;</span>
+
+    <span class="ident">j</span><span class="symbol">=</span><span class="numeric">0</span><span class="symbol">;</span>
+    <span class="keyword">while</span> <span class="symbol">(</span><span class="symbol">*</span><span class="ident">s</span><span class="symbol">!</span><span class="symbol">=</span><span class="char">' '</span> <span class="symbol">&amp;</span><span class="symbol">&amp;</span> <span class="ident">j</span><span class="symbol">&lt;</span><span class="numeric">15</span><span class="symbol">)</span> <span class="braces">{</span>
+        <span class="ident">method</span><span class="symbol">[</span><span class="ident">j</span><span class="symbol">]</span><span class="symbol">=</span><span class="symbol">*</span><span class="ident">s</span><span class="symbol">;</span>
+        <span class="symbol">+</span><span class="symbol">+</span><span class="ident">s</span><span class="symbol">;</span>
+        <span class="symbol">+</span><span class="symbol">+</span><span class="ident">j</span><span class="symbol">;</span>
+    <span class="braces">}</span>
+    <span class="ident">method</span><span class="symbol">[</span><span class="ident">j</span><span class="symbol">]</span><span class="symbol">=</span><span class="char">'<span class="esc_char">\0</span>'</span><span class="symbol">;</span>
+
+    <span class="keyword">if</span> <span class="symbol">(</span><span class="symbol">*</span><span class="ident">s</span><span class="symbol">!</span><span class="symbol">=</span><span class="char">' '</span><span class="symbol">)</span> <span class="braces">{</span>
+        <span class="ident">method</span><span class="symbol">[</span><span class="numeric">0</span><span class="symbol">]</span><span class="symbol">=</span><span class="char">'<span class="esc_char">\0</span>'</span><span class="symbol">;</span>
+        <span class="keyword">return</span><span class="symbol">;</span>
+    <span class="braces">}</span>
+
+    <span class="symbol">+</span><span class="symbol">+</span><span class="ident">s</span><span class="symbol">;</span>
+    <span class="keyword">if</span> <span class="symbol">(</span><span class="ident">strncmp</span><span class="symbol">(</span> <span class="ident">s</span>, <span class="string">&quot;http://&quot;</span>, <span class="numeric">7</span><span class="symbol">)</span><span class="symbol">=</span><span class="symbol">=</span><span class="numeric">0</span><span class="symbol">)</span> <span class="braces">{</span>
+        <span class="ident">s</span><span class="symbol">=</span><span class="ident">s</span><span class="symbol">+</span><span class="numeric">7</span><span class="symbol">;</span>
+        <span class="keyword">while</span> <span class="symbol">(</span><span class="symbol">*</span><span class="ident">s</span><span class="symbol">!</span><span class="symbol">=</span><span class="char">'<span class="esc_char">\0</span>'</span> <span class="symbol">&amp;</span><span class="symbol">&amp;</span> <span class="symbol">*</span><span class="ident">s</span><span class="symbol">!</span><span class="symbol">=</span><span class="char">'/'</span><span class="symbol">)</span> <span class="symbol">+</span><span class="symbol">+</span><span class="ident">s</span><span class="symbol">;</span>
+        <span class="keyword">if</span> <span class="symbol">(</span><span class="symbol">*</span><span class="ident">s</span><span class="symbol">!</span><span class="symbol">=</span><span class="char">'/'</span><span class="symbol">)</span> <span class="keyword">return</span><span class="symbol">;</span>
+    <span class="braces">}</span>
+
+    <span class="ident">j</span><span class="symbol">=</span><span class="numeric">0</span><span class="symbol">;</span>
+    <span class="keyword">while</span> <span class="symbol">(</span><span class="symbol">*</span><span class="ident">s</span><span class="symbol">!</span><span class="symbol">=</span><span class="char">'<span class="esc_char">\0</span>'</span> <span class="symbol">&amp;</span><span class="symbol">&amp;</span> <span class="symbol">*</span><span class="ident">s</span><span class="symbol">!</span><span class="symbol">=</span><span class="char">' '</span> <span class="symbol">&amp;</span><span class="symbol">&amp;</span> <span class="symbol">*</span><span class="ident">s</span><span class="symbol">!</span><span class="symbol">=</span><span class="char">'?'</span><span class="symbol">)</span> <span class="braces">{</span>
+        <span class="ident">localurl</span><span class="symbol">[</span><span class="ident">j</span><span class="symbol">]</span><span class="symbol">=</span><span class="symbol">*</span><span class="ident">s</span><span class="symbol">;</span>
+        <span class="symbol">+</span><span class="symbol">+</span><span class="ident">s</span><span class="symbol">;</span>
+        <span class="symbol">+</span><span class="symbol">+</span><span class="ident">j</span><span class="symbol">;</span>
+    <span class="braces">}</span>
+    <span class="ident">localurl</span><span class="symbol">[</span><span class="ident">j</span><span class="symbol">]</span><span class="symbol">=</span><span class="char">'<span class="esc_char">\0</span>'</span><span class="symbol">;</span>
+
+    <span class="keyword">if</span> <span class="symbol">(</span><span class="symbol">*</span><span class="ident">s</span><span class="symbol">=</span><span class="symbol">=</span><span class="char">'?'</span><span class="symbol">)</span> <span class="braces">{</span>
+        <span class="symbol">+</span><span class="symbol">+</span><span class="ident">s</span><span class="symbol">;</span>
+        <span class="ident">j</span><span class="symbol">=</span><span class="numeric">0</span><span class="symbol">;</span>
+        <span class="keyword">while</span> <span class="symbol">(</span><span class="symbol">*</span><span class="ident">s</span><span class="symbol">!</span><span class="symbol">=</span><span class="char">'<span class="esc_char">\0</span>'</span> <span class="symbol">&amp;</span><span class="symbol">&amp;</span> <span class="symbol">*</span><span class="ident">s</span><span class="symbol">!</span><span class="symbol">=</span><span class="char">' '</span><span class="symbol">)</span> <span class="braces">{</span>
+            <span class="ident">params</span><span class="symbol">[</span><span class="ident">j</span><span class="symbol">]</span><span class="symbol">=</span><span class="symbol">*</span><span class="ident">s</span><span class="symbol">;</span>
+            <span class="symbol">+</span><span class="symbol">+</span><span class="ident">s</span><span class="symbol">;</span>
+            <span class="symbol">+</span><span class="symbol">+</span><span class="ident">j</span><span class="symbol">;</span>
+        <span class="braces">}</span>
+        <span class="ident">params</span><span class="symbol">[</span><span class="ident">j</span><span class="symbol">]</span><span class="symbol">=</span><span class="char">'<span class="esc_char">\0</span>'</span><span class="symbol">;</span>
+    <span class="braces">}</span>
+<span class="braces">}</span>
+
+<span class="keyword">const</span> <span class="keyword">char</span> <span class="symbol">*</span> <span class="ident">page12</span> <span class="symbol">=</span> <span class="string">&quot;&lt;h1&gt;Device Status&lt;/h1&gt;&lt;p&gt;The device is on.&lt;/p&gt;&quot;</span><span class="symbol">;</span>
+<span class="keyword">const</span> <span class="keyword">char</span> <span class="symbol">*</span> <span class="ident">page13</span> <span class="symbol">=</span> <span class="string">&quot;&lt;h1&gt;Device Status&lt;/h1&gt;&lt;p&gt;The device is off.&lt;/p&gt;&quot;</span><span class="symbol">;</span>
+<span class="keyword">const</span> <span class="keyword">char</span> <span class="symbol">*</span> <span class="ident">page22</span> <span class="symbol">=</span> <span class="string">&quot;&lt;h1&gt;Device On&lt;/h1&gt;&lt;p&gt;The device was already on.&lt;/p&gt;&quot;</span><span class="symbol">;</span>
+<span class="keyword">const</span> <span class="keyword">char</span> <span class="symbol">*</span> <span class="ident">page23</span> <span class="symbol">=</span> <span class="string">&quot;&lt;h1&gt;Device On&lt;/h1&gt;&lt;p&gt;The device is now on.&lt;/p&gt;&quot;</span><span class="symbol">;</span>
+<span class="keyword">const</span> <span class="keyword">char</span> <span class="symbol">*</span> <span class="ident">page32</span> <span class="symbol">=</span> <span class="string">&quot;&lt;h1&gt;Device Off&lt;/h1&gt;&lt;p&gt;The device is now off.&lt;/p&gt;&quot;</span><span class="symbol">;</span>
+<span class="keyword">const</span> <span class="keyword">char</span> <span class="symbol">*</span> <span class="ident">page33</span> <span class="symbol">=</span> <span class="string">&quot;&lt;h1&gt;Device Off&lt;/h1&gt;&lt;p&gt;The device was already off.&lt;/p&gt;&quot;</span><span class="symbol">;</span>
+<span class="keyword">const</span> <span class="keyword">char</span> <span class="symbol">*</span> <span class="ident">menuln</span> <span class="symbol">=</span> <span class="string">&quot;&lt;hr /&gt;&lt;p&gt; &lt;a href=<span class="esc_char">\&quot;</span>/<span class="esc_char">\&quot;</span>&gt;status&lt;/a&gt; &amp;nbsp; &lt;a href=<span class="esc_char">\&quot;</span>/on.html<span class="esc_char">\&quot;</span>&gt;switch on&lt;/a&gt; &amp;nbsp; &lt;a href=<span class="esc_char">\&quot;</span>/off.html<span class="esc_char">\&quot;</span>&gt;switch off&lt;/a&gt; &lt;/p&gt;&quot;</span><span class="symbol">;</span>
+
+
+<span class="keyword">void</span> <span class="ident">SimpleHTTPServer</span><span class="symbol">(</span><span class="keyword">int</span> <span class="ident">port</span><span class="symbol">)</span> <span class="braces">{</span>
+    <span class="keyword">char</span> <span class="ident">buffer</span><span class="symbol">[</span><span class="numeric">2048</span><span class="symbol">]</span><span class="symbol">;</span>  <span class="comment">// make sure that the Web page contents fit inside</span>
+    <span class="keyword">char</span> <span class="ident">webpage</span><span class="symbol">[</span><span class="numeric">4096</span><span class="symbol">]</span><span class="symbol">;</span> <span class="comment">// make sure that the HTTP reply and the Web page fit inside</span>
+    <span class="keyword">char</span> <span class="ident">method</span><span class="symbol">[</span><span class="numeric">16</span><span class="symbol">]</span><span class="symbol">;</span>    <span class="comment">// GET POST HEAD PUT, 16 is already too much space</span>
+    <span class="keyword">char</span> <span class="ident">localurl</span><span class="symbol">[</span><span class="numeric">128</span><span class="symbol">]</span><span class="symbol">;</span>
+    <span class="keyword">char</span> <span class="ident">params</span><span class="symbol">[</span><span class="numeric">256</span><span class="symbol">]</span><span class="symbol">;</span>
+    <span class="keyword">int</span> <span class="ident">status</span><span class="symbol">;</span>
+
+    <span class="keyword">int</span> <span class="ident">mode</span> <span class="symbol">=</span><span class="numeric">0</span><span class="symbol">;</span>
+
+    <span class="ident">SOCKET</span> <span class="ident">serve</span> <span class="symbol">=</span> <span class="ident">TCPStartServer</span><span class="symbol">(</span><span class="ident">port</span>, <span class="numeric">10</span>, <span class="numeric">1</span><span class="symbol">)</span><span class="symbol">;</span>
+
+    <span class="keyword">for</span> <span class="symbol">(</span><span class="symbol">;</span><span class="symbol">;</span><span class="symbol">)</span> <span class="braces">{</span>
+        <span class="ident">SOCKET</span> <span class="ident">visitor</span> <span class="symbol">=</span> <span class="ident">TCPWaitForConnection</span><span class="symbol">(</span><span class="ident">serve</span><span class="symbol">)</span><span class="symbol">;</span>
+
+        <span class="ident">status</span> <span class="symbol">=</span> <span class="ident">TCPRecvLine</span><span class="symbol">(</span><span class="ident">visitor</span>, <span class="ident">buffer</span>, <span class="keyword">sizeof</span><span class="symbol">(</span><span class="ident">buffer</span><span class="symbol">)</span> <span class="symbol">)</span><span class="symbol">;</span>
+        <span class="keyword">if</span> <span class="symbol">(</span><span class="ident">status</span><span class="symbol">&lt;</span><span class="numeric">0</span><span class="symbol">)</span> <span class="keyword">continue</span><span class="symbol">;</span>
+        <span class="ident">D</span><span class="symbol">(</span><span class="ident">buffer</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="ident">ParseURL</span><span class="symbol">(</span><span class="ident">buffer</span>, <span class="ident">method</span>, <span class="ident">localurl</span>, <span class="ident">params</span><span class="symbol">)</span><span class="symbol">;</span>
+
+        <span class="keyword">do</span> <span class="braces">{</span>
+            <span class="ident">status</span> <span class="symbol">=</span> <span class="ident">TCPRecvDumpLine</span><span class="symbol">(</span><span class="ident">visitor</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="braces">}</span> <span class="keyword">while</span> <span class="symbol">(</span><span class="ident">status</span><span class="symbol">&gt;</span><span class="numeric">0</span><span class="symbol">)</span><span class="symbol">;</span>
+
+
+        <span class="keyword">if</span> <span class="symbol">(</span><span class="ident">strcmp</span><span class="symbol">(</span><span class="ident">method</span>, <span class="string">&quot;GET&quot;</span><span class="symbol">)</span><span class="symbol">!</span><span class="symbol">=</span><span class="numeric">0</span><span class="symbol">)</span> <span class="braces">{</span>
+            <span class="ident">CreateErrorReply</span><span class="symbol">(</span><span class="numeric">400</span>, <span class="ident">webpage</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="braces">}</span> <span class="keyword">else</span> <span class="keyword">if</span> <span class="symbol">(</span><span class="ident">strcmp</span><span class="symbol">(</span><span class="ident">localurl</span>, <span class="string">&quot;/&quot;</span><span class="symbol">)</span><span class="symbol">=</span><span class="symbol">=</span><span class="numeric">0</span><span class="symbol">)</span> <span class="braces">{</span>
+            <span class="keyword">if</span> <span class="symbol">(</span><span class="ident">mode</span><span class="symbol">=</span><span class="symbol">=</span><span class="numeric">0</span><span class="symbol">)</span> <span class="braces">{</span>
+                <span class="ident">strcpy</span><span class="symbol">(</span><span class="ident">buffer</span>, <span class="ident">page13</span><span class="symbol">)</span><span class="symbol">;</span>
+            <span class="braces">}</span> <span class="keyword">else</span> <span class="braces">{</span>
+                <span class="ident">strcpy</span><span class="symbol">(</span><span class="ident">buffer</span>, <span class="ident">page12</span><span class="symbol">)</span><span class="symbol">;</span>
+            <span class="braces">}</span>
+            <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">buffer</span>, <span class="ident">menuln</span><span class="symbol">)</span><span class="symbol">;</span>
+            <span class="ident">CreateContentReply</span><span class="symbol">(</span><span class="string">&quot;TNP Web Server&quot;</span>, <span class="ident">buffer</span>, <span class="ident">webpage</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="braces">}</span> <span class="keyword">else</span> <span class="keyword">if</span> <span class="symbol">(</span><span class="ident">strcmp</span><span class="symbol">(</span><span class="ident">localurl</span>, <span class="string">&quot;/on.html&quot;</span><span class="symbol">)</span><span class="symbol">=</span><span class="symbol">=</span><span class="numeric">0</span><span class="symbol">)</span> <span class="braces">{</span>
+            <span class="keyword">if</span> <span class="symbol">(</span><span class="ident">mode</span><span class="symbol">=</span><span class="symbol">=</span><span class="numeric">0</span><span class="symbol">)</span> <span class="braces">{</span>
+                <span class="ident">strcpy</span><span class="symbol">(</span><span class="ident">buffer</span>, <span class="ident">page23</span><span class="symbol">)</span><span class="symbol">;</span>
+                <span class="ident">mode</span><span class="symbol">=</span><span class="numeric">1</span><span class="symbol">;</span>
+                <span class="ident">cout</span> <span class="symbol">&lt;</span><span class="symbol">&lt;</span> <span class="string">&quot;Switching on&quot;</span> <span class="symbol">&lt;</span><span class="symbol">&lt;</span> <span class="ident">endl</span> <span class="symbol">&lt;</span><span class="symbol">&lt;</span> <span class="ident">flush</span><span class="symbol">;</span>
+            <span class="braces">}</span> <span class="keyword">else</span> <span class="braces">{</span>
+                <span class="ident">strcpy</span><span class="symbol">(</span><span class="ident">buffer</span>, <span class="ident">page22</span><span class="symbol">)</span><span class="symbol">;</span>
+            <span class="braces">}</span>
+            <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">buffer</span>, <span class="ident">menuln</span><span class="symbol">)</span><span class="symbol">;</span>
+            <span class="ident">CreateContentReply</span><span class="symbol">(</span><span class="string">&quot;TNP Web Server&quot;</span>, <span class="ident">buffer</span>, <span class="ident">webpage</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="braces">}</span> <span class="keyword">else</span> <span class="keyword">if</span> <span class="symbol">(</span><span class="ident">strcmp</span><span class="symbol">(</span><span class="ident">localurl</span>, <span class="string">&quot;/off.html&quot;</span><span class="symbol">)</span><span class="symbol">=</span><span class="symbol">=</span><span class="numeric">0</span><span class="symbol">)</span> <span class="braces">{</span>
+            <span class="keyword">if</span> <span class="symbol">(</span><span class="ident">mode</span><span class="symbol">=</span><span class="symbol">=</span><span class="numeric">0</span><span class="symbol">)</span> <span class="braces">{</span>
+                <span class="ident">strcpy</span><span class="symbol">(</span><span class="ident">buffer</span>, <span class="ident">page33</span><span class="symbol">)</span><span class="symbol">;</span>
+            <span class="braces">}</span> <span class="keyword">else</span> <span class="braces">{</span>
+                <span class="ident">strcpy</span><span class="symbol">(</span><span class="ident">buffer</span>, <span class="ident">page32</span><span class="symbol">)</span><span class="symbol">;</span>
+                <span class="ident">mode</span><span class="symbol">=</span><span class="numeric">0</span><span class="symbol">;</span>
+                <span class="ident">cout</span> <span class="symbol">&lt;</span><span class="symbol">&lt;</span> <span class="string">&quot;Switching off&quot;</span> <span class="symbol">&lt;</span><span class="symbol">&lt;</span> <span class="ident">endl</span> <span class="symbol">&lt;</span><span class="symbol">&lt;</span> <span class="ident">flush</span><span class="symbol">;</span>
+            <span class="braces">}</span>
+            <span class="ident">strcat</span><span class="symbol">(</span><span class="ident">buffer</span>, <span class="ident">menuln</span><span class="symbol">)</span><span class="symbol">;</span>
+            <span class="ident">CreateContentReply</span><span class="symbol">(</span><span class="string">&quot;TNP Web Server&quot;</span>, <span class="ident">buffer</span>, <span class="ident">webpage</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="braces">}</span> <span class="keyword">else</span> <span class="braces">{</span>
+            <span class="ident">CreateErrorReply</span><span class="symbol">(</span><span class="numeric">404</span>, <span class="ident">webpage</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="braces">}</span>
+
+        <span class="ident">TCPSendLine</span><span class="symbol">(</span><span class="ident">visitor</span>, <span class="ident">webpage</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="ident">D</span><span class="symbol">(</span><span class="ident">webpage</span><span class="symbol">)</span><span class="symbol">;</span>
+
+        <span class="ident">TCPPrepClose</span><span class="symbol">(</span><span class="ident">visitor</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="ident">TCPStopClient</span><span class="symbol">(</span><span class="ident">visitor</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="ident">D</span><span class="symbol">(</span><span class="string">&quot;Done&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="braces">}</span>
+<span class="braces">}</span>
+
+
+
+<span class="keyword">int</span> <span class="ident">main</span><span class="symbol">(</span><span class="symbol">)</span>
+<span class="braces">{</span>
+    <span class="ident">SocketLibStart</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">;</span>
+
+    <span class="ident">SimpleHTTPServer</span><span class="symbol">(</span><span class="ident">SERVER_TCP_PORT</span><span class="symbol">)</span><span class="symbol">;</span>
+
+    <span class="ident">SocketLibEnd</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="keyword">return</span><span class="symbol">(</span><span class="numeric">0</span><span class="symbol">)</span><span class="symbol">;</span>
+<span class="braces">}</span>
+
+</pre>
+<!-- <hr>syntax highlighted by <a href="https://www.palfrader.org/code/code2html/">Code2HTML</a>, v. 0.9.1  -->
+</body>
+</html>

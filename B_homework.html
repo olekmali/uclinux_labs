@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8" />
+<title>ECE472/572 (UCLX) Assignment Number 11</title>
+<!-- meta http-equiv="Pragma" content="no-cache" -->
+<meta name="robots" content="index,follow" />
+<!-- meta name="robots" content="noarchive" -->
+<link rel="shortcut icon" href="../../../icons/mopsys.ico" type="image/x-icon" />
+<script type="text/JavaScript" src="../../../default.js"></script>
+<link rel="stylesheet" href="../../../default.css" type="text/css" />
+<style type="text/css" />
+<!--
+.s_command {font-family: "Courier New", Courier, mono; }
+.s_tograde {color: #006600; }
+.s_tosee {color: #0000FF; }
+.s_optional { font-weight: lighter; color: #3F3FFF; }
+.s_warning {font-weight: bold; color: #7F0000; }
+.s_cmd_choice {color: #FF0000; font-family: "Courier New", Courier, mono; }
+.s_cmd_4grade {color: #006600; font-family: "Courier New", Courier, mono; }
+.s_code_fragment {font-family: "Courier New", Courier, mono; color: #0000FF; }
+-->
+</style>
+</head>
+<body>
+
+<h1>ECE 472/572 Assignment 11</h1>
+
+
+<h2>Purpose</h2>
+
+<h3>Skills</h3>
+
+<p>The purpose of this assignment is to help you practice the following skills that are essential to your success in this course / in school / in this field / in professional life beyond school:</p>
+
+<ul>
+    <li>Managing kernel moduls.</li>
+    <li>Compiling and cross-compiling kernel modules.</li>
+    <li>Modifying code of an existing kernel module of low complexity</li>
+    <li>Accessing system logs.</li>
+    <li>Command-line profficiency.</li>
+</ul>
+
+<h3>Knowledge</h3>
+
+<p>This assignment will also help you to become familiar with the following important content knowledge in this discipline:</p>
+
+<ul>
+Kernel Architecture
+    <li>Structure of Posix (Linux) device drivers.</li>
+    <li>System calls and APIs - communication with device Posix (Linux) drivers using file IO API 
+        (open, read, write, seek, ioctl, close) in user-space and reception in kernal-space.</li>
+    <li>Memory management in kernal-space and user-space.</li>
+    <li>Concurency and synchronization in kernel-space.</li>
+    <li>Linux build system</li>
+</ul>
+
+
+
+<h2>Prepare for the lab</h2>
+
+<p>Answer these questions while doing this lab &ndash; they will help you understand the procedure and better prepare for the tests.</p>
+<ul>
+    <li>You are already familiar with <span class="s_command">printk</span> and that it prints to some kind of a lgo file. This time we use KERN_INFO which is only one of several warning messages levels. 
+        <br>Name 3 more. (Hint: <span class="s_command">/usr/src/linux-headers-version/include/linux/kernel.h</span>) </li>
+    <li>Why the capability of installing Kernel Modules without need to recompile the entire Kernel is important? (Think practicality and licensing issues.) </li>
+    <li>What is the difference between the character and block device drivers? Name at least one character device and one block device in your Linux system. </li>
+    <li>How to install and remove an already compiled module from kernel using command line utilities? How to list all inserted modules? Are there any options that may change the way a module is inserted? (Hint: man -k module)</li>
+    <li>What are the major and minor device numbers? </li>
+    <li>Who can install and uninstall modules? (a regular user or only root)</li>
+    <li>Find at least <strong>three</strong> ways to find out what modules are installed on the system. 
+        Do not count looking at the log files as one of them. What are the commands to do it?</li>
+    <li>How to create a device mode inside <span class="s_command">/dev/</span> 
+        folder for a module? Assume that both the major and minor numbers are known.</li>
+    <li>Is the module loading used in this lab persistent for Linux? for ucLinux? If not how do you make it persistent?</li>
+    <li>What kinds of log files can be found in <span class="s_command">/var/log/</span>in case of Ubuntu? 
+        Can you find as many log files in case of the Buildroot Linux?</li>
+    <li>What does <span class="s_command">-C</span> option do when <span class="s_command">make</span> is run?</li>
+    <li>In this lab <span class="s_command">grep</span> is used abundantly to verify the results of various actions. 
+        What does <span class="s_command">grep</span> do?</li>
+    <li>Is there any difference between using <span class="s_command">cat /path/file|grep pattern</span> and 
+        <span class="s_command">grep pattern file</span>? If so, then why the latter command is used consistently? 
+        (Hint: think large files and efficiency.)</li>
+    <li>Is there any functional difference among <span class="s_command">tail -n 10 file</span> and 
+        <span class="s_command">tail -c 10 file</span> and deprecated <span class="s_command">tail -10 file</span> ? 
+        Would all three commands work? Is the same true about <span class="s_command">head</span> ?</li>
+</ul>
+
+
+<h2>Activity 1 (10 pts.)</h2>
+
+<p>The Linux portion of this activity was prepared based on the book published at <a href="http://tldp.org/LDP/lkmpg/2.6/html/c119.html">http://tldp.org/LDP/lkmpg/2.6/html/c119.html</a> .<br>
+</p>
+
+<h3>Test how a module can be added or removed from a Linux kernel</h3>
+
+<ul>
+    <li><span class="s_tograde">Record this procedure using script for the assignment submission.
+        <br /><span class="s_command">script hwB_1.txt </span></span>
+    </li>
+    <li>Download and install necessary packages. You might have some of them already installed. 
+        However, the attempt was made to list all key packages in case you started from a fresh installation.
+        <ul>
+            <li><span class="s_command">sudo apt install build-essential xinetd</span></li>
+            <li><span class="s_command">sudo apt install linux-headers-generic linux-headers-$(uname -r)</span></li>
+            <li><span class="s_command">sudo apt install <span class="s_cmd_choice">linux-kernel-devel<br></span></span>
+                Note that the package <span class="s_cmd_choice">linux-kernel-devel</span> cannot be found 
+                for the most recent versions of Ubuntu. We included it to show that the 
+                process of development of kernel and kernel modules is to some extend a 
+                moving target. Proceed with installing one of the other packages listed below. 
+                Hopefully one of them will work for your version of Debian Linux.
+                <ul>
+                    <li><span class="s_command">sudo apt install <span class="s_cmd_choice">linux</span></span></li>
+                    <li><span class="s_command">sudo apt install <span class="s_cmd_choice">linux-meta</span></span></li>
+                    <li><span class="s_command">sudo apt install <span class="s_cmd_choice">kernel-package</span></span></li>
+                    <li><span class="s_command">sudo apt install <span class="s_cmd_choice">linux-source</span></span></li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li>Compile the provided simplest kernel module 
+        <span class="s_command"><a href="B_module1.c.HTML">hello1.c</a></span>. 
+        Inspect and use the provided <span class="s_command"><a href="B_Makefile-1.txt.HTML">Makefile</a></span>. 
+        Note that the Makefile looks incomplete even though it is adequate as many compilation 
+        rules that we used to include are actually predefined. 
+        If they are not overwritten like in case of previous exercises, then the default rules are used.</li>
+    <li>You can install the module using <span class="s_command">sudo insmod ./hello1.ko</span></li>
+    <li>You can uninstall the module using <span class="s_command">sudo rmmod hello1</span></li>
+    <li>Take a look at <span class="s_command">/var/log/messages</span> just to see that it got logged to your system logfile.
+        <ul>
+            <li><span class="s_command">ls -l</span></li>
+            <li><span class="s_command">grep hello /proc/modules</span></li>
+            <li><span class="s_command">sudo insmod ./hello1.ko</span></li>
+            <li><span class="s_command">grep hello /proc/modules</span></li>
+            <li><span class="s_command">sudo lsmod</span></li>
+            <li><span class="s_command">sudo rmmod hello1</span></li>
+            <li><span class="s_command">grep hello /proc/modules</span></li>
+            <li>Check what is the correct name of the log file by inspecting folder 
+                with log files and modify command to inspect the log file as needed:
+                <span class="s_command"><br>ls -l /var/log</span></li>
+            <li><span class="s_command">tail -n 5 /var/log/<span>syslog</span></span></li>
+            <li><span class="s_command">sudo lsmod</span></li>
+        </ul>
+    </li>
+    <li>How much space does your module take up?</li>
+    <li>Add/change the following lines in your module:<br>
+        <pre><span class="s_code_fragment">MODULE_AUTHOR(&quot;<span class="s_cmd_choice">Your Name</span>&quot;);
+MODULE_DESCRIPTION(&quot;ECE-UCLX&quot;);
+static int uCLX_MyInt = 42;
+module_param(uCLX_MyInt,int, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+MODULE_PARM_DESC(uCLX_MyInt, &quot;An integer&quot;);</span></pre>
+    </li>
+    <li>Recompile and install your module again.</li>
+    <li>Type:
+        <ul>
+            <li><span class="s_command">ls -l</span></li>
+            <li><span class="s_command">cat hello1.c </span></li>
+            <li><span class="s_command">grep uCLX_MyInt /proc/kallsyms</span></li>
+        </ul>
+    </li>
+    <li>When a module is loaded all any symbol exported by the module becomes part of the kernel symbol table. Different systems will have different places to store the symbols.
+        In Debian, like e.g., Ubuntu do the above.</li>
+    <li>Uninstall your module. </li>
+    <li><span class="s_tograde">Finish recording this test using script for the assignment submission.</span></li>
+</ul>
+
+<h3>Test how a device driver can be created and added to a Linux kernel </h3>
+
+<p>One class of module is the device driver. List all of the contents in the /dev folder. 
+Each one of these devices has a device driver attached to it. 
+Run the following command <span class="s_command">ls -l /dev | head -5</span> . 
+You will see two numbers separated by a comma after the user and group information. 
+The first number represents the device driver controlling that the hardware. This is known as the major number. 
+The second number being different shows that the driver sees this as a separate piece of hardware. 
+Device drivers come in two flavors.  Character devices, and block devices. 
+The first letter seen tells you if a device is a character device &lsquo;c&rsquo;, or block device &lsquo;b&rsquo;.</p>
+
+<ul>
+    <li><span class="s_tograde">Record this procedure using script for the assignment submission.
+        <br /><span class="s_command">script hwB_2.txt </span></span>
+    </li>
+    <li>Download and unpack the provided module 
+        <a href="B_module2.h.HTML"><span class="s_command">module2.h</span></a>, 
+        <a href="B_module2.c.HTML"><span class="s_command">module2.c</span></a> and the 
+        <a href="B_Makefile-2.txt.HTML"><span class="s_command">Makefile</span></a>. </li>
+    <li>Compile and install the module:
+        <ul>
+            <li><span class="s_command">make</span></li>
+            <li><span class="s_command">sudo insmod ./module2.ko</span></li>
+            <li><span class="s_command">sudo lsmod</span></li>
+        </ul>
+    </li>
+    <li>If you look at the file you will see that it similar to the one compiled earlier. It contains an init_module, and a cleanup module. It registers and releases its major device ID with the kernel upon loading and unloading. It also contains a file_operations structure that is used when registering the device driver. This is to let the kernel know the different functions to call when the device is asked to be read, written to, opened, or released.</li>
+    <li>Now we need to find the major device id of our driver. 
+        /proc/modules contains a list of all of the device drivers, their major number, 
+        and the number of instances that are in use. Write down the major number.
+        <ul>
+            <li><span class="s_command">tail -n 10 /var/log/</span><span>syslog</span> </li>
+        </ul>
+    </li>
+    <li>Do one of the following:
+        <ul>
+            <li><span class="s_command">grep module2 /proc/devices</span></li>
+            <li><span class="s_command">grep module2 /proc/modules</span></li>
+            <li><span class="s_command">lsmod | grep module2</span></li>
+        </ul>
+    </li>
+    <li>Now create the device driver node, use your device major number instead of the provided number:
+        <ul>
+            <li><span class="s_command">sudo mknod /dev/mydevice c <span class="s_cmd_choice">majornumber 0</span></span></li>
+            <li><span class="s_command">ls -l /dev/mydevice</span>
+                <ul>
+                    <li>&quot;c&quot; stands for character</li>
+                    <li><span class="s_cmd_choice">majornumber</span> is the major device number. This number is used by the kernel to select the driver that needs to handle the access.</li>
+                    <li>0 is the minor device number. This number is only used by the driver to distinguish between multiple devices serviced by the same driver.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li>Now access the device module a couple of times either form console like below or by writing your own program.
+        <ul>
+            <li><span class="s_command">cat /dev/mydevice</span></li>
+        </ul>
+    </li>
+    <li>Now download and compile the provided <a href="B_program2.c.HTML"><span class="s_command">program2.c</span></a> 
+        that does a few more tests using <span class="s_command">ioctl</span>:
+        <ul>
+            <li>Run the program a few times.</li>
+            <li>Do you have to be a root in order to run the program?</li>
+        </ul>
+    </li>
+    <li>Unload the module/device driver (rmmod)</li>
+    <li>Check if it is unloaded:
+        <ul>
+            <li><span class="s_command">lsmod</span></li>
+            <li><span class="s_command">lsmod | grep module2</span></li>
+        </ul>
+    </li>
+    <li>Delete the device driver node. </li>
+    <li><span class="s_tograde">Finish recording this test using script for the assignment submission.</span></li>
+</ul>
+
+
+<h2>Activity 2 (10 pts.)</h2>
+
+<h3>Test how a module or device driver can be created and added to a ucLinux kernel</h3>
+
+<ul>
+    <li><span class="s_tograde">Record this procedure using script for the assignment submission.
+        <br /><span class="s_command">script hwB_4.txt </span></span>
+    </li>
+    <li>Download again and unpack the provided module <a href="B_module2.h.HTML"><span class="s_command">module2.h</span></a>, 
+        <a href="B_module2.c.HTML"><span class="s_command">module2.c</span></a> and the provided 
+        <a href="B_Makefile-board.txt.HTML" class="s_command">Makefile</a>
+        that is already partially customized to use with Buildroot.
+    </li>
+    <li>Modify Makefile according to present versions of Buildroot and Linux</li>
+    <li>Modify the following environment variables to reflect your embedded board 
+        and location of your Buildroot and its cross-compiler environment. 
+        You should be able to find the correct values for <span class="s_command">CROSS_COMPILE</span> 
+        and <span class="s_command">KDIR=</span> after browsing the directory tree of your Buildroot, 
+        and looking at your path instruction from the lab number seven.
+        <ul>
+            <li><span class="s_command">ARCH=arm</span></li>
+            <li><span class="s_command">CROSS_COMPILE=<span class="s_cmd_choice">xxx</span></span></li>
+            <li><span class="s_command">KDIR=<span class="s_cmd_choice">xxx</span></span></li>
+        </ul>
+    </li>
+    <li>Modify the following environment variables to reflect your embedded board 
+        and location of your Buildroot and its cross-compiler environment. 
+        You should be able to find the correct values for <span class="s_command">CROSS_COMPILE</span> 
+        and <span class="s_command">KDIR=</span> after browsing the directory tree of your Buildroot, 
+        and looking at your path instruction from the lab number seven.
+        <ul>
+            <li><span class="s_command">ARCH=arm</span></li>
+            <li><span class="s_command">CROSS_COMPILE=<span class="s_cmd_choice">xxx</span></span></li>
+            <li><span class="s_command">KDIR=<span class="s_cmd_choice">xxx</span></span></li>
+        </ul>
+    </li>
+    <li>Edit <span class="s_command">module2.c</span> and replace text 
+        <span class="s_cmd_choice">__INSERT_YOUR_NAME_HERE__</span> with your name
+    </li>
+    <li>Modify Makefile from earlier program with new program name (<span class="s_command">module2.o</span>)</li>
+    <li>Modify Makefile according to present versions of Buildroot and Linux</li>
+    <li>Compile the module:<br><span class="s_command">make default </span></li>
+    <li>Check the results:<br><span class="s_command">ls -l</span></li>
+    <li>Transfer the <span class="s_command">module2.ko</span> into the board to the folder <span class="s_command">/root/</span></li>
+    <li>Log in as root </li>
+    <li>Load module <br><span class="s_command">insmod /root/module2.ko</span></li>
+    <li>The program contains an init_module, and a cleanup module. 
+        It registers and releases its major device ID with the kernel upon loading and unloading. 
+        It also contains a file operations structure that is used when registering the device driver. 
+        This is to let the kernel know the different functions to call when the device is asked to be read, 
+        written to, opened, or released.
+    </li>
+    <li>Now we need to find the major device id of our driver. 
+        <span class="s_command">/proc/modules</span> 
+        contains a list of all of the device drivers, their major number, 
+        and the number of instances that are in use. Write down the major number.
+    </li>
+    <li>Check what is the correct name of the log file by inspecting folder with 
+    log files and modify command to inspect the log file as needed:<span class="s_command"><br>ls -l /var/log</span></li>
+    <li>Use
+        <br><span class="s_command">tail -n 10 /var/log/messages</span>
+        <br>or
+        <br><span class="s_command">grep module2 /proc/devices</span>
+    </li>
+    <li>Now create the device driver node, <span class="s_cmd_choice">look up and use your device major number</span>
+        <br><span class="s_command">sudo mknod /dev/mydevice c <span class="s_cmd_choice">majornumber 0</span></span>
+    </li>
+    <li><span class="s_command">ls -l /dev/mydevice</span></li>
+    <li>What does c which shows in the output of the command stand for?</li>
+    <li>Now access the device module <strong>a couple of times</strong> 
+        either from console like below or by writing your own program.
+        <br><span class="s_command">cat /dev/mydevice</span>
+    </li>
+    <li><span class="s_cmd_4grade">uname -a</span></li>
+    <li><span class="s_tograde">Capture images of HyperTerminal screen now.</span></li>
+    <li>Power down the board correctly.</li>
+</ul>
+
+
+
+<h2>Submission</h2>
+
+<p>Drop the file with <span class="s_tograde">the information collected during the exercise as instructed</span> 
+and the created Debian package in the corresponding assignment drop box on Canvas.</p>
+
+<p>Thank you.</p>
+
+
+
+<h2>Criteria for Success</h2>
+
+<p>The success in this lab is measured by the following outcomes:
+<ul>
+    <li>Successful compilation of kernel modules
+        which is a prerequisite for Part A of the lab.</li>
+    <li>Successful cross-compilation of kernel modules and transfer to Buildroot OS
+        which is a prerequisite for Part A of the lab.</li>
+    <li>Demonstrating successful attachment and removal of a kernel module - hello1 example, Part A.</li>
+    <li>Demonstrating successful attachment and removal of a kernel module - module2 example, Part A and B.</li>
+    <li>Demonstrating successful interaction with the attached kernel module module2
+        by creation and then interacting with its device driver handle, Part A and B.</li>
+    <li>In case of part B of this lab, the captured image will be inspected.
+        The recorded cross-compiling activity will be inspected only if the screen capture 
+        does not show successful interaction with the module2 device drvier on the Buildroot 
+        system so that partial credit can be awarded. Uname command is required both to verify
+        that you are running the exercise on Buildroot and to inspect its timestamp signature.</li>
+ </ul>
+</p>
+
+
+
+<p>
+<a href="../../../index.html"><img src="../../../icons/main.gif" class="menu32x32" alt="web site front" /></a>
+<a href="../index.html"><img src="../../../icons/menu.gif" class="menu32x32" alt="local main page" /></a>
+<a href="index.html"><img src="../../../icons/mmisc.gif" class="menu32x32" alt="local list page" /></a>
+<a href="../../../bookmark/index.html"><img src="../../../icons/mbookmark.gif" class="menu32x32" alt="general bookmarks" /></a>
+<a href="../../../bookmark/software.html"><img src="../../../icons/mbookabcd.gif" class="menu32x32" alt="software bookmarks" /></a>
+<a href="javascript:void(window.history.back());"><img src="../../../icons/maleft.gif" class="menu32x32" alt="go back" /></a>
+<a href="javascript:void(window.open('../../../copyright.html','C','toolbar=no,status=no,menubar=no,directories=no,location=no,width=600,height=500,resizable=no'));"><img src="../../../icons/mchecked.gif" class="menu32x32" alt="copyright info" /></a>
+</p>
+
+</body>
+</html>

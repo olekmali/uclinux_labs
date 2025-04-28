@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+  <title>B_Makefile-2.txt</title>
+  <style type="text/css">
+  <!--
+body { color: #000000; background: #ffffff; }
+h3.title_comment             { color: #F00000; }
+span.comment                 { color: #444444; }
+span.doc_comment             { color: #444444; font-style: italic; }
+span.string                  { color: #008000; }
+span.esc_string              { color: #77dd77; }
+span.char                    { color: #008000; }
+span.esc_char                { color: #77dd77; }
+span.numeric                 { color: #FF0000; }
+span.ident                   { color: #2040a0; }
+span.predef_ident            { color: #2040a0; font-weight: bold; }
+span.type                    { color: #2040a0; font-weight: bold; }
+span.predef_type             { color: #2040a0; font-weight: bold; }
+span.keyword                 {                 font-weight: bold; }
+span.library_fn              { color: #a52a2a; font-weight: bold; }
+span.include                 { color: #0000ff; font-weight: bold; }
+span.preproc                 { color: #0000ff; font-weight: bold; }
+span.braces                  { color: #4444FF; font-weight: bold; }
+span.symbol                  { color: #4444FF; }
+span.fn_header               {                 font-weight: bold; }
+span.fn_header_name          { color: #ff0000; }
+span.fn_header_args          { color: #2040a0; }
+span.regex                   { color: #b000d0; }
+span.text                    {                 font-style: italic; }
+span.entity                  { color: #ff0000; }
+span.assignment              { color: #2040a0; }
+span.dep_line                { color: #8b2252; }
+span.dep_target              {                 font-weight: bold; }
+span.dep_cont                { color: #000000; font-weight: bold; }
+span.macro                   { color: #2040a0; }
+span.int_macro               { color: #4080ff; }
+span.esc_usd                 { color: #444444; }
+  -->
+  </style>
+</head>
+<body>
+<pre>
+obj-m	+= module2.o
+
+<span class="assignment">KDIR	:=</span> /lib/modules/<span class="macro">$(shell uname -r)</span>/build
+<span class="assignment">PWD	:=</span> <span class="macro">$(shell pwd)</span>
+<span class="dep_line">
+<span class="dep_target">default</span>:</span>
+	<span class="macro">$(MAKE)</span> -C <span class="macro">$(KDIR)</span> M=<span class="macro">$(PWD)</span> modules
+<span class="dep_line">
+<span class="dep_target">clean</span>:</span>
+	<span class="macro">$(MAKE)</span> -C <span class="macro">$(KDIR)</span> M=<span class="macro">$(PWD)</span> clean
+	rm -f *~
+
+</pre>
+<!-- <hr>syntax highlighted by <a href="https://www.palfrader.org/code/code2html/">Code2HTML</a>, v. 0.9.1  -->
+</body>
+</html>

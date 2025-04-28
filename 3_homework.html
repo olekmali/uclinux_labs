@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8" />
+<title>ECE472/572 (UCLX) Assignment Number 3</title>
+<!-- meta http-equiv="Pragma" content="no-cache" -->
+<meta name="robots" content="index,follow" />
+<!-- meta name="robots" content="noarchive" -->
+<link rel="shortcut icon" href="../../../icons/mopsys.ico" type="image/x-icon" />
+<script type="text/JavaScript" src="../../../default.js"></script>
+<link rel="stylesheet" href="../../../default.css" type="text/css" />
+</head>
+<body>
+
+<h1>ECE 472/572 Assignment 3</h1>
+
+
+<h2>Purpose</h2>
+
+<p>This course follows two trails, the theory of modern operating systems with emphasis on Unix/Linux, 
+and hands-on laboratory experience with emphasis on setting up environements that facilitate development 
+of software for electronic control modules using embedded Linux Buildroot style. 
+This assignment is probably the only assignment that deviates from this hands-on laboratory theme 
+and follows more of what assignemnts of a similar course in COmputer Science Department has.
+The reason for this is that using pipes for communicaiton is probably the only software programming 
+feature that is unlikely to be experienced in advanced programming courses that cover multithreading 
+and/or network socket programming.</p>
+
+<h3>Skills</h3>
+
+<p>The purpose of this assignment is to help you practice the following skills that are essential to your success in this course / in school / in this field / in professional life beyond school:</p>
+
+<ul>
+    <li>Interprocess communication among multiple programs running in one instance of an operating using pipes</li>
+    <li>Accessing files using low level API libraries of C language</li>
+    <li>Command line operations to create and mainipulate an archive file</li>
+</ul>
+
+<h3>Knowledge</h3>
+
+<p>This assignment will also help you to become familiar with the following important content knowledge in this discipline:</p>
+
+<ul>
+    <li>Concept that streams and file handles are used not only to access data on perisstent storage but also for 
+        communication and control of the software environment</li>
+</ul>
+
+
+
+<h2>Prepare for the lab</h2>
+
+<p>Answer these questions while doing this lab &ndash; they will help you understand the procedure and better prepare for the tests.</p>
+<ul>
+    <li>Check how to use and exercise the following 
+        commands. You may be asked about them during the coming test. In some 
+        cases the command is listed several times with additional listings 
+        indicating certain useful options that could be used with a particular 
+        command:
+    <ul>
+      <li>cd</li>
+      <li>bz2</li>
+      <li>chmod</li>
+      <li>gzip</li>
+      <li>gunzip</li>
+      <li>ls -F</li>
+      <li>ls -alF</li>
+      <li>man</li>
+      <li>mkdir</li>
+      <li>pwd</li>
+      <li>rm</li>
+      <li>rm -rf</li>
+      <li>rmdir</li>
+      <li>tar</li>
+    </ul>
+  </li>
+  <li>For tar please look up also what the following commands would do, and why "f" is used always as the last option in these examples. What happens when &quot;z&quot; is replaced with &quot;j&quot;?
+    <ul>
+      <li>tar -cvf file.tar folder</li>
+      <li>tar -cf file.tar folder</li>
+      <li>tar -czf file.tgz folder</li>
+      <li>tar -xzf file.tar</li>
+    </ul>
+  </li>
+  <li>How to create a named pipe? It is done by some of your programs but it can be done from a terminal instead. </li>
+  <li>How to include an additional standard library that is not included by default when <strong>linking</strong> a program using gcc?</li>
+</ul>
+
+
+<h2>Activity (20 pts.)</h2>
+
+<p>Write a set of three programs called <strong>ONE.c</strong>, <strong>TWO.c</strong> 
+and <strong>THREE.c
+</strong>that would use the total of two named pipes to communicate ONE to TWO 
+and TWO to THREE. Run them simultanously in three terminals. The first program 
+shall ask user to enter text, one line at a time and send it through a pipe to 
+the program TWO. The program TWO shall receive the text from the program ONE and 
+immediately resend it to the program THREE without displaying it on the screen. 
+The program THREE shall receive the the text from the program TWO and 
+Program TWO shall print an asterisk each time a message is passed from one pipe to another.
+immediately display it to the console screen. The program ONE is ready to exit 
+when a user enters an empty line. The program ONE shall send that empty line to 
+program TWO to indicate that it shall exit as well but only after the message is 
+resent to program THREE so that it can exit as well.</p>
+
+<h3>Proof of Work</h3>
+
+<p>In order to test your work: open terminal windows for each compiled program. 
+Rearrange the windows so that you could see each of them. Go to the same folder in each of the terminals. 
+Compile the programs; you may do all of them from one of the terminals. 
+Run your programs, one in each terminal. Type lines from keyboard into the first program. 
+<strong>One of the lines must contain your name in order for the work to recevie any credit.</strong> 
+Observe the same text appearing in the last program. 
+Capture the computer screen of your programs running and save as screen.png file into the same folder. </p>
+
+<p>Pack your folder with program source files and compiled binary files using 
+tar and then gzip. Remember to execute tar from outside of that folder! 
+Consider how to perform both tar and gzip on one compound command line. 
+Consider the right file extension to indicate the correct file type to the grader.</p>
+
+
+<h2>Alternative 30 pts. version with a 10 pts. extra credit</h2>
+
+<p>Consider the pair of programs for Posix style pipes that is posted in the 
+programming examples section: <code>Named Pipes in Posix - sender</code> and 
+<code>Named Pipes in Posix - receiver</code>, and also a pair of programs for 
+Posix style shared memory: <code>Named Shared memory server in Posix</code> and 
+<code>Named Shared memory client in Posix</code>.</p>
+
+<p>Do the following experiment in a dedicated folder created inside your Ubuntu 
+Linux account. Regardless from the version you choose you are still responsible 
+for studying both communication by pipes and by shared memory in order to 
+prepare for the upcoming quiz or test.</p>
+
+<h3>Hints for the extra credit version</h3>
+
+<p>Write a pair of programs called <strong>ONE.c</strong> and <strong>TWO.c
+</strong>that would use both technologies, one area of shared 
+    memory and two named pipes to communicate between each other in the way 
+described below. </p>
+<ul>
+    <li>Program ONE:<ul>
+        <li>Create two named pipes in the current directory with 
+    names &quot;one-two&quot; and &quot;two-one&quot; in the current folder. The pipes shall be read write 
+    accessible only to the current user. Ignore potential &quot;pipe already created&quot; 
+        errors.</li>
+        <li>Open the two named pipes.<ul>
+            <li>The pipe #1 (&quot;one-two&quot;) shall be open for writing.</li>
+            <li>The pipe #2 (&quot;two-one&quot;) shall be open for reading.</li>
+            <li>Important: open in that order!</li>
+        </ul>
+        </li>
+        <li>Create shared memory block of 512 bytes. The block shall be read write accessible only to the current user.</li>
+        <li>Send the shared memory ID to the second program by writing to pipe #1 and then read back one character from pipe #2.
+        <ul>
+            <li>Use sprintf to convert integer ID to char array. Use constant buffer of the hard coded size.
+            <ul>
+                <li>Important! Send the entire fixed size buffer, do not use 
+                strlen(...). Hard code the same number in the second&nbsp; 
+                program.</li>
+            </ul>
+            </li>
+            <li>&nbsp;Optionally you can hard code the shared memory ID in the second program as well instead of doing this data transfer.</li>
+        </ul>
+        </li>
+        <li>Proceed with the loop: <strong>(The program shall contain only one loop!)</strong>&nbsp;&nbsp;
+        <ul>
+            <li>Ask the user to enter some text from a console up to 511 bytes long. </li>
+            <li>Store the text in shared memory.
+            <ul>
+                <li>Either read directly to the shared memory using 
+                fgets(shmem_pointer, 512,stdin);</li>
+                <li>or copy using strcpy(shmem_pointer, buffer) or use sprintf(shmem_pointer, &quot;%s&quot;, buffer);</li>
+            </ul>
+            </li>
+            <li>Check the size of the string entered by the user, for example 
+            strlen(buffer);</li>
+            <li>Write one character to pipe #1to indicate that the shared memory 
+            contains valid data ready to be received, <br>or that the programs 
+            need to end their work. For example, use '*' in the first case, and 
+            'x' ion the latter case.
+            <ul>
+                <li>For example code like: char ch='*'; write(#1, &amp;ch, 1);</li>
+            </ul>
+            </li>
+            <li>Read one character from pipe #2 to and that way wait until the second program retrieves data from shared memory.
+            <ul>
+                <li>For example code like: char ch'; read(#2, &amp;ch, 1);</li>
+            </ul>
+            </li>
+            <li>If the original buffer was empty or the 'x' character was 
+            received then exit the loop</li>
+        </ul>
+        </li>
+        <li>Close both pipes.</li>
+        <li>Unlink file names for both pipes, ignore any potential errors.</li>
+        <li>Clean&nbsp; up shared memory.</li>
+    </ul>
+    </li>
+    <li>Program TWO:<ul>
+        <li>Create two named pipes in the current directory with 
+    names &quot;one-two&quot; and &quot;two-one&quot; in the current folder. The pipes shall be read write 
+    accessible only to the current user. Ignore potential &quot;pipe already created&quot; 
+        errors.</li>
+        <li>Open the two named pipes.<ul>
+            <li>The pipe #1 (&quot;one-two&quot;) shall be open for reading.</li>
+            <li>The pipe #2 (&quot;two-one&quot;) shall be open for writing.</li>
+            <li><strong>Important: open in that order, or the two programs will stall!</strong></li>
+        </ul>
+        </li>
+        <li>Receive the shared memory ID to the second program by reading from 
+        pipe #1 and then writing back one character to pipe #2.
+        <ul>
+            <li>Use constant buffer of the hard coded size., Use sscanf to convert contents of the buffer to integer ID.
+            <ul>
+                <li>Important! request reading the same number of characters that the first program sent!</li>
+            </ul>
+            </li>
+            <li>&nbsp;Optionally you can hard code the shared memory ID in the second program as well instead of doing this data transfer.</li>
+        </ul>
+        </li>
+        <li>Create shared memory block of 512 bytes. The block shall be read write accessible only to the current user.</li>
+        <li>Proceed with the loop: <strong>(The program shall contain only one loop!)</strong>&nbsp;&nbsp;
+        <ul>
+            <li>Read one character from pipe #1.
+            <ul>
+                <li>For example code like: char ch'; read(#2, &amp;ch, 1);</li>
+                <li>if the character indicates end of transmission then send the 
+                same character back and exit the loop;</li>
+            </ul>
+            </li>
+            <li>Retrieve the text from shared memory.<ul>
+                <li>Either use a loop to copy the text byte by byte and terminate using '\0'</li>
+                <li>use puts(shmem_pointer) or use fprintf(stdout, &quot;%s&quot;, shmem_pointer);</li>
+            </ul>
+            </li>
+            <li>Write one character to pipe #2 to indicate that the shared memory 
+            data has been red and can be replaced with new data.
+            <ul>
+                <li>For example code like: write(#1, &amp;ch, 1);</li>
+            </ul>
+            </li>
+        </ul>
+        </li>
+        <li>Close both pipes.</li>
+        <li>Unlink file names for both pipes, ignore any potential errors.</li>
+        <li>Clean&nbsp; up shared memory.</li>
+    </ul>
+    </li>
+</ul>
+
+<h3>Proof of Work</h3>
+
+<p>In order to test your work: open terminal windows for each compiled program. 
+Rearrange the windows so that you could see each of them. Go to the same folder in each of the 
+terminals. Compile the programs; you may do all of them from one of the terminals. Run your 
+programs, one in each terminal. Type lines from keyboard into the first program. 
+Observe the same text appearing in the last program. 
+<strong>One of the lines must contain your name in order for the work to recevie any credit.</strong> 
+Capture the computer screen of your programs running and save as screen.png file into the same folder.</p>
+
+<p>Pack your folder with program source files and compiled binary files using 
+tar and then gzip. Remember to execute tar from outside of that folder! 
+Consider how to perform both tar and gzip on one compound command line. 
+Consider the right file extension to indicate the correct file type to the grader.</p>
+
+
+<h2>Submission</h2>
+
+<p>Drop off the produced .TGZ file in the corresponding assignment drop box on Canvas.</p>
+
+<p>Thank you.</p>
+
+
+
+<h2>Criteria for Success</h2>
+
+<p>A successfully completed lab results in the submission of source code of the requested three programs
+and a screen captures that shows three consoles with the three requested programs running. The screenshot
+shall show the user typing a few lines of text into the first console that appears printed by the program 
+in the third console. The instructor inspects the soruce code to verify that the first program communicates
+only with the second program and that the third program also communicates only th the second program. 
+Thus the second program serves as an intermediary between the two others and does not read or print anything 
+to its cosole. The success is completed by demonstrating correct use of tar and gzip to create a single file 
+archive that is submitted for grading. In case of the extra credit the functionality of the two extra credit 
+programsis demonstrated instead. Partial credit is awarded for partial functinality of the regular
+assingnment. No partial credit is awarded for incomplete extra credit version of the assignment.</p>
+
+
+
+<p>
+<a href="../../../index.html"><img src="../../../icons/main.gif" class="menu32x32" alt="web site front" /></a>
+<a href="../index.html"><img src="../../../icons/menu.gif" class="menu32x32" alt="local main page" /></a>
+<a href="index.html"><img src="../../../icons/mmisc.gif" class="menu32x32" alt="local list page" /></a>
+<a href="../../../bookmark/index.html"><img src="../../../icons/mbookmark.gif" class="menu32x32" alt="general bookmarks" /></a>
+<a href="../../../bookmark/software.html"><img src="../../../icons/mbookabcd.gif" class="menu32x32" alt="software bookmarks" /></a>
+<a href="javascript:void(window.history.back());"><img src="../../../icons/maleft.gif" class="menu32x32" alt="go back" /></a>
+<a href="javascript:void(window.open('../../../copyright.html','C','toolbar=no,status=no,menubar=no,directories=no,location=no,width=600,height=500,resizable=no'));"><img src="../../../icons/mchecked.gif" class="menu32x32" alt="copyright info" /></a>
+</p>
+
+</body>
+</html>

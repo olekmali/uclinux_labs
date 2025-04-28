@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+  <title>B_module1.c</title>
+  <style type="text/css">
+  <!--
+body { color: #000000; background: #ffffff; }
+h3.title_comment             { color: #F00000; }
+span.comment                 { color: #444444; }
+span.doc_comment             { color: #444444; font-style: italic; }
+span.string                  { color: #008000; }
+span.esc_string              { color: #77dd77; }
+span.char                    { color: #008000; }
+span.esc_char                { color: #77dd77; }
+span.numeric                 { color: #FF0000; }
+span.ident                   { color: #2040a0; }
+span.predef_ident            { color: #2040a0; font-weight: bold; }
+span.type                    { color: #2040a0; font-weight: bold; }
+span.predef_type             { color: #2040a0; font-weight: bold; }
+span.keyword                 {                 font-weight: bold; }
+span.library_fn              { color: #a52a2a; font-weight: bold; }
+span.include                 { color: #0000ff; font-weight: bold; }
+span.preproc                 { color: #0000ff; font-weight: bold; }
+span.braces                  { color: #4444FF; font-weight: bold; }
+span.symbol                  { color: #4444FF; }
+span.fn_header               {                 font-weight: bold; }
+span.fn_header_name          { color: #ff0000; }
+span.fn_header_args          { color: #2040a0; }
+span.regex                   { color: #b000d0; }
+span.text                    {                 font-style: italic; }
+span.entity                  { color: #ff0000; }
+span.assignment              { color: #2040a0; }
+span.dep_line                { color: #8b2252; }
+span.dep_target              {                 font-weight: bold; }
+span.dep_cont                { color: #000000; font-weight: bold; }
+span.macro                   { color: #2040a0; }
+span.int_macro               { color: #4080ff; }
+span.esc_usd                 { color: #444444; }
+  -->
+  </style>
+</head>
+<body>
+<pre>
+<span class="comment">/*  
+ *  hello1.c - The simplest kernel module.
+ *  Also illustrating the __init, __initdata and __exit macros.
+ *
+ *  Copyright © 2001 Peter Jay Salzman
+ *  http://tldp.org/LDP/lkmpg/2.6/html/lkmpg.html
+ */</span>
+<span class="preproc">#include <span class="string">&lt;linux/module.h&gt;</span>  <span class="comment"> /* Needed by all modules */</span></span>
+<span class="preproc">#include <span class="string">&lt;linux/kernel.h&gt;</span>  <span class="comment"> /* Needed for KERN_INFO */</span></span>
+<span class="preproc">#include <span class="string">&lt;linux/init.h&gt;</span>    <span class="comment"> /* Needed for the macros */</span></span>
+
+<span class="preproc">#define DRIVER_AUTHOR <span class="string">&quot;Peter Jay Salzman &lt;p@dirac.org&gt;&quot;</span></span>
+<span class="preproc">#define DRIVER_DESC   <span class="string">&quot;A sample driver&quot;</span></span>
+
+<span class="keyword">static</span> <span class="keyword">int</span> <span class="ident">hello1_data</span> <span class="ident">__initdata</span> <span class="symbol">=</span> <span class="numeric">1</span><span class="symbol">;</span>
+
+<span class="keyword">static</span> <span class="keyword">int</span> <span class="ident">__init</span> <span class="ident">hello1_init</span><span class="symbol">(</span><span class="keyword">void</span><span class="symbol">)</span>
+<span class="braces">{</span>
+    <span class="ident">printk</span><span class="symbol">(</span><span class="ident">KERN_INFO</span> <span class="string">&quot;Hello, world from &lt;insert-your-name-here&gt;%d<span class="esc_char">\n</span>&quot;</span>, <span class="ident">hello1_data</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="keyword">return</span> <span class="numeric">0</span><span class="symbol">;</span>
+<span class="braces">}</span>
+
+<span class="keyword">static</span> <span class="keyword">void</span> <span class="ident">__exit</span> <span class="ident">hello1_exit</span><span class="symbol">(</span><span class="keyword">void</span><span class="symbol">)</span>
+<span class="braces">{</span>
+    <span class="ident">printk</span><span class="symbol">(</span><span class="ident">KERN_INFO</span> <span class="string">&quot;Goodbye, world 1<span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+<span class="braces">}</span>
+
+<span class="ident">module_init</span><span class="symbol">(</span><span class="ident">hello1_init</span><span class="symbol">)</span><span class="symbol">;</span>
+<span class="ident">module_exit</span><span class="symbol">(</span><span class="ident">hello1_exit</span><span class="symbol">)</span><span class="symbol">;</span>
+
+<span class="ident">MODULE_LICENSE</span><span class="symbol">(</span><span class="string">&quot;GPL&quot;</span><span class="symbol">)</span><span class="symbol">;</span>                  <span class="comment">/* What is the licensing for distribution? */</span>
+<span class="ident">MODULE_AUTHOR</span><span class="symbol">(</span><span class="ident">DRIVER_AUTHOR</span><span class="symbol">)</span><span class="symbol">;</span>           <span class="comment">/* Who wrote this module? */</span>
+<span class="ident">MODULE_DESCRIPTION</span><span class="symbol">(</span><span class="ident">DRIVER_DESC</span><span class="symbol">)</span><span class="symbol">;</span>        <span class="comment">/* What does this module do? */</span>
+
+</pre>
+<!-- <hr>syntax highlighted by <a href="https://www.palfrader.org/code/code2html/">Code2HTML</a>, v. 0.9.1  -->
+</body>
+</html>

@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8" />
+<title>ECE472/572 (UCLX) Assignment Number 9</title>
+<!-- meta http-equiv="Pragma" content="no-cache" -->
+<meta name="robots" content="index,follow" />
+<!-- meta name="robots" content="noarchive" -->
+<link rel="shortcut icon" href="../../../icons/mopsys.ico" type="image/x-icon" />
+<script type="text/JavaScript" src="../../../default.js"></script>
+<link rel="stylesheet" href="../../../default.css" type="text/css" />
+<style type="text/css" /> 
+<!--
+.s_command {font-family: "Courier New", Courier, mono; }
+.s_tograde {color: #006600; }
+.s_tosee {color: #0000FF; }
+.s_optional { font-weight: lighter; color: #3F3FFF; }
+.s_warning {font-weight: bold; color: #7F0000; }
+.s_cmd_choice {color: #FF0000; font-family: "Courier New", Courier, mono; }
+.s_cmd_4grade {color: #006600; font-family: "Courier New", Courier, mono; }
+.s_code_fragment {font-family: "Courier New", Courier, mono; color: #0000FF; }
+--> 
+</style> 
+</head> 
+<body> 
+
+<h1>ECE 472/572 Assignment 9</h1>
+
+
+<h2>Purpose</h2>
+
+<h3>Skills</h3>
+
+<p>The purpose of this assignment is to help you practice the following skills that are essential to your success in this course / in school / in this field / in professional life beyond school:</p>
+
+<ul>
+    <li>Setting up recurring events using CRON tables.</li>
+    <li>Filtering data for command line programs using Unix tools like <code>grep</code>, <code>awk</code>, <code>head</code>, and <code>cut</code>.</li>
+</ul>
+
+<h3>Knowledge</h3>
+
+<p>This assignment will also help you to become familiar with the following important content knowledge in this discipline:</p>
+
+<ul>
+    <li>Scheduling in Linuix OS using CRON tables.</li>
+    <li>Interprocess communication using signals.</li>
+</ul>
+
+
+
+<h2>Prepare for the lab</h2> 
+ 
+<p>Answer these questions while doing this lab &ndash; they will help you understand the procedure and better prepare for the tests.</p>
+<ul> 
+    <li>Where are the cron tables located. (Hint: there is one main table and additional ones for each user.)</li> 
+    <li>What does <span class="s_command">crontab</span> do? Why -e?</li>
+    <li>What are possible ways to find a program's process id?</li> 
+    <li>What do the <span class="s_command">``</span> do in a shell command? (note: backquotes)</li>
+    <li>What do the <span class="s_command">$(insert_command_here)</span> do in a shell command?</li> 
+    <li>Why can't we just find the process id for a program once and use that every time it is run?</li> 
+    <li>What does <span class="s_command">which</span> do?</li>
+    <li>What does <span class="s_command">awk</span> do?</li>
+    <li>What does <span class="s_command">head</span> do?</li>
+    <li>What does <span class="s_command">tail</span> do?</li>
+    <li>What does <span class="s_command">cut</span> do?</li>
+    <li>Can <span class="s_command">cut</span> be used instead of <span class="s_command">awk</span>? 
+        Would it be simpler to use it? If so, then what would be command line?
+    </li>
+    <li>What does <span class="s_command">grep</span> do?</li>
+    <li>What is the difference in output when <span class="s_command">grep</span> is used as 
+        <span class="s_command">grep <em>expression</em></span> and as <span class="s_command">grep -o <em>expression</em></span>?
+    </li>
+    <li>Why sometimes one needs to use ' 's or &quot; &quot;s around a command line argument (like in case of awk in this lab)?
+        <br>What is the difference between use of single quote and double quote?
+    </li>
+    <li>What does <span class="s_command">kill</span> program do instead of terminating a process when used in its default settings?</li>
+    <li>Where are the programs <span class="s_command">kill</span>, <span class="s_command">ps</span>, 
+        <span class="s_command">grep</span>, and<span class="s_command"> awk</span> located on Ubuntu/Debian Linux?
+    </li>
+    <li>Where are the programs <span class="s_command">kill</span>, <span class="s_command">ps</span>, 
+        <span class="s_command">grep</span>, and<span class="s_command"> awk</span> located on uCLinux? 
+        Are they separate programs, or work through BusyBox?
+    </li> 
+    <li>Can we eliminate <span class="s_command">grep</span> by adding an option or another parameter to <span class="s_command">awk</span>? How?</li>
+    <li>What is the difference between using <span class="s_command">crontab -e</span> and <span class="s_command">sudo crontab -e</span> ?</li>
+    <li>Where are the actual cron tables stored? Is there one global configuration file, or one per each user? Is it in ASCII format, or binary? <br>
+        Hint: After doing the work check <span class="s_command">/var/spool/</span> and subfolders, 
+        <span class="s_command">/etc/cron.d/</span> folder family <span class="s_command">/etc/cron.*/</span>, 
+        and file <span class="s_command">/etc/crontab</span>.
+    </li>
+    <li>Explore how to set up the program to run on a particular schedule beyond examples provided in this instruction. 
+        For example: how to run program at 2am every Saturday morning?
+    </li>
+    <li>In <span class="s_command">crontab</span>, why some commands do need full path while others do not?</li>
+    <li>In the following lab a number is used for <span class="s_command"><span class="s_cmd_choice">YOURSIGNAL</span></span>. 
+        Is it a good or bad idea to use signal number 9? Why? 
+        Are there any (other) numbers that could make this lab not work well?
+    </li>
+</ul> 
+ 
+<h2>Activity 1 (10 pts.)</h2>
+
+<h3>Use Cron table to Control a Program on Linux</h3>
+
+<ul> 
+    <li><strong><span class="s_tograde">Record this procedure using script for the assignment submission.</span>
+        <br /><span class="s_cmd_4grade">script hw9_1.txt</span></strong></li> 
+    <li>Download the source code of the program <a href="9_signal_reporter.c.HTML" class="s_command">signal_reporter.c</a> that you are going to be using.</li> 
+    <li>Edit <span class="s_command">signal_reporter.c</span>, 
+        attempt to read and understand how the program works. 
+        You should enter <span class="s_command">man kill</span> and read about the functionality of kill 
+        and the different signals available to you.</li>
+        <ol> 
+            <li> Pick a signal number (an integer) and replace the sequence of characters 
+                <span class="s_command"><span class="s_cmd_choice">YOURSIGNAL</span></span>
+            </li>
+            <li>Change the signal handler function's name to reflect your signal choice.</li>
+            <li>Change the function pointer to reflect your functions name</li>
+            <li>Change the signal handled by your function in the sigaction() call.</li>
+            <li>Customize the information printed by the program by inserting your name 
+                instead of <span class="s_command"><span class="s_cmd_choice">&lt;insert_your_name_here&gt;</span></span>.
+            </li>
+        </ol> 
+
+    <li>Compile the C file using g++ or your favorite C or C++ compiler and name the output file 
+        <span class="s_command">signal_reporter</span></li>
+    <li>Open a second terminal window if you did not have two open before.</li> 
+    <li>Run the program in the first terminal window</li>
+    <li>In the second terminal window run subsequently the commands and observe their output:
+        <ul>
+            <li><span class="s_command">ps -ef</span></li>
+            <li><span class="s_command">ps -ef | grep signal_reporter</span></li>
+            <li><span class="s_command">ps -ef | grep signal_reporter | awk &#39;{ print $2}&#39;</span></li>
+            <li> <span class="s_command">ps -ef | grep signal_reporter | awk &#39;{ print $2}&#39; | head -n 1</span></li>
+            <li><span class="s_command">echo &quot;ps -ef | grep signal_reporter | awk &#39;{ print $2}&#39; | head -n 1&quot;</span></li>
+            <li><span class="s_command">echo $(ps -ef | grep signal_reporter | awk &#39;{ print $2}&#39; | head -n 1)</span></li>
+            <li><span class="s_command">echo `ps -ef | grep signal_reporter | awk &#39;{ print $2}&#39; | head -n 1`</span></li>
+        </ul>
+    </li>
+    <li>In the second terminal window enter <span class="s_command">kill -<span class="s_cmd_choice">YOURSIGNAL</span> 
+        `ps -ae | grep signal_reporter | awk '{ print $1}' 
+        | head -n 1`</span> Note: Replace <span class="s_cmd_choice">YOURSIGNAL</span> 
+        with the signal number you chose earlier.
+        <ul>
+            <li>Observe and explain the use <span class="s_command">$1</span> or
+                <span class="s_command">$2</span> depending on the ps options
+                <span class="s_command">ps -ae</span> or <span class="s_command">ps -ef</span>.
+            </li>
+            <li>Observe and explain the need or lack of need for <span class="s_command">head -n 1</span>.</li>
+            <li>Be prepared to explain the observations above.</li>
+        </ul>
+    </li>
+    <li>In the first terminal window that was running the program you should see it state that it received a user signal.</li>
+    <li>If that succeeded you can now use cron to automate the signal passing to the program.
+    <li>To edit the cron table enter <span class="s_command">crontab -e</span> to enter the cron table editor. 
+        Note that on some systems you must be a root to do so. 
+        Otherwise, root and every user have their own cron table. 
+        Programs added by root run as root, added by a user without <span class="s_command">sudo</span> run as that user.
+        <br><strong>Watch out!</strong> The default editor might be set as <span class="s_command">vi</span> 
+        or <span class="s_command">vim</span>. Check how to use it by running man vi. <strong>(ESC :wq ENTER)</strong>.
+    </li> 
+    <li>Cron table entries are constructed as follows: 
+        minute (0-59), hour (0-23, 0 = midnight), day (1-31), month (1-12), weekday (0-6, 0 = Sunday), command
+        <br>Commands located in <span class="s_command">/bin:/sbin:/usr/bin:/usr/sbin</span> 
+        does not need to be specified with a full path. For example,   
+        <ul>
+            <li>Check references for exact syntax, for example,
+                <a href="https://debian-handbook.info/browse/stable/" target="_blank">The Debian Administrator's Handbook</a>.
+            </li>
+            <li>to run the command every 2 hours the table would look like this:
+                <br><span class="s_command">0 */2 * * * /full/path/command_followed_by_its_options... /running_directory</span>
+            </li>
+            <li>to run the command at 12am and 12pm the table would look like this:
+                <br><span class="s_command">0 0,12 * * * /full/path/command_followed_by_its_options... /running_directory</span>
+            </li>
+            <li>to run the command at 2am on the first five days of each month the table would look like this:
+                <br><span class="s_command">0 2 1-5 * * /full/path/command_followed_by_its_options... /running_directory</span>
+            </li>
+            <li>Exercise: try to explain the following schedule:
+                <br><span class="s_command">0 2-6/2 1-2,5,10 * * /full/path/command_followed_by_its_options... /running_directory</span>
+            </li>
+        </ul>
+    </li>
+    <li>Set  the signal to be sent to the program every two minutes and create a new entry in the cron table 
+        that will send the signal to your program using kill. 
+        Use the kill command we used earlier to test the functionality of the program. 
+        Note that the cron table may utilize a different PATH variable 
+        and thus at least some programs called must include their path so you cannot just call <span class="s_command">kill</span>.
+    <li>Save and exit. The terminal should report <span class="s_command">crontab: installing new crontab</span></li>
+    <li>If the <span class="s_command">signal_reporter</span> program is not currently running in one of the terminal windows 
+        start it now and watch its output. When the cron table task occurs you should see the program detecting it 
+        and it should also report the interval that you set in the <span class="s_command">crontab</span> editor.</li>
+    <li>wait at least five to seven minutes to record at least two or three about 120-second-long intervals</li>
+    <li>Stop the program with Ctrl+C</li>
+    <li><strong><span class="s_tograde">take the screenshot of the entire screen that shows 
+        the console with signal_reporter showing auto-generated received signals.</span></strong></li>
+    <li><strong><span class="s_tograde">Exit script</span>.</strong></li>
+</ul>
+
+<h2>Activity 2 (10 pts.)</h2>
+
+<h3>Use Cron table to Control a Program on Microcontroller Linux</h3>
+
+<ul>
+    <li><strong><span class="s_tograde">Record this procedure using script for the assignment submission.</span>
+        <br><span class="s_cmd_4grade">script hw9_2.txt</span></strong>
+    </li>
+    <li>Start <span class="s_command">putty</span> or <span class="s_command">ssh</span>.</li>
+    <li>Login as root.</li>
+    <li><span class="s_tograde">Type </span><span class="s_cmd_4grade">uname -a</span></li>
+    <li>Verify if <span class="s_command">crond</span> is running. Starting 2024 crond may be already setup for your microcontroller board.
+        <ul>
+            <li><span class="s_command">ps -ef | grep cron</span></li>
+        </ul>
+    </li>
+    <li>Inspect the directory <span class="s_command">/etc/cron/crontabs</span> by typing <span class="s_command">ls -l /etc/cron/crontabs</span>
+        <br>If the folder does not exist then proceed with the 2023 and earlier version of this lab as follows:
+        <ul>
+            <li>Inspect the directory <span class="s_command">/var</span> by typing <span class="s_command">ls -l /var</span>
+                <br>Observe that the directory <span class="s_command">spool</span> is a symbolic link to
+                <span class="s_command">/tmp</span> which is stored in ram disk. Any changes will disappear after reboot.
+            </li>
+            <li>Create missing folders. In the unlikely case folders already existed 
+                nothing will get erased and errors will be displayed either:
+                <ul>
+                    <li><span class="s_command">mkdir -p /var/spool/cron/atjobs</span></li>
+                    <li><span class="s_command">mkdir -p /var/spool/cron/atspool</span></li>
+                    <li><span class="s_command">mkdir -p /var/spool/cron/crontabs</span></li>
+                    <li><span class="s_command">chmod -R a+rx /var/spool/cron</span></li>
+                    <li><span class="s_command">sync</span></li>
+                </ul>
+            </li>
+            <li>Start <span class="s_command">crond</span></li>
+            <li>Verify if <span class="s_command">crond</span> is running. If not, then try to figure out why not and rectify the problem.
+                <ul>
+                    <li><span class="s_command">ps -ef | grep cron</span></li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li>Repeat the same process as in the first part of this lab by compiling the program for ucLinux 
+        and setting it up on the embedded system board in the lab. </li>
+    <li>Check if you need to change the location or any options on <span class="s_command">crontab</span>,
+        <span class="s_command"> kill</span>, <span class="s_command">ps</span>, 
+        <span class="s_command"> grep</span>, <span class="s_command">awk</span>, or <span class="s_command">cut</span>.
+    </li>
+    <li><span class="s_tograde">Type </span><span class="s_cmd_4grade">uname -a</span></li>
+    <li>wait at least five to seven minutes to record at least two or three about 120-second-long intervals</li>
+    <li>Stop the program with Ctrl+C</li>
+    <li><strong><span class="s_tograde">take the screenshot of the entire screen that shows 
+        the console with signal_reporter showing auto-generated received signals.</span></strong></li>
+    <li><strong><span class="s_tograde">Exit script</span>.</strong></li>
+</ul>
+
+
+
+<h2>Submission</h2> 
+
+<p>For each exercise, drop the captured screen image that shows the output produced by 
+the signal receiver program reporting receving the signal at least several times 
+in the corresponding assignment drop box on Canvas. In case of the second part of
+the lab also capture running <span class="s_cmd_4grade">uname -a</span> 
+in the same screenshot. Resize the terminal as necessary.</p>
+
+<p>Thank you.</p> 
+
+
+
+<h2>Criteria for Success</h2>
+
+<p>The success in this lab is measured by the following outcomes:
+<ul>
+    <li><span class="s_command">signalreporter</span> program must print student's name, initials, or BUnetID (user name not ID number)
+        in order to be considered for grading.</li>
+    <li>Correct setup of the process number filter is the first of two steps of a success lab.
+        This can de demonstrated by runnign the <span class="s_command">signalreporter</span> in one 
+        terminal window while running the correctly setup cascade of piped commands in a second terminal.</li>
+    <li>If the step above is successfull proceed with scheduling it using CRON service. 
+        The success can de demonstrated by running <span class="s_command">signalreporter</span> for at least six
+        or seven minutes and capturing reported intervals between receiving the signal to be consistently reported
+        to be as desired when setting up schedule in the CRON service .</li>
+    <li>Persistence of the CRON table scheduling service is expected but the current lab procedure is not cunductive to grading that.</li>
+    <li>The Buildroot portion of the lab contains cross-compilation procedure that has been already graded by Lab 7.</li>
+</ul>
+</p>
+
+
+
+<p>
+<a href="../../../index.html"><img src="../../../icons/main.gif" class="menu32x32" alt="web site front" /></a>
+<a href="../index.html"><img src="../../../icons/menu.gif" class="menu32x32" alt="local main page" /></a>
+<a href="index.html"><img src="../../../icons/mmisc.gif" class="menu32x32" alt="local list page" /></a>
+<a href="../../../bookmark/index.html"><img src="../../../icons/mbookmark.gif" class="menu32x32" alt="general bookmarks" /></a>
+<a href="../../../bookmark/software.html"><img src="../../../icons/mbookabcd.gif" class="menu32x32" alt="software bookmarks" /></a>
+<a href="javascript:void(window.history.back());"><img src="../../../icons/maleft.gif" class="menu32x32" alt="go back" /></a>
+<a href="javascript:void(window.open('../../../copyright.html','C','toolbar=no,status=no,menubar=no,directories=no,location=no,width=600,height=500,resizable=no'));"><img src="../../../icons/mchecked.gif" class="menu32x32" alt="copyright info" /></a>
+</p>
+
+</body>
+</html>

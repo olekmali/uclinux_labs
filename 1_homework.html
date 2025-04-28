@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8" />
+<title>ECE472/572 (UCLX) Assignment Number 1</title>
+<!-- meta http-equiv="Pragma" content="no-cache" -->
+<meta name="robots" content="index,follow" />
+<!-- meta name="robots" content="noarchive" -->
+<link rel="shortcut icon" href="../../../icons/mopsys.ico" type="image/x-icon" />
+<script type="text/JavaScript" src="../../../default.js"></script>
+<link rel="stylesheet" href="../../../default.css" type="text/css" />
+<style type="text/css" />
+<!--
+.s_command {font-family: "Courier New", Courier, mono; }
+.s_tograde {color: #006600; }
+.s_tosee {color: #0000FF; }
+.s_optional { font-weight: lighter; color: #3F3FFF; }
+.s_warning {font-weight: bold; color: #7F0000; }
+.s_cmd_choice {color: #FF0000; font-family: "Courier New", Courier, mono; }
+.s_cmd_4grade {color: #006600; font-family: "Courier New", Courier, mono; }
+.s_code_fragment {font-family: "Courier New", Courier, mono; color: #0000FF; }
+-->
+</style>
+</head>
+<body>
+
+<h1>ECE 472/572 Assignment 1</h1>
+
+
+<h2>Purpose</h2>
+
+<h3>Skills</h3>
+
+<p>The purpose of this assignment is to help you practice the following skills that are essential to your success in this course / in school / in this field / in professional life beyond school:</p>
+
+<ul>
+    <li>How to setup a virtual machine for an operating system and select its rudimentary parameters such as hard drive space, amount of RAM, and number of CPU cores.</li>
+    <li>How to choose appropriate version of and then install an operating system from the Debian Linux family of OS.</li>
+    <li>How to run commands in a command line interface (CLI).</li>
+    <li>How to install OS updates and software packages using a command line interface (CLI).</li>
+</ul>
+
+<h3>Knowledge</h3>
+
+<p>This assignment will also help you to become familiar with the following important content knowledge in this discipline:</p>
+
+<ul>
+    <li>What is a command line interface.</li>
+    <li>Basic set of commands that can be used in a command line interface.</li>
+</ul>
+
+
+
+<h2>Prepare for the lab</h2>
+
+<p>Answer these questions while doing this lab &ndash; they will help you understand the procedure and better prepare for the tests.</p>
+<ul>
+    <li>What is a virtual machine? What are the main benefits of virtual machines? Consider if you were using this at your job.</li>
+    <li>How does a virtual machine create space for a new operating system without partitioning your hard drive?</li>
+    <li>What are the main limiting factors on the number of virtual machines that can be running simultaneously?</li>
+    <li>What are the host operating system (host OS), and guest operating system (guest OS)? Can both be Windows, or both be Linux? </li>
+    <li>Can you share files between your host PC and a Virtual Machine? Think of a situation where this is not desirable.</li>
+    <li>Do you need a valid license to run an OS in a virtual installations?</li>
+    <li>What is <span class="s_command">grub2</span> loader? How does it differ from 
+        <span class="s_command">grub</span>? What will this program allow you to do?</li>
+    <li>Protected files cannot be modified by users. How do you gain root access to a file, or open a program with root access?</li>
+    <li>What are <span class="s_command">apt</span> and <span class="s_command">apt-get</span>?</li>
+    <li>What is the difference between Ubuntu, Kubuntu, Xubuntu, Lubuntu, and Ubuntu Server?<br>
+        ( See also
+    <a href="https://askubuntu.com/questions/690/what-is-the-difference-between-ubuntu-and-its-derivatives" target="_blank">
+        https://askubuntu.com/questions/690/what-is-the-difference-between-ubuntu-and-its-derivatives</a>)
+    </li>
+    <li>What is the difference between Ubuntu and Linux Mint?&nbsp; Research at 
+        least a few communities to lear about different users' opinions.</li>
+</ul>
+
+
+<h2>Activity (20 pts.)</h2>
+
+<p> You do not have to set up a virtual machine; you can set up a dual boot system, or simply use the existing Ubuntu setup in the computer lab. However, you still need to get familiar with the setup procedure one way or another. You will find it convenient to do all the lab exercises using your computer except for testing Microcontroller Linux on the embedded system in the lab. As for this lab, you need to turn in only a proof that you are able to use Linux, open a terminal window, edit, compile and run a simple program written either in C or C++, and capture a screen shot. </p>
+<h3>Setting up Ubuntu inside a virtual machine </h3>
+<ol>
+    <li><span class="s_optional">Skip this step if you do your work in the computer lab as the VM is already installed:</span>
+    <br>Download and install Oracle's Virtual Machine - Virtual Box from
+    <a href="https://www.virtualbox.org/" target="_blank">https://www.virtualbox.org/</a>. It is a desktop application. 
+        Alternatively use VmWare's Virtual Machine - VMWare Player from
+    <a href="https://www.vmware.com/" target="_blank">https://www.vmware.com/</a> 
+	. Then donwload and install Virtual Box extension pack that contains 
+	non-open source componenets of Virtual Box that are necessary for efficient 
+	operation. VMWare is not open source so there is no extra step.</li>
+    <li>The guest OS will be a lightweight distribution of Ubuntu 22.04.5 or 24.04.1, 
+        so start downloading now to have it handy for later step. 
+        If you are rookie to Linux, make sure that you download the desktop version 
+        and not the server version of Ubuntu to make your life easier at later time.         <i>/* It is OK to use an odd numbered major version or .10 minor version but the instructor will support
+        <a href="https://wiki.ubuntu.com/Releases" target="_blank">only LTS versions</a> */</i>
+        <ul>
+            <li>
+                <a href="https://cdimage.ubuntu.com/xubuntu/releases/24.04/release/xubuntu-24.04.1-desktop-amd64.iso" target="_blank">
+				https://cdimage.ubuntu.com/xubuntu/releases/24.04/release/xubuntu-24.04.1-desktop-amd64.iso</a> 
+                or
+            </li>
+            <li>
+                <a href="https://cdimage.ubuntu.com/" target="_blank">https://cdimage.ubuntu.com/</a> 
+                and pick up your choice of K-, L-, or X-Ubuntu,&nbsp;or
+            </li>
+            <li><a href="https://linuxmint.com/download_all.php" target="_blank">https://linuxmint.com/download_all.php</a> .
+                Note that Mint 22.N matches Ubuntu 24.04.N, Mint 21.N matches Ubuntu 22.04.N, i.e., it is based on repackaged LTS version of Ubuntu.
+            </li>
+        </ul>
+    </li>
+    <li>Mean while before your download is being completed start working on the virtual machine. Choose &quot;Create a new Virtual Machine&quot;
+    <ol>
+        <li>&quot;I will install OS later&quot;.</li>
+        <li>&quot;Linux&quot; type of OS, Version &quot;Debian64&quot; or &quot;Ubuntu64&quot;
+            <ul>
+                <li>If you cannot choose 64-bit operating systems you need to restart 
+                    your computer, run BIOS setup before starting your operating system, 
+                    and enable virtualization support in the BIOS settings.
+                </li>
+            </ul>
+        </li>
+        <li>Pick a name for your virtual machine, and remember the location so that you could later inspect the files supporting your machine.</li>
+        <li>Hard drive
+            you are recommended to use at least 32GB for the hard drive 
+            size.&nbsp; This will be a file in your Windows system that will 
+            eventually grow to that size as needed. When the course is complete 
+            you can simply delete it. The rationale:
+            <ul>
+                <li><strong>you need about 25GB</strong> total hard drive space 
+                for playing with Linux, and for the labs 1 through 4, 
+                and to do only the first parts of Labs 8 through 11, 
+                Lab 12 and end of the semester extra credit labs.
+                </li>
+                <li><strong>you need between 32GB and 40GB</strong> plan to complete Lab 5 (recompile Kernel for your OS)</li>
+                <li><strong>you need at least 32GB</strong> to do Lab 6, and continue 
+                full development related to microcontroller Linux in the second parts 
+                of Lab 7 through 12 assuming you delete your Lab 5 work.
+                <br>If your computer is hard-drive-space-challenged then 
+                you could do these in the lab instead as you would eventually 
+                need to test your work on the embedded system there.
+                </li>
+                <li>Your hard drive will not be expanded immediately (unless you request to do so for the sake of faster performance). It will grow as necessary.</li>
+                <li>Putting your virtual machine on an SD card or USB stick may be not the best idea 
+                but it is doable. Just be prepared to spend up to two days doing Lab 5 or Lab 6.</li>
+            </ul>
+        </li>
+        <li>Customize RAM memory
+            Memory size is NOT the amount of RAM in your PC! This is the amount of RAM 
+            you want to dedicate to the Virtual installation. It is recommended to leave a minimum 
+            of 1GB remaining for the exclusive use of the host operating system (i.e. for Windows) 
+            and allow the guest system (i.e. Ubuntu Linux) to use the reminder if necessary.
+            <ul>
+                <li>You need <strong>at least 2GB of RAM</strong> to play with Linux and do all labs except Lab 6, 6, and 7.</li>
+                <li>We recommend that you assign <strong>4GB of RAM</strong> to be able to do all labs at reasonable speed.</li>
+                <li>Unlike the case of hard drive space, you can always power off the virtual machine, and adjust the memory settings.</li>
+            </ul>
+        </li>
+        <li>Customize other hardware
+            <ul>
+                <li>Remove printer, floppy, e.t.c.</li>
+                <li>Consider &quot;disconnecting&quot; the real DVD drive 
+                (if you still have one), and &quot;insert&quot; only *.ISO files when needed.</li>
+            </ul>
+        </li>
+        <li>By the way, have your Ubuntu *.ISO file download that you started a while ago complete by the time you read this?</li>
+        <li>YYou can always customize the virtual machine later as long as it is not running. It would be hard to change the 
+        size of the virtual hard drive though, especially to shrink it.</li>
+    </ol>
+    </li>
+    <li>Start the virtual machine. Start the Ubuntu install process. You can use the automatic install process as long as you do not choose "unattended installation."</li>
+    <li>Reboot the virtual machine computer and log in into Ubuntu.</li>
+    <li>In case of problems with screen resolution when running inside 
+    VirtualBox: (Similar solutions are available for VmWare.)
+        ol>
+            <li>Open terminal window and run:
+                <br><span class="s_command">sudo apt-get install virtualbox-guest-dkms virtualbox-guest-x11</span></li>
+            <li>Restart the machine and test if the screen can be enlarged after logging in.
+                <br>In case the procedure above did not work:
+                <ol>
+                    <li><span class="s_command">sudo apt-get purge virtualbox-*</span></li>
+                    <li><span class="s_command">sudo apt-get install build-essential</span></li>
+                    <li>In the virtual box MENU &#8594; devices &#8594; Inser guest additions CD image</li>
+                    <li><span class="s_command">cd /media/<span class="s_cmd_choice">your_user_id</span>/&lt;hit TAB&gt;</span></li>
+                    <li><span class="s_command">sudo ./autorun.sh</span></li>
+                    <li>and after the entire operation is complete restart the virtual machine. 
+                    (<span class="s_command">sudo reboot</span>)</li>
+                </ol>
+            </li>
+        </ol>
+    </li>
+    <li>Update the OS. You will see a pop up box alerting you to probably just two updates available. If only that were all. After you complete the first updates, check again for updates. Select and update all. This will take a significant amount of time, and does not need to be attended. Find something to keep you busy for a while.</li>
+    <li>Under the application menu, select Add/Remove. Find the Gnome Partition Manager and install it. (This package is an application so it can be installed from the console, but you should explore the graphical interface as well.) 
+    </li>
+    <li>To clean up cached installation files open a terminal window and run:
+    <span class="s_command"><br>sudo apt-get autoremove<br>sudo apt-get clean</span></li>
+</ol>
+
+<h3>Additional configuration that needs to be applied to the system</h3>
+
+<p>Attention. In case your update fails due to an unrecognized package name, or package unavailable, repeat the command with that particular package name removed. 
+Then inspect the spelling of the failed package name and try to install it 
+separately. <strong>In case of error message</strong> stating that one (or more) 
+package cannot be found, repeat the installation command without listing that 
+package. <strong>This request applies to all future lab instructions as well</strong> until the end of the semester.</p>
+
+<ol>
+    <li><span class="s_command">sudo apt-get update</span></li>
+    <li><span class="s_command">sudo apt-get install build-essential gcc g++ gcc-doc ltrace strace valgrind</span></li>
+    <li><span class="s_command">sudo apt-get install git git-doc screen vim wget</span></li>
+    <li><span class="s_command">sudo apt-get install htop btop gparted grub2 syslinux</span></li>
+	<li><span class="s_command">sudo apt-get install ldnsutils nmap tshark</span></li>
+    <li><span class="s_command">sudo apt-get install gedit gedit-plugins git-gui putty</span></li>
+    <li>Install and configure a firewall:
+        <span class="s_command">
+        <br>sudo apt-get install ufw
+        <br>sudo ufw allow 22/tcp
+        <br>sudo ufw allow 3389/tcp
+        <br>sudo ufw enable
+        <br>sudo ufw status
+        </span>
+    </li>
+    <li>Did you remember to download and apply the system updates? It can be done from the console:
+        <span class="s_command"><br>sudo apt-get update &amp;&amp; sudo apt upgrade<br>sudo apt-get autoremove</span>
+    </li>
+    <li><strong>Optional:</strong> If you are installing this&nbsp; as a regular Linux and not inside a 
+        virtual machine, you may want to be able to login remotely:
+        <span class="s_command"><br>sudo apt-get install openssh-server xrdp freerdp2-x11</span>
+    </li>
+    <li><strong>Optional:</strong> Dr. Mali created an excessively large virtual hard drive so he also 
+        installed the following programs that took an extra 1GB:
+        <span class="s_command">
+        <br>sudo apt-get install audacity ffmpeg jpeginfo  gimp libreoffice sox vlc xfig xournal
+        <br>sudo apt-get install kicad octave maxima ngspice p7zip sigrok 
+        <br>sudo apt-get install smartmontools wireshark 
+        <br>sudo apt-get install pulseaudio pulsemixer pulseaudio-utils obs-studio uxplay 
+        <br>sudo apt-get install lincity lincity-ng
+        </span>
+    </li>
+</ol>
+
+<h3>Proof of work</h3>
+
+<p class="s_tograde">As a proof of work please write, compile, and run a simple program 
+either in C or C++ that prints your first and last name to the standard output (printf/cout). 
+In addition prove the you are running it in an already installed OS by running commands 
+<span class="s_command">pwd</span> and <span class="s_command">df</span>.
+
+<p class="s_tograde">Perform the following steps:
+<ul>
+    <li>Open the program source code in a text editor</li>
+    <li>recompile the program again using a console command.</li>
+    <li>run the compiled program in the console window.</li>
+    <li>run <span class="s_command">pwd</span></li>
+    <li>run <span class="s_command">df</span></li>
+    <li>rearrange terminal window and its size and the text editor window
+        so that both of them are visible at the same time.</li>
+    <li>capture the entire Linux desktop screen and save as PNG or JPG file.</li>
+</ul>
+You can either capture the screen using Ubuntu screen capture, 
+or if you run a virtual machine, you could use Windows Sinpping Tool feature.
+</p>
+
+
+<h2>Submission</h2>
+
+<p>Drop off <span class="s_tograde">the screen shot image in PNG or JPG file format</span> 
+in the corresponding assignment drop box on Canvas.</p>
+
+<p>Thank you.</p>
+
+
+
+<h2>Criteria for Success</h2>
+
+<p>This is all-or-nothing lab. One cannot setup a usable version of an 
+operating system half-way. Compiling and running a minute three line program 
+does not represent much extra work and is used to ensure the individual 
+experience. The proof of successful work contains a screenshot of the entire 
+operating system desktop clearly showing that the compiled program prints your name
+and the requested diagnostic commands as describedin the Proof of Work Section above. 
+The compiled program output must show the name of the student or his/her BUnetID 
+(user name, not the ID number!)</p>
+
+<p>Note: the lab will be considered as succesful even if the available free disk space 
+is insufficient for future labs 5 or 6. In such case, if noticed, the instructor 
+will make an effort to warn you that the lab may have to be redone in the future
+with more generous virtual hard drive settings.</p>
+
+
+
+<p>
+<a href="../../../index.html"><img src="../../../icons/main.gif" class="menu32x32" alt="web site front" /></a>
+<a href="../index.html"><img src="../../../icons/menu.gif" class="menu32x32" alt="local main page" /></a>
+<a href="index.html"><img src="../../../icons/mmisc.gif" class="menu32x32" alt="local list page" /></a>
+<a href="../../../bookmark/index.html"><img src="../../../icons/mbookmark.gif" class="menu32x32" alt="general bookmarks" /></a>
+<a href="../../../bookmark/software.html"><img src="../../../icons/mbookabcd.gif" class="menu32x32" alt="software bookmarks" /></a>
+<a href="javascript:void(window.history.back());"><img src="../../../icons/maleft.gif" class="menu32x32" alt="go back" /></a>
+<a href="javascript:void(window.open('../../../copyright.html','C','toolbar=no,status=no,menubar=no,directories=no,location=no,width=600,height=500,resizable=no'));"><img src="../../../icons/mchecked.gif" class="menu32x32" alt="copyright info" /></a>
+</p>
+
+</body>
+</html>

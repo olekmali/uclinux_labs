@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+  <title>B_module2.c</title>
+  <style type="text/css">
+  <!--
+body { color: #000000; background: #ffffff; }
+h3.title_comment             { color: #F00000; }
+span.comment                 { color: #444444; }
+span.doc_comment             { color: #444444; font-style: italic; }
+span.string                  { color: #008000; }
+span.esc_string              { color: #77dd77; }
+span.char                    { color: #008000; }
+span.esc_char                { color: #77dd77; }
+span.numeric                 { color: #FF0000; }
+span.ident                   { color: #2040a0; }
+span.predef_ident            { color: #2040a0; font-weight: bold; }
+span.type                    { color: #2040a0; font-weight: bold; }
+span.predef_type             { color: #2040a0; font-weight: bold; }
+span.keyword                 {                 font-weight: bold; }
+span.library_fn              { color: #a52a2a; font-weight: bold; }
+span.include                 { color: #0000ff; font-weight: bold; }
+span.preproc                 { color: #0000ff; font-weight: bold; }
+span.braces                  { color: #4444FF; font-weight: bold; }
+span.symbol                  { color: #4444FF; }
+span.fn_header               {                 font-weight: bold; }
+span.fn_header_name          { color: #ff0000; }
+span.fn_header_args          { color: #2040a0; }
+span.regex                   { color: #b000d0; }
+span.text                    {                 font-style: italic; }
+span.entity                  { color: #ff0000; }
+span.assignment              { color: #2040a0; }
+span.dep_line                { color: #8b2252; }
+span.dep_target              {                 font-weight: bold; }
+span.dep_cont                { color: #000000; font-weight: bold; }
+span.macro                   { color: #2040a0; }
+span.int_macro               { color: #4080ff; }
+span.esc_usd                 { color: #444444; }
+  -->
+  </style>
+</head>
+<body>
+<pre>
+<span class="comment">/*
+ *  module2.c - Create an input/output character device
+ *
+ *  Copyright © 2001, 2007 Peter Jay Salzman
+ *  http://tldp.org/LDP/lkmpg/2.6/html/lkmpg.html
+ *
+ *  Modified by Dr. Aleksander Malinowski 4/24/2013
+ *    deprecated dependence on kernel lock/unlock was removed
+ *  Modified by Dr. Aleksander Malinowski 4/3/2017
+ *    if down_interruptible(...) lock acquisitionn is interrupted and returns nonzero
+ *    then do not proceed, instead return error -ERESTARTSYS so that the upper layer may retry the call later
+ *    not that any progress iinside the device driver must be undone before such return
+ */</span>
+
+<span class="preproc">#include <span class="string">&lt;linux/kernel.h&gt;</span>      <span class="comment"> /* We're doing kernel work */</span></span>
+<span class="preproc">#include <span class="string">&lt;linux/module.h&gt;</span>      <span class="comment"> /* Specifically, a module */</span></span>
+// #<span class="ident">include</span> <span class="symbol">&lt;</span><span class="ident">linux</span>/<span class="ident">smp_lock</span>.<span class="ident">h</span><span class="symbol">&gt;</span>  <span class="comment">/* access semaphore to lock and unlock the kernel - deprecated */</span>
+//   <span class="ident">down_interruptible</span><span class="symbol">(</span><span class="symbol">&amp;</span><span class="ident">device_semaphore_xxx_lock</span><span class="symbol">)</span><span class="symbol">;</span>
+//   <span class="ident">up</span><span class="symbol">(</span><span class="symbol">&amp;</span><span class="ident">device_semaphore_xxx_lock</span><span class="symbol">)</span><span class="symbol">;</span>
+//       <span class="ident">separate</span> <span class="ident">semaphonre</span> <span class="ident">is</span> <span class="ident">used</span> <span class="keyword">for</span> <span class="ident">read</span>/<span class="ident">write</span> <span class="ident">and</span> <span class="keyword">for</span> <span class="ident">ioctl</span> <span class="ident">as</span> <span class="ident">ioctl</span> <span class="ident">calls</span> <span class="ident">read</span>/<span class="ident">write</span>
+//       <span class="ident">and</span> <span class="ident">the</span> <span class="ident">semaphonre</span> <span class="ident">is</span> <span class="ident">not</span> <span class="ident">recurisve</span> <span class="ident">unlike</span> <span class="ident">the</span> <span class="ident">deprecated</span> <span class="ident">Big</span> <span class="ident">kernel</span> <span class="ident">Lock</span>.
+<span class="preproc">#include <span class="string">&lt;linux/semaphore.h&gt;</span>   <span class="comment"> /* semaphore functinality */</span></span>
+<span class="preproc">#include <span class="string">&lt;linux/fs.h&gt;</span>          <span class="comment"> /* device struct data type definitions */</span></span>
+<span class="preproc">#include <span class="string">&lt;linux/uaccess.h&gt;</span>     <span class="comment"> /* for get_user and put_user */</span></span>
+
+<span class="preproc">#include <span class="string">&quot;module2.h&quot;</span></span>
+
+<span class="preproc">#define SUCCESS 0</span>
+<span class="preproc">#define DEVICE_NAME <span class="string">&quot;module2&quot;</span></span>
+<span class="preproc">#define BUF_LEN 80</span>
+
+<span class="comment">/* 
+ * we are using a dynamic major number, we need to save it so that we can clean up the module
+ */</span>
+<span class="keyword">static</span> <span class="keyword">int</span> <span class="ident">major_num</span><span class="symbol">;</span>
+
+<span class="comment">/* 
+ * semaphore to ensure correct work of the module
+ * to be used instead of deprecated down_interruptible(&amp;device_semaphore_lock)/up(&amp;device_semaphore_lock)
+ */</span>
+<span class="keyword">static</span> <span class="keyword">struct</span> <span class="ident">semaphore</span> <span class="ident">device_semaphore_rw_lock</span><span class="symbol">;</span>
+<span class="keyword">static</span> <span class="keyword">struct</span> <span class="ident">semaphore</span> <span class="ident">device_semaphore_ioctl_lock</span><span class="symbol">;</span>
+
+<span class="comment">/* 
+ * Is the device open right now? Used to prevent
+ * concurent access into the same device 
+ */</span>
+<span class="keyword">static</span> <span class="keyword">int</span> <span class="ident">device_open_count</span> <span class="symbol">=</span> <span class="numeric">0</span><span class="symbol">;</span>
+
+<span class="comment">/* 
+ * The message the device will give when asked 
+ */</span>
+<span class="keyword">static</span> <span class="keyword">char</span> <span class="ident">Message</span><span class="symbol">[</span><span class="ident">BUF_LEN</span><span class="symbol">]</span><span class="symbol">;</span>
+
+<span class="comment">/* 
+ * How far did the process reading the message get?
+ * Useful if the message is larger than the size of the
+ * buffer we get to fill in device_read. 
+ */</span>
+<span class="keyword">static</span> <span class="keyword">char</span> <span class="symbol">*</span><span class="ident">Message_Ptr</span><span class="symbol">;</span>
+
+<span class="comment">/* 
+ * This is called whenever a process attempts to open the device file 
+ */</span>
+<span class="keyword">static</span> <span class="keyword">int</span> <span class="ident">device_open</span><span class="symbol">(</span><span class="keyword">struct</span> <span class="ident">inode</span> <span class="symbol">*</span><span class="ident">inode</span>, <span class="keyword">struct</span> <span class="ident">file</span> <span class="symbol">*</span><span class="ident">file</span><span class="symbol">)</span>
+<span class="braces">{</span>
+    <span class="keyword">static</span> <span class="keyword">int</span> <span class="ident">counter</span> <span class="symbol">=</span> <span class="numeric">0</span><span class="symbol">;</span> <span class="comment">/* static variable is kept between function calls */</span>
+
+<span class="preproc">#ifdef DEBUG</span>
+    <span class="ident">printk</span><span class="symbol">(</span><span class="ident">KERN_INFO</span> <span class="string">&quot;device_open(%p)<span class="esc_char">\n</span>&quot;</span>, <span class="ident">file</span><span class="symbol">)</span><span class="symbol">;</span>
+<span class="preproc">#endif</span>
+
+    <span class="comment">/* 
+     * We don't want to talk to two processes at the same time 
+     */</span>
+    <span class="keyword">if</span> <span class="symbol">(</span><span class="ident">device_open_count</span><span class="symbol">)</span>
+        <span class="keyword">return</span> <span class="symbol">-</span><span class="ident">EBUSY</span><span class="symbol">;</span>
+
+    <span class="keyword">if</span> <span class="symbol">(</span><span class="ident">down_interruptible</span><span class="symbol">(</span><span class="symbol">&amp;</span><span class="ident">device_semaphore_rw_lock</span><span class="symbol">)</span><span class="symbol">)</span>
+        <span class="keyword">return</span> <span class="symbol">-</span><span class="ident">ERESTARTSYS</span><span class="symbol">;</span>
+    <span class="ident">device_open_count</span><span class="symbol">+</span><span class="symbol">+</span><span class="symbol">;</span>
+    <span class="comment">/*
+     * Initialize the message 
+     */</span>
+    <span class="ident">sprintf</span><span class="symbol">(</span><span class="ident">Message</span>, <span class="string">&quot;I already told you %d times Hello world!<span class="esc_char">\n</span>&quot;</span>, <span class="ident">counter</span><span class="symbol">+</span><span class="symbol">+</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="ident">Message_Ptr</span> <span class="symbol">=</span> <span class="ident">Message</span><span class="symbol">;</span>
+    <span class="ident">try_module_get</span><span class="symbol">(</span><span class="ident">THIS_MODULE</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="ident">up</span><span class="symbol">(</span><span class="symbol">&amp;</span><span class="ident">device_semaphore_rw_lock</span><span class="symbol">)</span><span class="symbol">;</span>
+
+    <span class="keyword">return</span> <span class="ident">SUCCESS</span><span class="symbol">;</span>
+<span class="braces">}</span>
+
+<span class="keyword">static</span> <span class="keyword">int</span> <span class="ident">device_release</span><span class="symbol">(</span><span class="keyword">struct</span> <span class="ident">inode</span> <span class="symbol">*</span><span class="ident">inode</span>, <span class="keyword">struct</span> <span class="ident">file</span> <span class="symbol">*</span><span class="ident">file</span><span class="symbol">)</span>
+<span class="braces">{</span>
+<span class="preproc">#ifdef DEBUG</span>
+    <span class="ident">printk</span><span class="symbol">(</span><span class="ident">KERN_INFO</span> <span class="string">&quot;device_release(%p,%p)<span class="esc_char">\n</span>&quot;</span>, <span class="ident">inode</span>, <span class="ident">file</span><span class="symbol">)</span><span class="symbol">;</span>
+<span class="preproc">#endif</span>
+
+    <span class="comment">/* 
+     * We're now ready for our next caller 
+     */</span>
+    <span class="keyword">if</span> <span class="symbol">(</span><span class="ident">down_interruptible</span><span class="symbol">(</span><span class="symbol">&amp;</span><span class="ident">device_semaphore_rw_lock</span><span class="symbol">)</span><span class="symbol">)</span>
+        <span class="keyword">return</span> <span class="symbol">-</span><span class="ident">ERESTARTSYS</span><span class="symbol">;</span>
+    <span class="ident">device_open_count</span><span class="symbol">-</span><span class="symbol">-</span><span class="symbol">;</span>
+    <span class="ident">module_put</span><span class="symbol">(</span><span class="ident">THIS_MODULE</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="ident">up</span><span class="symbol">(</span><span class="symbol">&amp;</span><span class="ident">device_semaphore_rw_lock</span><span class="symbol">)</span><span class="symbol">;</span>
+
+    <span class="keyword">return</span> <span class="ident">SUCCESS</span><span class="symbol">;</span>
+<span class="braces">}</span>
+
+<span class="comment">/* 
+ * This function is called whenever a process which has already opened the
+ * device file attempts to read from it.
+ */</span>
+<span class="keyword">static</span> <span class="ident">ssize_t</span> <span class="ident">device_read</span><span class="symbol">(</span><span class="keyword">struct</span> <span class="ident">file</span> <span class="symbol">*</span><span class="ident">file</span>, <span class="keyword">char</span> <span class="ident">__user</span> <span class="symbol">*</span> <span class="ident">buffer</span>, <span class="keyword">size_t</span> <span class="ident">length</span>, <span class="ident">loff_t</span> <span class="symbol">*</span> <span class="ident">offset</span><span class="symbol">)</span>
+<span class="braces">{</span>
+    <span class="comment">/* 
+     * Number of bytes actually written to the buffer 
+     */</span>
+    <span class="keyword">int</span> <span class="ident">bytes_read</span> <span class="symbol">=</span> <span class="numeric">0</span><span class="symbol">;</span>
+
+<span class="preproc">#ifdef DEBUG</span>
+    <span class="ident">printk</span><span class="symbol">(</span><span class="ident">KERN_INFO</span> <span class="string">&quot;device_read(%p,%p,%d)<span class="esc_char">\n</span>&quot;</span>, <span class="ident">file</span>, <span class="ident">buffer</span>, <span class="ident">length</span><span class="symbol">)</span><span class="symbol">;</span>
+<span class="preproc">#endif</span>
+
+    <span class="comment">/* 
+     * If we're at the end of the message, return 0
+     * (which signifies end of file) 
+     */</span>
+    <span class="keyword">if</span> <span class="symbol">(</span><span class="symbol">*</span><span class="ident">Message_Ptr</span> <span class="symbol">=</span><span class="symbol">=</span> <span class="numeric">0</span><span class="symbol">)</span>
+        <span class="keyword">return</span> <span class="numeric">0</span><span class="symbol">;</span>
+
+    <span class="comment">/* 
+     * Actually put the data into the buffer 
+     */</span>
+    <span class="keyword">if</span> <span class="symbol">(</span><span class="ident">down_interruptible</span><span class="symbol">(</span><span class="symbol">&amp;</span><span class="ident">device_semaphore_rw_lock</span><span class="symbol">)</span><span class="symbol">)</span>
+        <span class="keyword">return</span> <span class="symbol">-</span><span class="ident">ERESTARTSYS</span><span class="symbol">;</span>
+    <span class="keyword">while</span> <span class="symbol">(</span><span class="ident">length</span> <span class="symbol">&amp;</span><span class="symbol">&amp;</span> <span class="symbol">*</span><span class="ident">Message_Ptr</span><span class="symbol">)</span> <span class="braces">{</span>
+
+        <span class="comment">/* 
+         * Because the buffer is in the user data segment,
+         * not the kernel data segment, assignment wouldn't
+         * work. Instead, we have to use put_user which
+         * copies data from the kernel data segment to the
+         * user data segment. 
+         */</span>
+        <span class="ident">put_user</span><span class="symbol">(</span><span class="symbol">*</span><span class="symbol">(</span><span class="ident">Message_Ptr</span><span class="symbol">+</span><span class="symbol">+</span><span class="symbol">)</span>, <span class="ident">buffer</span><span class="symbol">+</span><span class="symbol">+</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="ident">length</span><span class="symbol">-</span><span class="symbol">-</span><span class="symbol">;</span>
+        <span class="ident">bytes_read</span><span class="symbol">+</span><span class="symbol">+</span><span class="symbol">;</span>
+    <span class="braces">}</span>
+    <span class="ident">up</span><span class="symbol">(</span><span class="symbol">&amp;</span><span class="ident">device_semaphore_rw_lock</span><span class="symbol">)</span><span class="symbol">;</span>
+
+<span class="preproc">#ifdef DEBUG</span>
+    <span class="ident">printk</span><span class="symbol">(</span><span class="ident">KERN_INFO</span> <span class="string">&quot;Read %d bytes, %d left<span class="esc_char">\n</span>&quot;</span>, <span class="ident">bytes_read</span>, <span class="ident">length</span><span class="symbol">)</span><span class="symbol">;</span>
+<span class="preproc">#endif</span>
+
+    <span class="comment">/* 
+     * Read functions are supposed to return the number
+     * of bytes actually inserted into the buffer 
+     */</span>
+    <span class="keyword">return</span> <span class="ident">bytes_read</span><span class="symbol">;</span>
+<span class="braces">}</span>
+
+<span class="comment">/* 
+ * This function is called when somebody tries to
+ * write into our device file. 
+ */</span>
+<span class="keyword">static</span> <span class="ident">ssize_t</span> <span class="ident">device_write</span><span class="symbol">(</span><span class="keyword">struct</span> <span class="ident">file</span> <span class="symbol">*</span><span class="ident">file</span>, <span class="keyword">const</span> <span class="keyword">char</span> <span class="ident">__user</span> <span class="symbol">*</span> <span class="ident">buffer</span>, <span class="keyword">size_t</span> <span class="ident">length</span>, <span class="ident">loff_t</span> <span class="symbol">*</span> <span class="ident">offset</span><span class="symbol">)</span>
+<span class="braces">{</span>
+    <span class="keyword">int</span> <span class="ident">i</span><span class="symbol">;</span>
+
+<span class="preproc">#ifdef DEBUG</span>
+    <span class="ident">printk</span><span class="symbol">(</span><span class="ident">KERN_INFO</span> <span class="string">&quot;device_write(%p,%s,%d)&quot;</span>, <span class="ident">file</span>, <span class="ident">buffer</span>, <span class="ident">length</span><span class="symbol">)</span><span class="symbol">;</span>
+<span class="preproc">#endif</span>
+
+    <span class="keyword">if</span> <span class="symbol">(</span><span class="ident">down_interruptible</span><span class="symbol">(</span><span class="symbol">&amp;</span><span class="ident">device_semaphore_rw_lock</span><span class="symbol">)</span><span class="symbol">)</span>
+        <span class="keyword">return</span> <span class="symbol">-</span><span class="ident">ERESTARTSYS</span><span class="symbol">;</span>
+    <span class="keyword">for</span> <span class="symbol">(</span><span class="ident">i</span> <span class="symbol">=</span> <span class="numeric">0</span><span class="symbol">;</span> <span class="ident">i</span> <span class="symbol">&lt;</span> <span class="ident">length</span> <span class="symbol">&amp;</span><span class="symbol">&amp;</span> <span class="ident">i</span> <span class="symbol">&lt;</span> <span class="ident">BUF_LEN</span><span class="symbol">;</span> <span class="ident">i</span><span class="symbol">+</span><span class="symbol">+</span><span class="symbol">)</span>
+        <span class="ident">get_user</span><span class="symbol">(</span><span class="ident">Message</span><span class="symbol">[</span><span class="ident">i</span><span class="symbol">]</span>, <span class="ident">buffer</span> <span class="symbol">+</span> <span class="ident">i</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="ident">Message_Ptr</span> <span class="symbol">=</span> <span class="ident">Message</span><span class="symbol">;</span>
+    <span class="ident">up</span><span class="symbol">(</span><span class="symbol">&amp;</span><span class="ident">device_semaphore_rw_lock</span><span class="symbol">)</span><span class="symbol">;</span>
+
+    <span class="comment">/* 
+     * Again, return the number of input characters used 
+     */</span>
+    <span class="keyword">return</span> <span class="ident">i</span><span class="symbol">;</span>
+<span class="braces">}</span>
+
+<span class="comment">/* 
+ * This function is called when somebody tries to
+ * change the current read/write position in a file, and
+ * the new position is returned as a (positive) return value.
+ */</span>
+<span class="keyword">static</span> <span class="ident">loff_t</span> <span class="ident">device_llseek</span> <span class="symbol">(</span><span class="keyword">struct</span> <span class="ident">file</span> <span class="symbol">*</span><span class="ident">file</span>, <span class="ident">loff_t</span> <span class="ident">offset</span>, <span class="keyword">int</span> <span class="ident">origin</span><span class="symbol">)</span>
+<span class="braces">{</span>
+<span class="preproc">#ifdef DEBUG</span>
+    <span class="ident">printk</span><span class="symbol">(</span><span class="ident">KERN_INFO</span> <span class="string">&quot;device_llseek(%p,%ld,%d)&quot;</span>, <span class="ident">file</span>, <span class="ident">offset</span>, <span class="ident">origin</span><span class="symbol">)</span><span class="symbol">;</span>
+<span class="preproc">#endif</span>
+    
+    <span class="comment">/* 
+     * Again, the new position is returned as a (positive) return value
+     * Errors are signaled by a negative return value
+     */</span>
+    <span class="keyword">return</span> <span class="numeric">0</span><span class="symbol">;</span>
+<span class="braces">}</span>
+
+<span class="comment">/* 
+ * This function is called whenever a process tries to do an ioctl on our
+ * device file. We get two extra parameters (additional to the inode and file
+ * structures, which all device functions get): the number of the ioctl called
+ * and the parameter given to the ioctl function.
+ *
+ * If the ioctl is write or read/write (meaning output is returned to the
+ * calling process), the ioctl call returns the output of this function.
+ *
+ */</span>
+<span class="keyword">static</span> <span class="keyword">long</span> <span class="ident">device_ioctl</span><span class="symbol">(</span> <span class="keyword">struct</span> <span class="ident">file</span> <span class="symbol">*</span><span class="ident">file</span>, <span class="keyword">unsigned</span> <span class="keyword">int</span> <span class="ident">ioctl_num</span>, <span class="keyword">unsigned</span> <span class="keyword">long</span> <span class="ident">ioctl_param</span><span class="symbol">)</span>
+<span class="braces">{</span>
+    <span class="keyword">int</span> <span class="ident">i</span><span class="symbol">;</span>
+    <span class="keyword">char</span> <span class="symbol">*</span><span class="ident">temp</span><span class="symbol">;</span>
+    <span class="keyword">char</span> <span class="ident">ch</span><span class="symbol">;</span>
+    <span class="keyword">int</span> <span class="ident">status</span> <span class="symbol">=</span> <span class="ident">SUCCESS</span><span class="symbol">;</span>
+
+    
+    <span class="comment">/* 
+     * Switch according to the ioctl called 
+     */</span>
+    <span class="keyword">switch</span> <span class="symbol">(</span><span class="ident">ioctl_num</span><span class="symbol">)</span> <span class="braces">{</span>
+    <span class="keyword">case</span> <span class="ident">IOCTL_SET_MSG</span><span class="symbol">:</span>
+        <span class="comment">/* 
+         * Receive a pointer to a message (in user space) and set that
+         * to be the device's message.  Get the parameter given to 
+         * ioctl by the process. 
+         */</span>
+        <span class="ident">temp</span> <span class="symbol">=</span> <span class="symbol">(</span><span class="keyword">char</span> <span class="symbol">*</span><span class="symbol">)</span><span class="ident">ioctl_param</span><span class="symbol">;</span>
+
+        <span class="comment">/* 
+         * Find the length of the message 
+         */</span>
+        <span class="ident">get_user</span><span class="symbol">(</span><span class="ident">ch</span>, <span class="ident">temp</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="keyword">for</span> <span class="symbol">(</span><span class="ident">i</span> <span class="symbol">=</span> <span class="numeric">0</span><span class="symbol">;</span> <span class="ident">ch</span> <span class="symbol">&amp;</span><span class="symbol">&amp;</span> <span class="ident">i</span> <span class="symbol">&lt;</span> <span class="ident">BUF_LEN</span><span class="symbol">;</span> <span class="ident">i</span><span class="symbol">+</span><span class="symbol">+</span>, <span class="ident">temp</span><span class="symbol">+</span><span class="symbol">+</span><span class="symbol">)</span>
+            <span class="ident">get_user</span><span class="symbol">(</span><span class="ident">ch</span>, <span class="ident">temp</span><span class="symbol">)</span><span class="symbol">;</span>
+
+        <span class="ident">device_write</span><span class="symbol">(</span><span class="ident">file</span>, <span class="symbol">(</span><span class="keyword">char</span> <span class="symbol">*</span><span class="symbol">)</span><span class="ident">ioctl_param</span>, <span class="ident">i</span>, <span class="numeric">0</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="keyword">break</span><span class="symbol">;</span>
+
+    <span class="keyword">case</span> <span class="ident">IOCTL_GET_MSG</span><span class="symbol">:</span>
+        <span class="comment">/* 
+         * Give the current message to the calling process - 
+         * the parameter we got is a pointer, fill it. 
+         */</span>
+        <span class="ident">i</span> <span class="symbol">=</span> <span class="ident">device_read</span><span class="symbol">(</span><span class="ident">file</span>, <span class="symbol">(</span><span class="keyword">char</span> <span class="symbol">*</span><span class="symbol">)</span><span class="ident">ioctl_param</span>, <span class="numeric">99</span>, <span class="numeric">0</span><span class="symbol">)</span><span class="symbol">;</span>
+
+        <span class="comment">/* 
+         * Put a zero at the end of the buffer, so it will be 
+         * properly terminated 
+         */</span>
+        <span class="ident">put_user</span><span class="symbol">(</span><span class="char">'<span class="esc_char">\0</span>'</span>, <span class="symbol">(</span><span class="keyword">char</span> <span class="symbol">*</span><span class="symbol">)</span><span class="ident">ioctl_param</span> <span class="symbol">+</span> <span class="ident">i</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="keyword">break</span><span class="symbol">;</span>
+
+    <span class="keyword">case</span> <span class="ident">IOCTL_GET_NTH_BYTE</span><span class="symbol">:</span>
+        <span class="comment">/* 
+         * This ioctl is both input (ioctl_param) and 
+         * output (the return value of this function) 
+         */</span>
+        <span class="keyword">return</span> <span class="ident">Message</span><span class="symbol">[</span><span class="ident">ioctl_param</span><span class="symbol">]</span><span class="symbol">;</span>
+        <span class="keyword">break</span><span class="symbol">;</span>
+    <span class="keyword">default</span><span class="symbol">:</span>
+        <span class="ident">status</span> <span class="symbol">=</span> <span class="symbol">-</span><span class="ident">EINVAL</span><span class="symbol">;</span> <span class="comment">/* invalid IOCTL argument */</span>
+    <span class="braces">}</span>
+
+    <span class="keyword">return</span> <span class="ident">status</span><span class="symbol">;</span>
+<span class="braces">}</span>
+
+<span class="comment">/* Module Declarations */</span>
+
+<span class="comment">/* 
+ * This structure will hold the functions to be called
+ * when a process does something to the device we
+ * created. Since a pointer to this structure is kept in
+ * the devices table, it can't be local to
+ * init_module. NULL is for unimplemented functions. 
+ */</span>
+<span class="keyword">struct</span> <span class="ident">file_operations</span> <span class="ident">fops</span> <span class="symbol">=</span> <span class="braces">{</span>
+    .<span class="ident">owner</span>   <span class="symbol">=</span> <span class="ident">THIS_MODULE</span>,
+    .<span class="ident">llseek</span>  <span class="symbol">=</span> <span class="ident">device_llseek</span>,
+    .<span class="ident">read</span>    <span class="symbol">=</span> <span class="ident">device_read</span>,
+    .<span class="ident">write</span>   <span class="symbol">=</span> <span class="ident">device_write</span>,
+    .<span class="ident">unlocked_ioctl</span> <span class="symbol">=</span> <span class="ident">device_ioctl</span>,
+    .<span class="ident">open</span>    <span class="symbol">=</span> <span class="ident">device_open</span>,
+    .<span class="ident">release</span> <span class="symbol">=</span> <span class="ident">device_release</span>,  <span class="comment">/* a.k.a. close */</span>
+<span class="braces">}</span><span class="symbol">;</span>
+
+<span class="comment">/* 
+ * Initialize the module - Register the character device 
+ */</span>
+<span class="keyword">int</span> <span class="ident">init_module</span><span class="symbol">(</span><span class="symbol">)</span>
+<span class="braces">{</span>
+
+    <span class="comment">/* 
+     * initialize the device driver semaphore
+     */</span>
+    <span class="ident">sema_init</span><span class="symbol">(</span><span class="symbol">&amp;</span><span class="ident">device_semaphore_rw_lock</span>, <span class="numeric">1</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="ident">sema_init</span><span class="symbol">(</span><span class="symbol">&amp;</span><span class="ident">device_semaphore_ioctl_lock</span>, <span class="numeric">1</span><span class="symbol">)</span><span class="symbol">;</span>
+
+    <span class="comment">/* 
+     * Register the character device (atleast try) 
+     */</span>
+    <span class="ident">major_num</span> <span class="symbol">=</span> <span class="ident">register_chrdev</span><span class="symbol">(</span><span class="numeric">0</span>, <span class="ident">DEVICE_NAME</span>, <span class="symbol">&amp;</span><span class="ident">fops</span><span class="symbol">)</span><span class="symbol">;</span> <span class="comment">/* use this version for the first available major number */</span>
+    <span class="comment">/* major_num = register_chrdev(MAJOR_NUM, DEVICE_NAME, &amp;fops); -- use this version for preset major number */</span>
+
+    <span class="comment">/* 
+     * Negative values signify an error 
+     */</span>
+    <span class="keyword">if</span> <span class="symbol">(</span><span class="ident">major_num</span> <span class="symbol">&lt;</span> <span class="numeric">0</span><span class="symbol">)</span> <span class="braces">{</span>
+        <span class="ident">printk</span><span class="symbol">(</span><span class="ident">KERN_ALERT</span> <span class="string">&quot;%s failed with %d<span class="esc_char">\n</span>&quot;</span>,
+            <span class="string">&quot;Sorry, registering the character device &quot;</span>, <span class="ident">major_num</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="keyword">return</span> <span class="ident">major_num</span><span class="symbol">;</span>
+    <span class="braces">}</span>
+
+    <span class="ident">printk</span><span class="symbol">(</span><span class="ident">KERN_INFO</span> <span class="string">&quot;%s The major device number is %d.<span class="esc_char">\n</span>&quot;</span>,
+            <span class="string">&quot;Registeration is a success&quot;</span>, <span class="ident">major_num</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="ident">printk</span><span class="symbol">(</span><span class="ident">KERN_INFO</span> <span class="string">&quot;If you want to talk to the device driver,<span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="ident">printk</span><span class="symbol">(</span><span class="ident">KERN_INFO</span> <span class="string">&quot;you'll have to create a device file. <span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="ident">printk</span><span class="symbol">(</span><span class="ident">KERN_INFO</span> <span class="string">&quot;We suggest you use:<span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="ident">printk</span><span class="symbol">(</span><span class="ident">KERN_INFO</span> <span class="string">&quot;mknod %s c %d 0<span class="esc_char">\n</span>&quot;</span>, <span class="ident">DEVICE_FILE_NAME</span>, <span class="ident">major_num</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="ident">printk</span><span class="symbol">(</span><span class="ident">KERN_INFO</span> <span class="string">&quot;The device file name is important, because<span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="ident">printk</span><span class="symbol">(</span><span class="ident">KERN_INFO</span> <span class="string">&quot;the ioctl test program assumes that's the file you'll use.<span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+
+    <span class="keyword">return</span> <span class="numeric">0</span><span class="symbol">;</span>
+<span class="braces">}</span>
+
+<span class="comment">/* 
+ * Cleanup - unregister the appropriate file from /proc 
+ */</span>
+<span class="keyword">void</span> <span class="ident">cleanup_module</span><span class="symbol">(</span><span class="symbol">)</span>
+<span class="braces">{</span>
+    <span class="comment">/* 
+     * Unregister the device 
+     */</span>
+    <span class="ident">unregister_chrdev</span><span class="symbol">(</span><span class="ident">major_num</span>, <span class="ident">DEVICE_NAME</span><span class="symbol">)</span><span class="symbol">;</span>
+<span class="braces">}</span>
+
+<span class="ident">MODULE_LICENSE</span><span class="symbol">(</span><span class="string">&quot;GPL&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+<span class="ident">MODULE_AUTHOR</span><span class="symbol">(</span><span class="string">&quot;Aleksander Malinowski&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+<span class="ident">MODULE_DESCRIPTION</span><span class="symbol">(</span><span class="string">&quot;Example of a module with a semaphore&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+
+</pre>
+<!-- <hr>syntax highlighted by <a href="https://www.palfrader.org/code/code2html/">Code2HTML</a>, v. 0.9.1  -->
+</body>
+</html>

@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8" />
+<title>ECE472/572 (UCLX) Assignment Number 12</title>
+<!-- meta http-equiv="Pragma" content="no-cache" -->
+<meta name="robots" content="index,follow" />
+<!-- meta name="robots" content="noarchive" -->
+<link rel="shortcut icon" href="../../../icons/mopsys.ico" type="image/x-icon" />
+<script type="text/JavaScript" src="../../../default.js"></script>
+<link rel="stylesheet" href="../../../default.css" type="text/css" />
+<style type="text/css" />
+<!--
+.s_command {font-family: "Courier New", Courier, mono; }
+.s_tograde {color: #006600; }
+.s_tosee {color: #0000FF; }
+.s_optional { font-weight: lighter; color: #3F3FFF; }
+.s_warning {font-weight: bold; color: #7F0000; }
+.s_cmd_choice {color: #FF0000; font-family: "Courier New", Courier, mono; }
+.s_cmd_4grade {color: #006600; font-family: "Courier New", Courier, mono; }
+.s_code_fragment {font-family: "Courier New", Courier, mono; color: #0000FF; }
+-->
+</style>
+</head>
+<body>
+
+<h1>ECE 472/572 Assignment 12</h1>
+
+
+
+<h2>Prepare for the lab</h2>
+
+<p>Answer these questions while doing this lab &ndash; they will help you understand the procedure and better prepare for the tests.</p>
+<ul>
+    <li>Please note that except of installing the necessary tools we do not use root privileges. 
+        What does <span class="s_command">fakeroot</span> do?
+    </li>
+    <li>What is <span class="s_command">Debian Helper</span> or <span class="s_command">dh_make</span>? What does it do? 
+        Can you name other programs from this group of programs and tell what do they do for <span class="s_command">dh_make</span>?
+    </li>
+    <li>What is the impact of use of a <span class="s_command">.PHONY:</span> line in any Make file?</li>
+    <li>After you complete this exercise: in package dh-make there are several utilities with names starting dh_xxx. 
+        Could you name a few of them? What is used to run the build? During that build:
+        <ul>
+            <li>What is used to create the script to install and run init.d script during installation?</li>
+            <li>What is used to create a script to modify the cron table during installation?</li>
+            <li>What is used to create a device access file using <span class="s_command">UDEV</span> technology?</li>
+            <li>What is used to trigger actions in case networks is connected or disconnected?</li>
+            <li>What is used to modify the user interface menu?</li>
+        </ul>
+    </li>
+    <li>At some point while doing this lab you will be asked to inspect the files listed below. 
+        What is the significance of each of these files?
+        <ul>
+            <li><span class="s_command">debian/http-counter/DEBIAN/control</span></li>
+            <li><span class="s_command">debian/http-counter/DEBIAN/preinst</span></li>
+            <li><span class="s_command">debian/http-counter/DEBIAN/postinst</span></li>
+            <li><span class="s_command">debian/http-counter/DEBIAN/prerm</span></li>
+            <li><span class="s_command">debian/http-counter/DEBIAN/postrm</span></li>
+        </ul>
+    </li>
+    <li>What is the use of <span class="s_command">debuild</span>?</li>
+    <li>What is the use of <span class="s_command">lintian</span>?</li>
+    <li>What is the use of <span class="s_command">dpkg</span>?</li>
+</ul>
+
+
+<h2>Activity 1 (20pts.)</h2>
+
+<p>This activity is based on the book published at <a href="https://www.debian.org/doc/manuals/maint-guide/index.en.html">https://www.debian.org/doc/manuals/maint-guide/index.en.html</a>.</p>
+
+<h3>Create a Debian distribution package </h3>
+
+<p><strong>Important! If you still have service from Lab 8 installed 
+please perform the clean up of that lab before starting this lab.</strong></p>
+
+<ul>
+    <li><span class="s_tograde">Record this procedure using script for the assignment submission.
+        <br /><span class="s_command">script hwC.txt </span></span>
+    </li>
+    <li>Download and install necessary packages. You might have some of them already installed. 
+        However, the attempt was made to list all key packages in case you started from a fresh installation. 
+        <ul>
+            <li><span class="s_command">sudo apt-get update</span></li>
+            <li><span class="s_command">sudo apt-get install build-essential dh-make devscripts fakeroot patch diffutils patchutils</span></li>
+        </ul>
+    </li>
+    <li>Make a directory <span class="s_command">http-counter-1.0</span>. 
+        The name of that folder will be the name of your package. 
+        If you choose a different name that does not match your main binary file 
+        then you may have to make changes in several configuration files.
+        <ul>
+            <li><span class="s_command">mkdir http-counter-1.0</span></li>
+            <li><span class="s_command">cd http-counter-1.0</span></li>
+        </ul>
+    </li>
+    <li><strong>Download and unpack </strong> <a href="C_code.tar.gz"><strong>the source code of the program</strong></a> that you are going to distribute in your package into that folder. 
+        <br>This version has an updated <span class="s_command">Makefile</span> 
+        that includes rules for automated installation upon successful compilation of the package. 
+        <br>Our goal is to precompile it and pack into a Debian installation package. 
+        Upon successful package creation the installation package will be stored in the parent folder.
+    </li>
+    <li>Do the following changes to <span class="s_command">Makefile</span>:
+        <ul>
+            <li><span class="s_command">gedit Makefile &amp;</span></li>
+            <li>In the rule for <span class="s_command">install</span> 
+                comment or remove the lines that have anything to do with copying files to 
+                <span class="s_command">/etc/init.d</span> or <span class="s_command">update-rc.d</span>. 
+            </li>
+            <li>In the <span class="s_command">Makefile</span> consider commenting out or deleting the rule for 
+                <span class="s_command">remove</span>.
+            </li>
+        </ul>
+    </li>
+    <li>Inspect contents of the file <span class="s_command">http-counter.sh</span>
+        <ul>
+            <li><span class="s_command">gedit http-counter.sh &amp;</span></li>
+        </ul>
+    </li>
+    <li>Create the package creation project. Select single binary package project.
+        <ul>
+            <li><span class="s_command">dh_make -s -c gpl --createorig</span></li>
+            <li>Note: should you need to run it again please do remove the folder 
+                <span class="s_command">debian</span> and its contents before running it again.
+            </li>
+        </ul>
+    </li>
+    <li>Go into the folder <span class="s_command">debian</span> that has just been created. 
+        You will need to do several changes there: 
+        <ul>
+            <li>In file <span class="s_command">dirs</span>, if the file does not exist, create one and edit it:
+                <ul>
+                    <li><span class="s_command">touch debian/dirs</span></li>
+                    <li><span class="s_command">gedit debian/dirs &amp;</span> </li>
+                    <li>add a line containing <span class="s_command">usr/sbin</span></li>
+                    <li>add a line containing <span class="s_command">etc/init.d</span></li>
+                    <li>add a line containing <span class="s_command">var/log/http-counter</span></li>
+                    <li>add a line containing <span class="s_command">usr/share/doc</span></li>
+                    <li>add a line containing <span class="s_command">usr/share/applications</span></li>
+                    <li>remove the line containing <span class="s_command">usr/bin</span> 
+                        and any other lines not mentioned above. The file shall look like below:
+                    </li>
+                </ul>
+                <blockquote>
+                    <p><span class="s_code_fragment">usr/sbin
+                    <br>etc/init.d
+                    <br>var/log/http-counter
+                    <br>usr/share/doc
+                    <br>usr/share/applications</span></p>
+                </blockquote>
+            </li>
+            <li><strong>Copy the <a href="C_rules_Makefile.txt.HTML">provided rules file</a></strong> 
+                to the newly generated file <span class="s_command">rules</span>, 
+                if the file does not exist, create one and edit it:
+                <ul>
+                    <li>make sure that there are no empty lines above the so-called Shebang line:
+                        <br><span class="s_command">#!/usr/bin/make -f</span>
+                    </li>
+                    <li><span class="s_command">gedit debian/rules &amp;</span><br>Pay attentions to TABs like in Makefiles!</li>
+                    <li>in rule for <span class="s_command">binary-arch</span> uncomment 
+                        <span class="s_command">dh_install</span>, 
+                        <span class="s_command">dh_installinit</span>, 
+                        <span class="s_command">dh_installman</span>.
+                    </li>
+                    <li>in rule for <span class="s_command">binary-arch</span> add to 
+                        <span class="s_command">dh_installinit</span> the following parameters: 
+                        <span class="s_command"><br>--update-rcd-params=&quot;defaults&quot; --restart-after-upgrade</span>
+                    </li>
+                    <li>in rule for <span class="s_command">binary-arch</span> add to 
+                        <span class="s_command">dh_install</span> the following parameters: 
+                        <span class="s_command"><br>http-counter usr/sbin</span>
+                    </li>
+                    <li>in rule for <span class="s_command">binary-arch</span> add one more line directly 
+                        after the line above:
+                        <br><span class="s_command">dh_install http-counter.desktop usr/share/applications</span>
+                    </li>
+                </ul>
+            </li>
+            <li>Startup scripts: copy contents of the file 
+                <span class="s_command">http-counter.sh</span> as <span class="s_command">debian/init.d</span>
+                <br>and make sure that the copied file is marked as executable
+                    (use <span class="s_command">chmod</span>as needed but it should already be executable.)
+                <ul>
+                    <li><span class="s_command">cp http-counter.sh debian/init.d</span></li>
+                    <li><span class="s_command">chmod a+rx debian/init.d</span></li>
+                    <li><span class="s_command">gedit debian/init.d &amp;</span></li>
+                </ul>
+            </li>
+            <li>Maintenance scripts: copy contents of the file 
+                <span class="s_command">http-counter.cron.d.ex</span> as <span class="s_command">debian/cron.d</span>
+                <br>and edit the file to remove the existing CRON table entry.
+                <ul>
+                    <li><span class="s_command">cp debian/http-counter.cron.d.ex debian/cron.d</span></li>
+                    <li><span class="s_command">gedit debian/cron.d &amp;</span></li>
+                    <li>No customization is required at this time.</li>
+                </ul>
+            </li>
+            <li>Rename or copy the file 
+                <span class="s_command">debian/preinst.ex</span> as <span class="s_command">debian/preinst</span>
+                  <ul>
+                      <li><span class="s_command">cp debian/preinst.ex debian/preinst</span></li>
+                      <li><span class="s_command">gedit debian/preinst &amp;</span></li>
+                      <li>No customization is required at this time.</li>
+                  </ul>
+            </li>
+            <li>Rename or copy the file 
+                <span class="s_command">debian/postinst.ex</span> as <span class="s_command">debian/postinst</span>
+                <ul>
+                    <li><span class="s_command">cp debian/postinst.ex debian/postinst</span></li>
+                    <li><span class="s_command">gedit debian/postinst &amp;</span></li>
+                    <li>Add instruction to create a new user like you did manually in the Lab 8. 
+                        Place it in the configure case:
+                        <br><span class="s_command">configure)<br></span>
+                        <span class="s_command">adduser --group --system --disabled-password --no-create-home --home /var/log/http-counter --shell /bin/sh counter
+                        <br>chown -R counter:counter /var/log/http-counter</span><span class="s_command">
+                        <br>;;</span>
+                    </li>
+                </ul>
+            <li>Rename or copy the file 
+                <span class="s_command">debian/prerm.ex</span> as <span class="s_command">debian/prerm</span>
+                <ul>
+                    <li><span class="s_command">cp debian/prerm.ex debian/prerm</span></li>
+                    <li><span class="s_command">gedit debian/prerm &amp;</span></li>
+                    <li>No customization is required at this time.</li>
+                </ul>
+            <li>Rename or copy the file 
+                <span class="s_command">debian/postrm.ex</span> as <span class="s_command">debian/postrm</span>
+                <ul>
+                    <li><span class="s_command">cp debian/postrm.ex debian/postrm</span></li>
+                    <li><span class="s_command">gedit debian/postrm &amp;</span></li>
+                    <li>No customization is required at this time.</li>
+                </ul>
+            <li>Update contents of the file <span class="s_command">control</span>
+                <ul>
+                    <li><span class="s_command">gedit debian/control &amp;</span></li>
+                    <li>update the short and long package description</li>
+                    <li>In line that starts with <span class="s_command">Depends:</span> append 
+                        <span class="s_command">, netbase, adduser</span>
+                    </li>
+                </ul>
+            </li>
+            <li>In the file <span class="s_command">debian/copyright</span>
+                insert <span class="s_cmd_choice">your name and BU affiliation</span>. The license should be GNU.
+                <ul>
+                    <li><span class="s_command">gedit debian/copyright</span> &amp; </li>
+                    <li>No other customization required at this time.</li>
+                </ul>
+            </li>
+            <li>Copy the file 
+                <span class="s_command">debian/manpage.1.ex</span> to <span class="s_command">debian/http-counter.1</span> 
+                and look what is inside.
+                <ul>
+                    <li><span class="s_command">cp debian/manpage.1.ex debian/http-counter.1</span></li>
+                    <li><span class="s_command">gedit debian/http-counter.1</span> &amp;</li>
+                    <li>Dare to make at least some changes in <span class="s_command">http-counter.1</span>? 
+                        <br>Please do change at least the author's name to your name. 
+                    </li>
+                </ul>
+            </li>
+            <li>Create a file named <span class="s_command">debian/http-counter.manpages</span>
+                <ul>
+                    <li><span class="s_command">touch debian/http-counter.manpages</span></li>
+                    <li><span class="s_command">gedit debian/http-counter.manpages &amp;</span></li>
+                    <li>add a line containing: <span class="s_command">debian/http-counter.1</span></li>
+                </ul>
+            </li>
+            <li>Create file <span class="s_command">http-counter.desktop</span> and paste the provided text
+                <ul>
+                    <li><span class="s_command">touch http-counter.desktop</span></li>
+                    <li><span class="s_command">gedit http-counter.desktop &amp;</span></li>
+                    <li>The content of the file shall be as listed below:
+                        <blockquote>
+                            <p><span class="s_code_fragment">[Desktop Entry]
+                            <br>Type=Application
+                            <br>Categories=Network
+                            <br>Terminal=true
+                            <br>Name=remove http-counter
+                            <br>Exec=sudo -i sh -c "dpkg -P http-counter"
+                            <br>Icon=/usr/share/pixmaps/debian-logo.png</span></p>
+                        </blockquote>
+                    </li>
+                </ul>
+            </li>
+            <li>Inspect file <span class="s_command">debian/changelog</span> file:
+                <ul>
+                    <li><span class="s_command">gedit debian/changelog &amp;</span></li>
+                </ul>
+            </li>
+            <li>Delete the source code folder and other files that are not needed:
+                <ul>
+                    <li><span class="s_command">rm -r debian/source debian/*.ex debian/*.EX debian/README.*</span></li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li>Inspect your changes :</li>
+    <ul>
+        <li><span class="s_command">ls -lF debian/*</span></li>
+        <li><span class="s_command">cat debian/dirs</span></li>
+        <li><span class="s_command">cat debian/rules</span></li>
+        <li><span class="s_command">cat debian/init.d</span></li>
+        <li><span class="s_command">cat debian/cron.d</span></li>
+        <li><span class="s_command">cat debian/control</span></li>
+        <li><span class="s_command">cat debian/copyright</span></li>
+        <li><span class="s_command">cat debian/http-counter.1</span></li>
+        <li><span class="s_command">cat debian/http-counter.manpages</span></li>
+        <li><span class="s_command">cat http-counter.desktop</span></li>
+        <li><span class="s_command">cat debian/changelog</span></li>
+    </ul>
+    <li>Build the package: 
+    <ul>
+        <li><span class="s_command">debuild -- clean</span></li>
+        <li><span class="s_command">debuild -i -us -uc -b</span></li>
+        <li><span class="s_command">ls -lF * </span></li>
+        <li><span class="s_command">ls -lF ../* </span></li>
+    </ul>
+    </li>
+    <li>Inspect certain interesting files that were created automatically:
+    <ul>
+        <li><span class="s_command">ls -lF debian/http-counter/DEBIAN/*</span></li>
+        <li><span class="s_command">cat debian/http-counter/DEBIAN/control</span></li>
+        <li><span class="s_command">cat debian/http-counter/DEBIAN/postinst</span></li>
+        <li><span class="s_command">cat debian/http-counter/DEBIAN/prerm</span></li>
+        <li><span class="s_command">cat debian/http-counter/DEBIAN/postrm</span></li>
+    </ul>
+    </li>
+    <li>The installation package file is placed in the directory 
+        where you created the initial directory for your package source code. 
+        Go to that directory. Use file explorer if you have problems with locating it.
+        <ul>
+            <li><span class="s_command">cd ../</span> (or find the correct location)</li>
+        </ul>
+        Look for the file that is named
+        <span class="s_command">http-counter_1.0-<span class="s_cmd_choice">nnn_architecture</span>.deb</span> 
+        or close to that. The <span class="s_cmd_choice">architecture</span> typically would be one of the following:
+        <ul>
+            <li><span class="s_command">amd64</span> - for 64-bit Intel or AMD processor architecture</li>
+            <li><span class="s_command">i386</span> - for 32-bit Intel or AMD processor architecture</li>
+            <li><span class="s_command">arm</span> - for 32-bit ARM processor  architecture</li>
+            <li><span class="s_command">arm64</span> - for 64-bit ARM processor architecture</li>
+        </ul>
+    </li>
+    <li>Install the package, test if it works, and remove it. 
+        Adjust the name of the package during installation and removal as necessary. 
+        Pay attention to the exact spelling!
+    <ul>
+        <li><span class="s_command">ls -lF *.deb</span></li>
+        <li><span class="s_command">sudo dpkg -i http-counter_1.0-<span class="s_cmd_choice">nnn_architecture</span>.deb</span></li>
+        <li>Check if the service was installed and started:
+            <ul>
+                <li><span class="s_command">wget http://localhost:88/ -O - </span></li>
+                <li><span class="s_command">wget http://localhost:88/ -O - </span>
+                    <br>The counter shall run correctly and count
+                </li>
+                <li>You may check the same using your favorite Web browser running on the same Ubuntu machine - click
+                    <a href="http://localhost:88/">http://localhost:88/</a> </li>
+            </ul>
+        </li>
+        <li>If the service is installed but not started automatically start it manually.</li>
+        <li>Check if the menu item shows up.</li>
+        <li>Test if the service starts and stopes correctly:
+            <ul>
+                <li><span class="s_command">sudo systemctl stop http-counter.service</span></li>
+                <li><span class="s_command">wget http://localhost:88/ -O - </span>
+                    <br>The counter shall fail to run
+                </li>
+                <li><span class="s_command">sudo systemctl start http-counter.service</span></li>
+                <li><span class="s_command">wget http://localhost:88/ -O - </span>
+                    <br>The counter shall run correctly again and keep the count
+                </li>
+            </ul>
+        </li>
+        <li>That shall replace the need to restart the operating system inside the virtual machine.</li>
+        <li>Uninstall the package:
+            <ul>
+                <li><span class="s_command">sudo sudo dpkg -r http-counter</span></li>
+                <li><span class="s_command">sudo sudo dpkg -P http-counter</span></li>
+                <li><span class="s_command">wget http://localhost:88/ -O - </span>
+                    <br>The counter shall fail to run
+                </li>
+            </ul>
+        </li>
+    </ul>
+    </li>
+    <li>Check with the past assignment as it did instruct you to check do these checks. Do not create or remove things manually. All must be automated.</li>
+    <li><span class="s_tograde">Finish recording this test using script for the homework submission.</span></li>
+</ul>
+
+
+
+<h2>Submission</h2>
+
+<p>Drop the file with <span class="s_tograde">the information collected during the exercise as instructed</span> 
+and the created Debian package in the corresponding assignment drop box on Canvas.</p>
+
+<p>Thank you.</p>
+
+
+
+<p>
+<a href="../../../index.html"><img src="../../../icons/main.gif" class="menu32x32" alt="web site front" /></a>
+<a href="../index.html"><img src="../../../icons/menu.gif" class="menu32x32" alt="local main page" /></a>
+<a href="index.html"><img src="../../../icons/mmisc.gif" class="menu32x32" alt="local list page" /></a>
+<a href="../../../bookmark/index.html"><img src="../../../icons/mbookmark.gif" class="menu32x32" alt="general bookmarks" /></a>
+<a href="../../../bookmark/software.html"><img src="../../../icons/mbookabcd.gif" class="menu32x32" alt="software bookmarks" /></a>
+<a href="javascript:void(window.history.back());"><img src="../../../icons/maleft.gif" class="menu32x32" alt="go back" /></a>
+<a href="javascript:void(window.open('../../../copyright.html','C','toolbar=no,status=no,menubar=no,directories=no,location=no,width=600,height=500,resizable=no'));"><img src="../../../icons/mchecked.gif" class="menu32x32" alt="copyright info" /></a>
+</p>
+
+</body>
+</html>

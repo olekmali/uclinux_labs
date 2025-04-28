@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8" />
+<title>ECE472/572 (UCLX) Assignment Number 8</title>
+<!-- meta http-equiv="Pragma" content="no-cache" -->
+<meta name="robots" content="index,follow" />
+<!-- meta name="robots" content="noarchive" -->
+<link rel="shortcut icon" href="../../../icons/mopsys.ico" type="image/x-icon" />
+<script type="text/JavaScript" src="../../../default.js"></script>
+<link rel="stylesheet" href="../../../default.css" type="text/css" />
+<style type="text/css">
+<!--
+.s_command {font-family: "Courier New", Courier, mono; }
+.s_tograde {color: #006600; }
+.s_tosee {color: #0000FF; }
+.s_optional { font-weight: lighter; color: #3F3FFF; }
+.s_warning {font-weight: bold; color: #7F0000; }
+.s_cmd_choice {color: #FF0000; font-family: "Courier New", Courier, mono; }
+.s_cmd_4grade {color: #006600; font-family: "Courier New", Courier, mono; }
+.s_code_fragment {font-family: "Courier New", Courier, mono; color: #0000FF; }
+-->
+</style>
+</head>
+<body>
+
+<h1>ECE 472/572 Assignment 8</h1>
+
+
+<h2>Purpose</h2>
+
+<h3>Skills</h3>
+
+<p>The purpose of this assignment is to help you practice the following skills that are essential to your success in this course / in school / in this field / in professional life beyond school:</p>
+
+<ul>
+    <li>Setting up background services (daemons).</li>
+    <li>Securing services by migrating them to non-privileged accounts.</li>
+</ul>
+
+<h3>Knowledge</h3>
+
+<p>This assignment will also help you to become familiar with the following important content knowledge in this discipline:</p>
+
+<ul>
+    <li>Linux services (daemons, programs running automatically in background).</li>
+    <li>init.d [lightweight] Linux service management.</li>
+    <li>systemd Linux service management.</li>
+    <li>Cybersecurity concept of minimum privileges.</li>
+</ul>
+
+
+
+<h2>Prepare for the lab</h2>
+
+<p>Answer these questions while doing this lab &ndash; they will help you understand the procedure and better prepare for the tests.</p>
+<ul>
+    <li>What is <span class="s_command">/etc/inittab</span> ? Check if it is present on Ubuntu, and on your embedded board.</li>
+    <li>What is <span class="s_command">/etc/init.d/rc</span> ? Check if it is present on Ubuntu, and on your embedded board.</li>
+    <li>What is <span class="s_command">/etc/rc.local</span> ? Check if it is present on Ubuntu, and on your embedded board.</li>
+    <li>What is <span class="s_command">/etc/init</span> ? Check if it is present on Ubuntu, and on your embedded board.</li>
+    <li>What are run levels? What each of the run level numbers 0 through 6 correspond to? Does Ubuntu have run levels? Does ucLinux have run levels?</li>
+    <li>Look at the  files in the folder <span class="s_command">/etc/rc5.d</span> or folder <span class="s_command">/etc/rcS</span> . How are they executed? </li>
+    <li>What are <span class="s_command">sysvinit</span> (or simply <span class="s_command">init</span>), 
+        <span class="s_command">upstart</span>, and <span class="s_command">systemd</span>?
+        Tell about arrangements of configuration files or/and driectories for each of them.
+    </li>
+    <li>What is the use of <span class="s_command">http-counter.sh</span> file that is used later on in this task?</li>
+    <li>How to run a command as a different user is you are root?
+        (You can look it up in <span class="s_command">http-counter.sh</span>)
+    </li>
+    <li>How to run a command as a different user if you are a regular user?</li>
+    <li>Why you do need to run this program as the super user? We used to run similar servers on ports above 8000 as regular users.</li>
+    <li>What are <span class="s_command">adduser</span> and <span class="s_command">deluser</span>?
+        How do they differ from <span class="s_command">useradd</span> and <span class="s_command">userdel</span>? 
+        What does the option <span class="s_command">--group</span> do?
+    </li>
+    <li>SH script related questions:
+        <ul>
+            <li>How to use an environment variable value in an sh shell script?</li>
+            <li>How to test if a file exists in an sh script?</li>
+            <li>Hot to test if a directory exists in an sh script?</li>
+            <li>How to print text in an sh shell script?</li>
+            <li>How to mark how much of the code belongs to the inside of a loop in an sh shell script?</li>
+            <li>How is while loop written in an sh shell script?</li>
+            <li>How to use if-else clause in an sh shell script?</li>
+        </ul>
+    </li>
+</ul>
+
+<h2>Activity 1 (10 pts.)</h2>
+
+<h3>Preparing and installing services on Linux and ucLinux operating systems</h3>
+
+<p>Consider vthe provided program</a> 
+that could run as a Web server on port 88 and a 
+<a href="8_http-counter.sh.HTML">startup script</a> 
+that can be used to configure it as a service. 
+They are provided in the provided <a href="8_code.tar.gz">archive file</a> along with the needed 
+source code of the library supporting it.</p>
+
+<ul>
+    <li>Download the <a href="8_code.tar.gz">8_code.tar.gz</a> archive and unpack its contents</li>
+    <li><strong><span class="s_tograde">Record this test using script for the assignment submission.</strong>
+        <ul>
+            <li><strong><span class="s_cmd_4grade">script hw8_1.txt</span></strong></span></li>
+        </ul>
+    </li>
+    <li>Compile <a href="8_http-counter.cpp.HTML">http-counter.cpp</a> for execution on Ubuntu. 
+        Let the executable file be named <span class="s_command">http-counter</span>
+        <ul>
+            <li><span class="s_command">g++ http-counter.cpp tnplib.cpp -o http-counter</span></li>
+            <li><span class="s_tosee">If you downloaded and unpacked the provided archive you can expect 
+                that the program compiles out of the box and the binary file http-counter is created.</span></li>
+        </ul>
+    </li>
+    <li> The program needs a folder to save its data files. Look up its name in the source code and amend the command below as needed.
+        <ul>
+            <li><span class="s_command">mkdir -p /var/log/http-counter</span></li>
+            <li><span class="s_tosee">You can expect that the directory is not created because only root 
+                can manipulate files and directories in this location. You can verify that using ls -l command.</span></li>
+        </ul>
+    </li>
+    <li> Try to run the program as not root and observe failure of the server socket binding to a port below 1024 limit and then again as a root.
+        <ul>
+            <li><span class="s_command">./http-counter</span></li>
+            <li><span class="s_command">sudo ./http-counter</span></li>
+            <li><span class="s_tosee">You can expect that the program files because it cannot change to user counter,
+                or also becasue it cannot open a sockat at port below 1024 as it does not run as root.</span></li>
+        </ul>
+    </li>
+
+    <li>It is a bad idea to let run services as root, especially those that are exposed to the outside network. 
+        In case a service is compromised a third party could gain the same privileges as the user that runs the service. 
+        Therefore, the typical set up involves securing a service by switching it to a non-root, non-administrative user. 
+        Typically this can done by the service software that could set up all necessary connections 
+        and then change the user ID and group ID of a process. 
+        This server already contains such code and is designed to fail if the user cannot be changed.
+        Let us add that account now. In addition, we need create log file directory and adjust its ownership.
+        <ul>
+            <li><span class="s_command">sudo adduser counter --group --system --disabled-password --no-create-home 
+                --home /var/log/http-counter --shell /bin/sh</span>
+            </li>
+            <li><span class="s_command">sudo mkdir -p /var/log/http-counter</span></li>
+            <li><span class="s_tosee">You can expect that the directory is created. 
+                You can verify that using ls -l command.</span></li>
+            <li><span class="s_command">sudo chown -R counter:counter /var/log/http-counter</span></li>
+            <li><span class="s_tosee">You can expect that the directory is now owned by the counter user.  
+                You can verify that using ls -l command.</span></li>
+            <li><span class="s_command">sudo chmod a+rx,u+w /var/log/http-counter</span></li>
+            <li><span class="s_tosee">You can expect that the directory is accessible to all and user counter can write to it. 
+                You can verify that using ls -l command.</span></li>
+        </ul>
+    </li>
+    <li>Analyze how we are testing the program by running commands below. 
+        <ul>
+            <li><span class="s_command">ls -l</span></li>
+            <li><span class="s_command">sudo ./http-counter</span>
+                <br>Note: If you just run the program and it still runs, 
+                so this subsequent run is expected to fail with &quot;bind failed.&quot;
+            </li>
+            <li><span class="s_tosee">You can expect that the server program will start correctly 
+                with confirmation printed to the console and releases the console.</span></li>
+            <li><span class="s_command">wget http://localhost:88/ -O -</span>
+                <br>Note: -O is capital O letter, not lowercase o or zero!
+            </li>
+            <li><span class="s_tosee">You can expect that the source code of a web page is printed to the console.</span></li>
+            <li><span class="s_command">wget http://localhost:88/ -O -</span></li>
+            <li><span class="s_command">wget http://localhost:88/ -O - </span></li>
+            <li><span class="s_tosee">You can expect that the number embedded in the webpage increases</span></li>
+            <li><span class="s_tosee">Testing from a GUI web browser is optional.</span></li>
+            <li><span class="s_command">ls -l</span></li>
+            <li><span class="s_command">ls -l /var/log/http-counter</span></li>
+            <li><span class="s_command">cat /var/log/http-counter/counter.txt</span>
+                <br>Note: If the program was never shut down before the file shall not exist yet.
+            </li>
+            <li><span class="s_tosee">If this is the first time you run an operational server you can expect
+                the command to fail as there is no text file.</span></li>
+            <li><span class="s_command">sudo killall http-counter </span></li>
+            <li><span class="s_command">wget http://localhost:88/ -O - </span></li>
+            <li><span class="s_tosee">You can expect that the webpage retrieval fails becasue the server no longer runs.</span></li>                
+            <li><span class="s_command">ls -l /var/log/http-counter</span></li>
+            <li><span class="s_command">cat /var/log/http-counter/counter.txt</span></li>
+            <li><span class="s_tosee">You can expect that the file exists and contains the number that was displayed 
+                when its web page was accessed for the last time.</span></li>
+        </ul>
+    </li>
+    <li>Copy the program as root into <span class="s_command">/usr/sbin/</span>. 
+        <ul>
+            <li><span class="s_command">sudo cp http-counter /usr/sbin/ </span></li>
+        </ul>
+    </li>
+    <li><span class="s_tosee">You can expect that the binary file is copied to that location.
+        You may use ls -l /usr/sbin/http* to verify that.</span></li>                
+    <li><span class="s_command">cd /etc/init.d/</span></li>
+    <li>Download the service startup script <span class="s_command"><a href="8_http-counter.sh.HTML">http-counter.sh</a></span> 
+        into your account. You may alredy have it available becasue it was included the the tar file 
+        that you unpacked.
+        <br />Note that this is a text-based script file to start a binary file 
+            that is located somewhere else and has the same name (and perhaps a different file extension.)
+    </li>
+    <li><span class="s_command">gedit http-counter.sh</span> and inspect against unnecessary 
+        <span class="s_command">^M</span> characters at the end of each line. 
+        Such artifacts may have been created by previously editing the file under Windows.
+    </li>
+    <li>Copy the  as root into <span class="s_command">/etc/init.d/</span>. 
+        <ul>
+            <li><span class="s_command">sudo cp http-counter.sh /etc/init.d/</span></li>
+        </ul>
+    </li>
+    <li><span class="s_tosee">You can expect that the binary file is copied to that location.
+        You may use ls -l /usr/sbin/http* to verify that.</span></li>                
+    <li><span class="s_command">chmod a+rx http-counter.sh</span></li>
+    <li><span class="s_tosee">You can expect that the script is now readable and executable by everybody.
+        You may use ls -l /etc/init.d/http* to verify that.</span></li>                
+    <li><span class="s_command">cat http-counter.sh</span></li>
+    <li><span class="s_command">sudo update-rc.d -f http-counter.sh defaults</span></li>
+    <li><span class="s_tosee">You can expect the confirmation message that the service has been installed.</span></li>                
+    <li>Test the start up and shut down script:
+        <ul>
+            <li><span class="s_command">sudo /etc/init.d/http-counter.sh start</span></li>
+            <li><span class="s_command">ps -ef | grep http-count</span></li>
+            <li><span class="s_command">wget http://localhost:88/ -O -</span></li>
+            <li><span class="s_command">wget http://localhost:88/ -O - </span></li>
+            <li><span class="s_command">cat /var/log/http-counter/counter.txt</span></li>
+            <li><span class="s_command">sudo /etc/init.d/http-counter.sh stop</span></li>
+            <li><span class="s_command">ps -ef | grep http-count</span></li>
+            <li><span class="s_command">cat /var/log/http-counter/counter.txt</span></li>
+        </ul>
+    </li>
+    <li><span class="s_tosee">You can expect the same correct behavior as when the server was run manually.</span></li>
+    <li>The correct way to start and stop the service is as follows:
+        <ul>
+            <li><span class="s_command">sudo systemctl start http-counter.service</span></li>
+            <li><span class="s_command">ps -ef | grep http-count</span></li>
+            <li><span class="s_tosee">You can expect that the service process is listed as running.</span></li>
+            <li><span class="s_command">wget http://localhost:88/ -O -</span></li>
+            <li><span class="s_command">wget http://localhost:88/ -O - </span></li>
+            <li><span class="s_tosee">You can expect that the server is running.</span></li>
+            <li><span class="s_command">sudo systemctl stop http-counter.service</span></li>
+            <li><span class="s_command">ps -ef | grep http-count</span></li>
+            <li><span class="s_tosee">You can expect that the service process is not listed as running.</span></li>
+            <li><span class="s_command">wget http://localhost:88/ -O - </span></li>
+            <li><span class="s_tosee">You can expect that the server is not running and webpages cannot be retrieved.</span></li>
+        </ul>
+    </li>
+    <li><span class="s_tograde">Finish recording this test using script for the assignment submission.</span>
+        <ul>
+            <li><strong><span class="s_cmd_4grade">exit</span></strong></span></li>
+        </ul>
+    </li>
+    <li>The ultimate test is to restart the operating system and check if the service was restarted.</li>
+    <li><span class="s_tosee">The service shall already run when you sign in after rebooting Linux.</span></li>
+</ul>
+
+<h3>Cleanup of your Linux System</h3>
+
+<ul>
+    <li>In case you used persistent Ubuntu installation - to revert the changes later you can type:
+        <ul>
+            <li><span class="s_command">sudo update-rc.d -f http-couter.sh remove </span></li>
+            <li><span class="s_command">sudo rm /etc/init.d/http-counter.sh</span></li>
+            <li><span class="s_command">sudo rm /usr/sbin/http-counter</span></li>
+            <li><span class="s_command">sudo rm -r /var/log/http-counter</span></li>
+            <li><span class="s_command">sudo deluser counter</span></li>
+            <li><span class="s_command">sudo delgroup counter</span></li>
+        </ul>
+    </li>
+</ul>
+
+<h2>Activity 2 (10 pts.)</h2>
+
+<h3>Preparing and installing services on Linux and ucLinux operating systems</h3>
+
+<p>Consider <a href="8_code.tar.gz">the provided program</a> that could run as a Web server on port 88. </p>
+<ul>
+    <li>Cross-compile for execution on the microcontroller board running ucLinux 
+        - use the same compiler family that you used in the previous lab.
+    </li>
+    <li>Copy the cross-compiled program and the startup script to the  microcontroller board running ucLinux.
+        <br>Use <span class="s_command">scp</span>, direct placement on the SD card or any other technique.</li>
+    <li>Start <span class="s_command">ssh</span>, perform all remaining work on ucLinux as root 
+        including creating an extra user and group the same way as on Ubuntu 
+        except for the service configuration. Instead do it as described below:
+        <ul>
+            <li>The service installation file should be renamed to 
+                <span class="s_command"><a href="8_http-counter.sh.HTML">S80http-counter.sh</a></span> 
+                and should be placed inside <span class="s_command">/etc/init.d</span> directory.
+            </li>
+            <li>The cross-compiled service binary file should be called 
+                <span class="s_command">http-counter</span> and placed in <span class="s_command">/usr/sbin</span>
+            </li>
+            <li>Make sure that both files are owned by root and are set as executable</li>
+            <li>Create the same user with disabled login and group as in case of Ubuntu</li>
+            <li>There are no run levels to customize, or are there? 
+                In case there are run levels, please see the run level configuration 
+                for a Debian-like distributions and check if there is one for ucLinux. 
+            </li>
+            <li>Look at the two files in the <span class="s_command">/etc/init.d</span> directory: 
+                <span class="s_command">rcS</span> and <span class="s_command">rcK</span>. 
+                Those two files are responsible for starting and stopping the services.
+                <strong>No changes are needed!</strong>
+            </li>
+            <li>Reboot the ucLinux<br><span class="s_command">sudo reboot</span></li>
+        </ul>
+    </li>
+    <li>Reconnect using <span class="s_command">ssh</span> as the connection was dropped during reboot</li>
+    <li><span class="s_tograde">Record this test using script for the assignment submission.
+        <ul>
+            <li><strong><span class="s_cmd_4grade">script hw8_2.txt</span></strong></span></li>
+        </ul>
+        Alternative, if you use PuTTY (on Windows or Linux) instead of ssh, you can enable logging
+        the console activity to a text file. See: session/Logging settings before connecting.
+    </li>
+    <li>Log in again and perform the tests below in order to verify if the service runs correctly</li>
+    <li>Show the results of your work for the record in the script or resize the terminal window
+        (PuTTY or ssh) and capture the activity as an image.
+        (this is really the only portion of the lab that is needed for grading)
+        <ul>
+            <li><span class="s_command"><strong>/etc/init.d/S80http-counter.sh start</strong></span></li>
+            <li><span class="s_command"><strong>wget http://localhost:88/ -O -</strong></span></li>
+            <li><span class="s_command"><strong>wget http://localhost:88/ -O -</strong></span></li>
+            <li><span class="s_command"><strong>ls -alF /etc/init.d/*ht*</strong></span></li>
+            <li><span class="s_command"><strong>ls -alF /usr/sbin/ht*</strong></span></li>
+            <li><span class="s_command"><strong>ls -alF /var/log/http-counter</strong></span></li>
+            <li><span class="s_command"><strong>ps -ef | grep http-count</strong></span></li>
+            <li><span class="s_command"><strong>/etc/init.d/S80http-counter.sh stop</strong></span></li>
+            <li><span class="s_command"><strong>/etc/init.d/S80http-counter.sh start</strong></span></li>
+            <li><span class="s_command"><strong>ls -alF /var/log/http-counter</strong></span></li>
+            <li><span class="s_command"><strong>cat /var/log/http-counter</strong></span></li>
+            <li><span class="s_command"><strong>uname -a</strong></span></li>
+            <li><span class="s_command"><strong>exit</strong></span></li>
+            <li><span class="s_tosee">The same behavior is expected as when you do the final test of the service on Ubuntu.</span></li>
+        </ul>
+    <li><span class="s_tograde">Finish recording this test using script for the assignment submission.</span></li>
+    <li>If the test above does not work inspect the installation, make corrections and redo the entire test above.</li>
+    <li>Optionally test if the service is accessible from your PC by using a GUI-based Web browser on Linux or on Windows 
+        <span class="s_command"><a href="http://192.168.1.xx:88/">http://<span class="s_cmd_choice">192.168.1.xx</span>:88/</a></span>.
+    </li>
+</ul>
+
+
+
+<h2>Submission</h2>
+
+<p>Drop each file with <span class="s_tograde">the information collected during the exercise as instructed</span> 
+in the corresponding assignment drop box on Canvas.</p>
+
+<p>Thank you.</p>
+
+
+
+<h2>Criteria for Success</h2>
+
+<p>The success in this lab is measured by the following outcomes:
+<ul>
+    <li>The service binary file and service control files are placed in correct locations 
+        that is veriffied by starting and stopping the service (not the program directly) manually.
+        The sevice operation is tested using <span class="s_command">wget</span> command.</li>
+    <li>Since the program and the control scripts are provided, there is not much else to do
+        and thus to grade in this lab. So that is all-or-nothing grading scheme.</li>
+    <li>Persistence of service is expected but the current lab procedure is not cunductive to be easily graded.</li>
+    <li>The Buildroot portion of the lab contains cross-compilation procedure that has been already graded by Lab 7.</li>
+</ul>
+</p>
+
+
+
+<p>
+<a href="../../../index.html"><img src="../../../icons/main.gif" class="menu32x32" alt="web site front" /></a>
+<a href="../index.html"><img src="../../../icons/menu.gif" class="menu32x32" alt="local main page" /></a>
+<a href="index.html"><img src="../../../icons/mmisc.gif" class="menu32x32" alt="local list page" /></a>
+<a href="../../../bookmark/index.html"><img src="../../../icons/mbookmark.gif" class="menu32x32" alt="general bookmarks" /></a>
+<a href="../../../bookmark/software.html"><img src="../../../icons/mbookabcd.gif" class="menu32x32" alt="software bookmarks" /></a>
+<a href="javascript:void(window.history.back());"><img src="../../../icons/maleft.gif" class="menu32x32" alt="go back" /></a>
+<a href="javascript:void(window.open('../../../copyright.html','C','toolbar=no,status=no,menubar=no,directories=no,location=no,width=600,height=500,resizable=no'));"><img src="../../../icons/mchecked.gif" class="menu32x32" alt="copyright info" /></a>
+</p>
+
+</body>
+</html>

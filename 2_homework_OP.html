@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8" />
+<title>ECE472/572 (UCLX) Assignment Number 2</title>
+<!-- meta http-equiv="Pragma" content="no-cache" -->
+<meta name="robots" content="index,follow" />
+<!-- meta name="robots" content="noarchive" -->
+<link rel="shortcut icon" href="../../../icons/mopsys.ico" type="image/x-icon" />
+<script type="text/JavaScript" src="../../../default.js"></script>
+<link rel="stylesheet" href="../../../default.css" type="text/css" />
+<style type="text/css" />
+<!--
+.s_command {font-family: "Courier New", Courier, mono; }
+.s_tograde {color: #006600; }
+.s_tosee {color: #0000FF; }
+.s_optional { font-weight: lighter; color: #3F3FFF; }
+.s_warning {font-weight: bold; color: #7F0000; }
+.s_cmd_choice {color: #FF0000; font-family: "Courier New", Courier, mono; }
+.s_cmd_4grade {color: #006600; font-family: "Courier New", Courier, mono; }
+.s_code_fragment {font-family: "Courier New", Courier, mono; color: #0000FF; }
+-->
+</style>
+</head>
+<body>
+
+<h1>ECE 472/572 Assignment 2 - version for Orange Pi Zero 3</h1>
+
+
+<h2>Purpose</h2>
+
+<p>This is an early attempt to prepare an SD card with a provided operating systenm for an Electronic Control Module and then use it.
+The actual purpose is to find out if you have all accessories that will be needed in every lab starting from Lab 6 so that you could
+address any problems without risking late submission of any of the later labs.</p>
+
+<h3>Skills</h3>
+
+<p>Your skills of using command line itnerface will enhance. 
+It is expected that you look up what each command used by you does.
+The lab does not explain the reason for each step to allow you 
+to look it up on your own and explore the subject.</p>
+
+<p>The purpose of this assignment is to help you practice the following skills that are essential to your success in this course / in school / in this field / in professional life beyond school:</p>
+
+<ul>
+    <li>Introduce the concept of the manual upgrade and recovery of the OS for ECM.</li>
+    <li>Show how to access ECM using a serial debug console.</li>
+    <li>Ensure that you have all resources needed to carry out Labs six and later
+        or have sufficent time to order anything that is needed but you miss.</li>
+</ul>
+
+<h3>Knowledge</h3>
+
+<p>This assignment will also help you to become familiar with the following important content knowledge in this discipline:</p>
+
+<ul>
+    <li>What a serial debug console is.</li>
+    <li>Understanding the actual process of preparing the media with an operating system 
+        is too advanced at this point of the curse. You will benefit from this exprience 
+        later on when file systems are covered in the theory trail of this course.</li>
+</ul>
+
+
+
+<h2>Prepare for the lab</h2>
+
+<p>Answer these questions while doing this lab &ndash; they will help you understand the procedure and better prepare for the tests.</p>
+<ul>
+    <li>What happens if running <span class="s_command">sudo su</span> is skipped? 
+        What does the  <span class="s_command">sudo su</span> command do? 
+        What does each of these two commands do when run separately?
+    </li>
+    <li>The <span class="s_command">man</span> command and help switch are very important for command line work. 
+        Try <span class="s_command">sfdisk -h</span> and <span class="s_command">man sfdisk</span> to see the difference. 
+        The <span class="s_command">info</span> command is similar to <span class="s_command">man</span>. 
+        Try it too. Having trouble exiting a man or info screen? Press 'q'. What is the -l switch do for sfdisk?
+    </li>
+    <li>What does <span class="s_command">lsblk</span> command do?</li>
+    <li>What does <span class="s_command">mount</span> command without any arguments do?</li>
+    <li>What does <span class="s_command">apt-get</span> command do?</li>
+    <li>Find the commands and their options as necessary for the following command line tasks:
+        <ul>
+            <li>Change directory to the root folder</li>
+            <li>Change directory to the folder XYZ in your current directory</li>
+            <li>Change directory to your home directory </li>
+            <li>Check what directory you are in </li>
+            <li>List files in the current directory without too many details </li>
+            <li>List files in the current directory with all details</li>
+            <li>List all files in the current directory including hidden files</li>
+            <li>What does -F do when used with command than lists files?</li>
+            <li>What are the difference among the following:
+                <ul>
+                <li><span class="s_command">ls /dev/*</span></li>
+                <li><span class="s_command">ls /dev/sd*</span></li>
+                <li><span class="s_command">ls /dev/sd?</span></li>
+                <li><span class="s_command">ls /dev/sd??</span></li>
+                <li><span class="s_command">ls /dev/sda?</span></li>
+                </ul>
+            </li>
+            <li>Delete a file in the current directory</li>
+            <li>Delete an empty folder</li>
+            <li>Delete a non-empty folder with its contents</li>
+            <li>Display contents of a text file without running a text editor</li>
+        </ul>
+    </li>
+    <li>What does <span class="s_command">wget</span> command do? 
+    What does it do when it is used with "-O -" option (dash-big-O space dash)?</li>
+</ul>
+
+
+<h2>Activity (20 pts.)</h2>
+
+<p>This installation assumes that you are running a Linux, or preferably Debian Linux such as Ubuntu booted from a HD or a Virtual Machine. It may be possible to do it while running from a Live CD but the amount of data to be saved temporarily on a RAM disk might be prohibitive.</p>
+
+<ol>
+    <li>This exercise is based on documentation posted at
+        <a href="https://ofitselfso.com/BeagleNotes/CloningABootableBeagleboneBlackSDCard.php" target="_blank">
+        https://ofitselfso.com/BeagleNotes/CloningABootableBeagleboneBlackSDCard.php</a>
+        and the recent different software repository located at
+        <a href="http://www.orangepi.org/html/hardWare/computerAndMicrocontrollers/service-and-support/Orange-Pi-Zero-3.html" target="_blank">
+        http://www.orangepi.org/html/hardWare/computerAndMicrocontrollers/service-and-support/Orange-Pi-Zero-3.html</a> . 
+        It puts emphasis on performing steps manually one by one rather than running
+        automated scripts for the sake of learning media partitioning and formatting
+        operations.By the way, we will be using Orange Pi Zero 3 headless like a typical
+        electronic control module in automotive industry or an IoT device.</li>
+    <li><span class="s_command">cd</span></li>
+    <li><span class="s_cmd_4grade">script hw2op.txt</span></li>
+    <li><span class="s_command">sudo apt-get install wget xz-utils p7zip</span></li>
+    <li><span class="s_command">ls -l /dev/*</span></li>
+    <li><span class="s_command">ls -l /dev/sd*</span></li>
+    <li>Insert a 4GB or larger SD card. (Cards up to 32GB have been tested.)</li>
+    <li><span class="s_command">ls -l /dev/sd*</span></li>
+    <li>Check for a new disk device name. It will be in the format of 
+        <span class="s_command">/dev/sd<span class="s_cmd_choice">x</span></span> .
+        <ul>
+            <li>Use that name in the reminder of this instruction by substituting <span class="s_command"><span class="s_cmd_choice">x</span></span> to form correct name.
+                For example:<span class="s_command">/dev/sd<span class="s_cmd_choice">b</span></span></li>
+            <li>Some systems (different than Ubuntu) use different naming systems for SD cards, such as <span class="s_command">/dev/mmcblk<span class="s_cmd_choice">0</span></span> or <span class="s_command">/dev/mmc/blk<span class="s_cmd_choice">0</span></span></li>
+            <li>If you use N-in-one card reader that reads multiple memory cards it may show up as several (up to four) devices even if you do not insert the SD card into it. Therefore, it is highly recommended that novice users use a single purpose SD card reader. Running <span class="s_command">sudo mount</span> and inspecting for additional lines after the SD card was inserted may be of help if the SD card was already formatted. </li>
+        </ul>
+    </li>
+    <li><span class="s_command">sudo mount</span></li>
+    <li><span class="s_command">sudo lsblk</span></li>
+    <li><span class="s_command">df -h</span></li>
+    <li><span class="s_command">sudo umount /dev/sd<span class="s_cmd_choice">x</span>?</span>
+        <br>Note: this should unmount 
+        <span class="s_command">/dev/sd<span class="s_cmd_choice">x</span>1</span> and 
+        <span class="s_command">/dev/sd<span class="s_cmd_choice">x</span>2</span>,
+        and produce an error message for 
+        <span class="s_command">/dev/sd<span class="s_cmd_choice">x</span></span> as the latter was never mounted.
+    </li>
+    <li><span class="s_warning">Do not proceed with this media name if the command above produced an error indicating that the media unmounting failed because the media is in use. ou might be trying to format your hard drive instead of the SD card!</span></li>
+    <li>In case Ubuntu "knows better" and mounts the SD card again disable
+        automounting service until you reboot the system:<span class="s_command">
+        <br>sudo systemctl stop udisks2.service
+    </span><li>
+    <li>Inspect what kind of partition system was already present on your SD card:
+    <br><span class="s_command">sudo sfdisk -l /dev/sd<span class="s_cmd_choice">x</span></span></li>
+    <li><span class="s_command">cd</span></li>
+    <li><span class="s_command">mkdir lab2_opz3</span></li>
+    <li><span class="s_command">cd lab2_opz3</span></li>
+    <li><span class="s_command">pwd</span></li>
+    <li>Unlike the cases of Beagle Bone or Raspberry Pi the OS image is hosted on Google drive 
+        and <span class="s_command">wget</span> command cannot be easily used. 
+        Use your web browser to download the image from
+        <a href="https://drive.google.com/drive/folders/1g2o209HE9_28v7wIXdq0tf5jOTTJdpVb">
+	https://drive.google.com/drive/folders/1g2o209HE9_28v7wIXdq0tf5jOTTJdpVb</a> . 
+	In case the link is broken navigate to Debian Linux download from the board 
+	webpage at
+	<a href="http://www.orangepi.org/html/hardWare/computerAndMicrocontrollers/service-and-support/Orange-Pi-Zero-3.html">
+	http://www.orangepi.org/html/hardWare/computerAndMicrocontrollers/service-and-support/Orange-Pi-Zero-3.html</a> 
+	.t</li>
+    <li><span class="s_command">ls -l</span></li>
+    <li>Use p7zip to unpack the downloaded file. 
+        <ul>
+            <li><span class="s_command">p7zip -d <span class="s_cmd_choice">
+                Orangepizero3_1.0.4_debian_bookworm_server_linux6.1.31.7z</span></span></li>
+            <li><span class="s_command">cat <span class="s_cmd_choice">the_same_file_name.img.xz</span>.sha256sum</span></li>
+            <li>Compute the actual checksum of the file that you have downloaded
+            <br>
+            <span class="s_command">sha256sum <span class="s_cmd_choice">the_same_file_name.img.xz</span></span></li>
+            <li>In case both sums do not match look for a different source to download</li>
+        </ul>
+    </li>
+    <li>Check the actual uncompressed file size that will be copied as an image of the SD card:
+        <br><span class="s_command">xz -l <span class="s_cmd_choice">
+        the_same_file_name.img.xz</span></span>
+    </li>
+    <li>Unmount but do not eject the partition(s) of the SD card.&nbsp; 
+        Also, make sure that it does not mount again automatically on Ubuntu.<span class="s_command">
+        <br>sudo systemctl stop udisks2.service</span>
+        <br><span class="s_command">sudo umount /dev/sd<span class="s_cmd_choice">x</span>?</span>
+    </li>
+    <li>Extract the compressed file using xv to pipe, and read from that pipe by
+        <span class="s_command">dd</span> run as root that writes data sector by sector to SD card &quot;hard drive&quot;:<br>
+        <span class="s_command">xz -dc <span class="s_cmd_choice">the_same_file_name.img.xz</span>
+        | sudo dd bs=4M status=progress of=/dev/sd<span class="s_cmd_choice">x</span></span></li>
+    <li><strong>Try this: </strong>open another terminal and occasionally type:<br>
+    <span class="s_command">sudo pkill -USR1 -n -x dd<br></span>and then inspect
+    the original terminal window.&nbsp; This is .&nbsp; Please note that the size of the .XZ file
+    (about 1GB) is after compression. We are unpacking and copying much higher volume of
+    data that is almost 4GB.</li>
+    <li><span class="s_command">sync</span></li>
+    <li>Inspect what kind of partition system was written to your SD card:<br>
+    <span class="s_command">sudo sfdisk -l /dev/sd<span class="s_cmd_choice">x</span></span></li>
+    <li>Check the integrity of the created disk partition images:<br>
+    <span class="s_command">sudo fsck /dev/sd<span class="s_cmd_choice">x</span>1<br>sudo
+    fsck /dev/sd<span class="s_cmd_choice">x</span>2</span></li>
+    <li>We do not desire to mount the SD card partitions manually each time.
+    Restart the automount service:<br><span class="s_command">
+        sudo systemctl start udisks2.service</span></li>
+    <li>Just in case:<br><span class="s_command">sudo umount /dev/sd<span class="s_cmd_choice">x</span>?</span></li>
+    <li>Remove the SD card and insert it into your BeagleBone. Make sure that
+    the SD card reader LED stopped flashing before <strong>ejecting</strong> the
+    card. Otherwise, you may have to restart the process from the step where you
+    copy the image file to the SD card using dd.</li>
+    <li><strong>Connect the BeagleBone to your FTDI USB to serial adapter
+    connected as instructed or using three pins (GND, RX, and TX) as instructed
+    if you have a different USB-UART adapter.</strong> If you are using older BeagleBone
+    White the USB
+    on-the-go would work as a USB to serial adapter. It most likely will not
+    work that way on BeagleBone Black (depending on version.)</li>
+    <li><strong>If you are using BeagleBone Black, depress the boot button
+    before connecting the USB adapter to your computer. Keep it depressed for some ten
+    more seconds. </strong>That will ensure that you boot it from your SD card
+    and not from the internal flash memory.&nbsp; BeaglerBone boards in the lab
+    have their internal flash erased so that the system will boot from your SD
+    card regardless whether you press the button or not.</li>
+    <li>Within a minute the board shall come &quot;alive&quot;, it's LED shall start pulsing, your computer shall detect four USB devices including USB to serial, and mass storage device</li>
+    <li>Run a HyperTerminal (from Windows or Linux)
+        On windows you may use an open source software called PuTTY from
+        <span class="s_command"><a href="https://www.putty.org/" target="_blank">https://www.putty.org/</a></span>
+        <ol>
+            <li>Connect to the Orange Pi Zero 3. The connection parameters are
+            <span class="s_command">115200 bits per second, 8-bit, no parity, 1 stop bit</span></li>
+            <li>Try to login as one of the following:
+                <ul>
+                    <li>user: <span class="s_command">orangepi</span></li>
+                    <li>password: <span class="s_command">orangepi</span></li>
+                </ul>
+            </li>
+            <li>Set the password using <span class="s_command">passwd</span> command. 
+                Change the password to something that is not very easy to guess.
+                Instructor uses a very short password (ee00) for the classroom demo board 
+                because that board is never powered up outside of class and never 
+                exposed to the university network.
+            </li>
+            <li>This step was intentionally left blank
+                <br>/* You may have noticed that there are versions of this lab 
+                for various boards. This step is performed only on RaspberryPi */</li>
+            <li>Check if you are connected to Ethernet
+                <ul>
+                    <li>verify that the RJ45 connector is active (LED on the connector lights up)</li>
+                    <li>check what is your IP address using <span class="s_command">ifconfig</span></li>
+                    <li>Ignore the <span class="s_command">127.0.0.1</span> address as it is a local address of the board for testing purposes (Local Loopback).
+                    </li>
+                    <li>If the IP address starts with <span class="s_command">10.</span>.... that
+                    means that the Ethernet port is initialized but DHCP client for IP v.4 was not run.</li>
+                    <li>If you are running a home router with network address translation firewall the address should most likely start with
+                    <span class="s_command">192.168.</span>... </li>
+                </ul>
+            </li>
+            <li>If you are connected to the Internet  consioder installing more packages that may be useful one day:<br>
+                <span class="s_command">sudo apt-get update
+                <br>sudo apt-get install binutils bzip2 fakeroot gcc g++ gettext git git-doc libtool make patch screen sed wget lynx nmap tshark valgrind</span>
+                <br><span class="s_optional">Comment: It is not our intention to develop software directly on the board.
+                The industry does use cross-compiling technology for embedded system development. 
+                However, this board is powerful enough to allow for local compilation of simple programs directly 
+                on the board. It is possible to do all further lab work except #5, #6 
+                (system speed and SD card speed and size limit), and #13 (not applicable) directly on this board.</span>
+            </li>
+            <li>Install and configure a firewall:
+                <span class="s_command">
+                <br>sudo apt-get install ufw
+                <br>sudo ufw allow 22/tcp
+                <br>sudo ufw allow 3389/tcp
+                <br>sudo ufw enable
+                <br>sudo ufw status</span>
+            </li>
+            <li>just in case run <span class="s_command">sync</span></li>
+            </li>
+            <li>If you are connected to a reliable power adapter (not to a computer USB!) and to the Internet 
+                do attempt to update the board contents. 
+                <br><span class="s_command">sudo apt-get update
+                <br>sudo apt-get upgrade</span>
+            </li>
+            <li>just in case run <span class="s_command">sync</span></li>
+        </ol>
+    </li>
+    <li>Connect to the board using SSH: <span class="s_command">
+        <br>ssh 123.456.789.012 -l orangepi</span>
+    </li>
+    <li>This is an alternative connection to using the UART console. 
+        However, you must find out the board IP address before connecting. 
+        Note: typing <span class="s_command">exit</span> will log you out 
+        back to the local terminal window.
+    </li>
+    <li><span class="s_cmd_4grade">exit</span>
+        <br>This will end the script session. 
+        Submit the file <span class="s_cmd_4grade">hw2opz3.txt</span> only if requested.
+    </li>
+</ol>
+
+
+
+<h3>Assignment submission</h3>
+
+<p>Open a HyperTerminal (e.g. PuTTY) either on your Windows host machine or
+Linux guest machine and login to your microcontroller. 
+Alternatively, if you managed to connect your board to the network 
+and you know how to do it connect to your board using ssh command. 
+Resize the terminal window to show as much of the response as practical.</p>
+<p>After logging in to the board run the following commands:</p>
+<ul>
+    <li><span class="s_command">ip addr</span></li>
+    <li><span class="s_command">date</span></li>
+    <li><span class="s_command">whoami</span></li>
+    <li><span class="s_command">uname -a</span></li>
+</ul>
+<p>Take a photographs (phone camera is OK) of the connected board and the HyperTerminal
+window clearly showing output of the commands. Submit that photograph.</p>
+<p>Submissions that rely on connecting a monitor and keyboard to your
+microcontroller will receive only up to 50% of credit. In case you do not get
+the lab working submit the recorded script <span class="s_cmd_4grade">hw2bb.txt</span> 
+to receive partial credit "for the effort."</p>
+
+<p>Thank you.</p>
+
+
+
+<h2>Criteria for Success</h2>
+
+<p>This is all-or-nothing lab. One cannot setup or update a usable version of an 
+operating system on an ECM half-way. The successful proof of work contains a demonstration
+that the most current version of the OS distribution for your board is installed and accessed 
+using a serial console interfaced from the computer workstation site using a hyper terminal, 
+for example, PuTTY. The connection and the version of OS is demonstrated using the command 
+<code>uname -a</code>. Demonstration using a keyboard and monitor can be accepted 
+for partial credit of up to 75%.</p>
+
+
+
+<p>
+<a href="../../../index.html"><img src="../../../icons/main.gif" class="menu32x32" alt="web site front" /></a>
+<a href="../index.html"><img src="../../../icons/menu.gif" class="menu32x32" alt="local main page" /></a>
+<a href="index.html"><img src="../../../icons/mmisc.gif" class="menu32x32" alt="local list page" /></a>
+<a href="../../../bookmark/index.html"><img src="../../../icons/mbookmark.gif" class="menu32x32" alt="general bookmarks" /></a>
+<a href="../../../bookmark/software.html"><img src="../../../icons/mbookabcd.gif" class="menu32x32" alt="software bookmarks" /></a>
+<a href="javascript:void(window.history.back());"><img src="../../../icons/maleft.gif" class="menu32x32" alt="go back" /></a>
+<a href="javascript:void(window.open('../../../copyright.html','C','toolbar=no,status=no,menubar=no,directories=no,location=no,width=600,height=500,resizable=no'));"><img src="../../../icons/mchecked.gif" class="menu32x32" alt="copyright info" /></a>
+</p>
+
+</body>
+</html>

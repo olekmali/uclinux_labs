@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+<title>ECE 472/572 Extra Credit Assignment Number D</title>
+<meta http-equiv="Pragma" content="no-cache">
+<meta name="robots" content="index,follow">
+<meta name="robots" content="noarchive">
+<link rel="shortcut icon" href="../../mopsys.ico" type="image/x-icon">
+<script type="text/JavaScript" src="../default.js"></script>
+<link rel="stylesheet" href="../default.css" type="text/css">
+<style type="text/css">
+<!--
+.s_command {font-family: "Courier New", Courier, mono; }
+.s_tograde {color: #006600; }
+.s_tosee {color: #0000FF; }
+.s_optional { font-weight: lighter; color: #3F3FFF; }
+.s_warning {font-weight: bold; color: #7F0000; }
+.s_cmd_choice {color: #FF0000; font-family: "Courier New", Courier, mono; }
+.s_cmd_4grade {color: #006600; font-family: "Courier New", Courier, mono; }
+.s_code_fragment {font-family: "Courier New", Courier, mono; color: #0000FF; }
+-->
+</style>
+</head>
+<body>
+
+<h1>ECE 472/572 Extra Credit Assignment D</h1>
+
+
+
+<h2>Prepare for the lab</h2>
+
+<p>Answer these questions while doing this lab &ndash; they will help you understand the procedure and better prepare for the tests. 
+You can find the answers at
+<a href="https://docs.docker.com/get-started/" target="_blank">
+https://docs.docker.com/get-started/</a> .&nbsp; Read all "Parts" of the "Get 
+Started" section of the documentaiton that is shown in the left side menu of the 
+documentation page.&nbsp; Then look at
+<a href="https://docs.docker.com/engine/reference/builder/" target="_blank">
+https://docs.docker.com/engine/reference/builder/</a> and finish with
+<a href="https://docs.docker.com/compose/compose-file/" target="_blank">
+https://docs.docker.com/compose/compose-file/</a> .</p>
+<ul>
+    <li>What is a docker container?</li>
+    <li>What is a container image?</li>
+    <li>What is the use of <span class="s_command">Dockerfile</span>?</li>
+    <li>How to update a Docker image?</li>
+    <li>What is a container volume?</li>
+    <li>How to allow incoming network traffic to a specific port?</li>
+    <li>How to run an command inside a dokcer image using the command <span class="s_command">docker exec ... </span>?</li>
+    <li>What is a YAML language in general? What is a YAML file int he context of Docker?</li>
+</ul>
+
+<h2>Extra Credit Activity 1 (Up to 20 pts.)</h2>
+
+<h3>Creating and installing a service in a Docker Container</h3>
+
+<p>This activity is based on several short random tutorial, each of them partially correct, 
+and then rectified using the copious Docker docs.</p>
+
+<h2>Cleaning up after Lab 8 and/or Lab 12</h2>
+
+<ul>
+    <li>At the minimum the http-counter service must be stopped. That would have to be done after each reboot:
+        <ul>
+            <li><span class="s_command">sudo /etc/init.d/http-counter stop</span></li>
+        </ul>
+    </li>
+    <li>The full cleanup involves uninstalling the service and is a permanent solution:
+        <ul>
+            <li><span class="s_command">sudo apt-get purge http-counter</span></li>
+            <li><span class="s_command">sudo rm /etc/init.d/http-counter</span></li>
+            <li><span class="s_command">sudo rm -r /var/log/http-counter</span></li>
+            <li><span class="s_command">sudo rm /usr/sbin/http-counter # in case of Lab 8</span></li>
+        </ul>
+    </li>
+</ul>
+
+
+<h2>Lab Prerequisites</h2>
+
+<p>Install necessary packages and set up the current account to be able to setup containers.</p>
+
+<ul>
+    <li><span class="s_command">sudo apt-get update</span></li>
+    <li><span class="s_command">sudo apt-get upgrade</span> (this step is optional)</li>
+    <li><span class="s_command">sudo apt-get install docker.io docker-compose</span></li>
+    <li><span class="s_command">sudo systemctl status docker</span></li>
+    <li><span class="s_command">sudo usermod -a -G docker uclinux</span></li>
+    <li><span class="s_command">sudo reboot</span></li>
+</ul>
+
+<h2>Set up a Docker container and test its behavior</h2>
+
+<p>Consider <a href="D_http-counted.cpp.HTML">the provided program</a> 
+that could run as a Web server (server but not service) on port 88.
+Customize the container name using your BUnetID to show that you did this lab by yourself.</p>
+
+
+<ul>
+    <li>Start the lab in an empty directory. Download and untar <a href="D_code.tar.gz">the entire archive</a>.</li>
+    <li><span class="s_tograde">Record this procedure using script for the assignment submission.
+        <br /><span class="s_command">script hwD.txt </span></span>
+    </li>
+    <li>Compile the server and call it <span class="s_command">http-counted</span>
+        <ul>
+            <li><span class="s_command">make</span></li>
+            <li>or</li>
+            <li><span class="s_command">g++ http_counted.cpp tnplib.cpp -o http_counted</span></li>
+        </ul>
+    </li>
+    <li>Check the <span class="s_command">container</span> command:
+        <ul>
+            <li><span class="s_command">docker container ls -a</span></li>
+            <li><span class="s_command">docker pull ubuntu</span></li>
+            <li><span class="s_command">docker container ls -a</span></li>
+            <li><span class="s_command">docker container create --name testname ubuntu</span></li>
+            <li><span class="s_command">docker container ls -a</span></li>
+            <li><span class="s_command">docker container rm testname</span></li>
+            <li><span class="s_command">docker container ls -a</span></li>
+            <li><span class="s_command">docker volume ls</span></li>
+        </ul>
+    </li>
+    <li>Create <span class="s_command">Dockerfile</span> file:
+        <ul>
+            <li><span class="s_command">gedit Dockerfile &amp;
+                <br><span class="s_code_fragment">&nbsp;&nbsp;&nbsp; FROM ubuntu
+                <br>&nbsp;&nbsp;&nbsp; LABEL org.opencontainers.image.authors="My Name Here"
+                <br>&nbsp;&nbsp;&nbsp; LABEL org.opencontainers.image.version="0.1"
+                <br>&nbsp;&nbsp;&nbsp; RUN apt-get update -y &amp;&amp; apt-get install netbase adduser -y
+                <br>&nbsp;&nbsp;&nbsp; RUN adduser --group --system --disabled-password --no-create-home 
+                    --home /var/log/http-counter --shell /bin/sh counter
+                <br>&nbsp;&nbsp;&nbsp; COPY http-counted /usr/sbin/
+                <br>&nbsp;&nbsp;&nbsp; RUN chmod a+rx /usr/sbin/http-counted
+                <br>&nbsp;&nbsp;&nbsp; RUN mkdir /var/log/http-counter
+                <br>&nbsp;&nbsp;&nbsp; RUN chown -R counter:counter /var/log/http-counter
+                <br>&nbsp;&nbsp;&nbsp; EXPOSE 88/tcp
+                <br>&nbsp;&nbsp;&nbsp; CMD /usr/sbin/http-counted</span></span>
+            </li>
+        </ul>
+    </li>
+    <li>Create the container and inspect its behavior. Replace dram with your initials
+        <ul>
+            <li><span class="s_command">docker build -t http_counted_<span class="s_cmd_choice">dram</span> .</span></li>
+            <li><span class="s_command">docker images</span></li>
+            <li><span class="s_command">docker container ls -a</span></li>
+            <li><span class="s_command">docker run -p 88:88 -it http_counted_<span class="s_cmd_choice">dram</span></span></li>
+        </ul>
+    </li>
+    <li>Run a web browser (GUI or use <span class="s_command">wget</span> from another console) 
+        and test the counter if it works like you previously did in the related previous assignments.
+    </li>
+    <li>Stop the container (<span class="s_command">Ctrl+C</span>) and restart it.</li>
+    <li>Run the web browser again and check if the counter was reset or not.</li>
+    <li>Stop the container (<span class="s_command">Ctrl+C</span>)</li>
+    <li>Run it again using a different command:
+        <br><span class="s_command">docker run -p 88:88 -v counter_disk:/var/log/http-counter/ -it http_counted_<span class="s_cmd_choice">dram</span></span>
+    </li>
+    <li>Run the web browser again, stop and start the container again, and check if the counter was reset or not.</li>
+    <li>Inspect the volumes:<br><span class="s_command">docker volume ls</span></li>
+</ul>
+
+
+
+<h2>Configuring automated start (and stop) of the Docker container image</h2>
+<ul>
+    <li>Create <span class="s_command">docker-compose.yml</span> file:
+        <ul>
+            <li><span class="s_command">gedit docker-compose.yml &amp;
+                <br>&nbsp;&nbsp;&nbsp;<span class="s_code_fragment">version: '3.3'<br>&nbsp;&nbsp;&nbsp; services:
+                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; hc:
+                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; container_name: 'http_counted_<span class="s_cmd_choice">dram</span>'
+                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; image: 'http_counted_</span><span class="s_cmd_choice">dram</span><span class="s_code_fragment">'
+                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; command: /usr/sbin/http-counted
+                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; volumes:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - 'counter_disk:/var/log/http-counter/:rw'
+                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ports:
+                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - '88:88'
+                <br>&nbsp;&nbsp;&nbsp; volumes:
+                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; counter_disk:</span></span>
+            </li>
+        </ul>
+    </li>
+    <li>Run the container using the configuration file above.
+        <br><span class="s_command">docker-compose up</span>
+    </li>
+    <li>Run the web browser again, stop and start the container again, and check if the counter was reset or not</li>
+    <li>Repeat the test above, but this time instead of using <span class="s_command">Ctrl+C</span> run the command below to stop the container. Use the same directory.
+        <br><span class="s_command">docker-compose down</span>
+    </li>
+    <li>Repeat the test above, but this time instead of using <span class="s_command">Ctrl+C</span> run the command below to stop the container. Use from anywhere.
+        <br><span class="s_command">docker ps<br>docker kill xxx</span>
+    </li>
+    <li><span class="s_tograde">Homework submission:</span>
+        <ul>
+            <li><span class="s_tograde">type <span class="s_command">exit</span></span></li>
+            <li><span class="s_tograde">save file hwD.txt for future homework submission.</span></li>
+        </ul>
+    </li>
+</ul>
+<h2>Cleanup of unneeded Docker containers and Images</h2>
+<ul>
+    <li><span class="s_command">docker container ls -a</span></li>
+    <li><span class="s_command">docker images</span></li>
+    <li><span class="s_command">docker volume ls</span></li>
+    <li><span class="s_command">docker container prune</span></li>
+    <li><span class="s_command">docker image prune</span></li>
+    <li><span class="s_command">docker volume prune</span></li>
+    <li><span class="s_command">docker container ls -a</span></li>
+    <li><span class="s_command">docker images</span></li>
+    <li><span class="s_command">docker volume ls</span></li>
+</ul>
+<h2>Submission</h2>
+
+<p>Drop the file with <span class="s_tograde">the information collected during the exercise as instructed</span> 
+and the created Debian package in the corresponding assignment drop box on Canvas.</p>
+
+<p>Thank you.</p>
+
+
+
+</body> 
+</html>

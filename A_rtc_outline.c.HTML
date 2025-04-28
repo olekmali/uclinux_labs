@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+  <title>A_rtc_outline.c</title>
+  <style type="text/css">
+  <!--
+body { color: #000000; background: #ffffff; }
+h3.title_comment             { color: #F00000; }
+span.comment                 { color: #444444; }
+span.doc_comment             { color: #444444; font-style: italic; }
+span.string                  { color: #008000; }
+span.esc_string              { color: #77dd77; }
+span.char                    { color: #008000; }
+span.esc_char                { color: #77dd77; }
+span.numeric                 { color: #FF0000; }
+span.ident                   { color: #2040a0; }
+span.predef_ident            { color: #2040a0; font-weight: bold; }
+span.type                    { color: #2040a0; font-weight: bold; }
+span.predef_type             { color: #2040a0; font-weight: bold; }
+span.keyword                 {                 font-weight: bold; }
+span.library_fn              { color: #a52a2a; font-weight: bold; }
+span.include                 { color: #0000ff; font-weight: bold; }
+span.preproc                 { color: #0000ff; font-weight: bold; }
+span.braces                  { color: #4444FF; font-weight: bold; }
+span.symbol                  { color: #4444FF; }
+span.fn_header               {                 font-weight: bold; }
+span.fn_header_name          { color: #ff0000; }
+span.fn_header_args          { color: #2040a0; }
+span.regex                   { color: #b000d0; }
+span.text                    {                 font-style: italic; }
+span.entity                  { color: #ff0000; }
+span.assignment              { color: #2040a0; }
+span.dep_line                { color: #8b2252; }
+span.dep_target              {                 font-weight: bold; }
+span.dep_cont                { color: #000000; font-weight: bold; }
+span.macro                   { color: #2040a0; }
+span.int_macro               { color: #4080ff; }
+span.esc_usd                 { color: #444444; }
+  -->
+  </style>
+</head>
+<body>
+<pre>
+<h3 class="title_comment">//* Outline for your RTC access program for the Lab *</h3>
+<span class="preproc">#include <span class="string">&lt;stdio.h&gt;</span></span>
+<span class="preproc">#include <span class="string">&lt;stdlib.h&gt;</span></span>
+<span class="preproc">#include <span class="string">&lt;fcntl.h&gt;</span></span>
+<span class="preproc">#include <span class="string">&lt;unistd.h&gt;</span></span>
+<span class="preproc">#include <span class="string">&lt;sys/ioctl.h&gt;</span></span>
+
+<span class="preproc">#include <span class="string">&lt;linux/rtc.h&gt;</span></span>
+
+<span class="comment">/*
+struct rtc_time {
+    int tm_sec;
+    int tm_min;
+    int tm_hour;
+    int tm_mday;
+    int tm_mon;
+    int tm_year;
+    int tm_wday;     // unused
+    int tm_yday;     // unused
+    int tm_isdst;    // unused
+};
+
+ICTL commands:
+#define RTC_RD_TIME     ...
+#define RTC_SET_TIME    ...
+interrupts (unsigned long frequency)
+#define RTC_IRQP_READ   ...
+#define RTC_IRQP_SET    ...
+#define RTC_UIE_ON      ...
+#define RTC_UIE_OFF     ...
+reading from the file will block each time until interrupt run
+alarms
+#define RTC_ALM_READ    ...
+#define RTC_ALM_SET     ...
+#define RTC_AIE_ON      ...
+#define RTC_AIE_OFF     ...
+reading from the file will block each time until alarm run
+and many more
+...
+
+See the example posted in the course notes for instruction how to implements the commands above
+
+*/</span>
+
+<span class="preproc">#define RTC_DEV <span class="string">&quot;/dev/clock&quot;</span></span>
+// <span class="ident">Note</span><span class="symbol">:</span> <span class="ident">revert</span> <span class="ident">it</span> <span class="ident">to</span> <span class="ident">the</span> <span class="ident">line</span> <span class="ident">below</span> <span class="keyword">if</span> <span class="ident">you</span> <span class="ident">were</span> <span class="ident">not</span> <span class="ident">successful</span> <span class="ident">with</span> <span class="ident">UDEV</span> <span class="ident">part</span> <span class="ident">of</span> <span class="ident">the</span> <span class="ident">lab</span>
+// #<span class="ident">define</span> <span class="ident">RTC_DEV</span> <span class="string">&quot;/dev/rtc0&quot;</span>
+
+<span class="keyword">int</span> <span class="ident">main</span> <span class="symbol">(</span><span class="symbol">)</span>
+<span class="braces">{</span>
+    <span class="keyword">struct</span> <span class="ident">rtc_time</span>     <span class="ident">currentTime</span><span class="symbol">;</span>
+    <span class="keyword">unsigned</span> <span class="keyword">long</span> <span class="keyword">int</span>   <span class="ident">currentStatus</span><span class="symbol">;</span>
+    <span class="keyword">int</span>                 <span class="ident">rtc_fd</span><span class="symbol">;</span>
+
+    <span class="ident">printf</span><span class="symbol">(</span> <span class="string">&quot;Hello, my name is __________<span class="esc_char">\n</span><span class="esc_char">\n</span>&quot;</span> <span class="symbol">)</span><span class="symbol">;</span>
+
+
+    <span class="ident">rtc_fd</span> <span class="symbol">=</span> <span class="ident">open</span><span class="symbol">(</span><span class="ident">RTC_DEV</span>, <span class="ident">O_RDWR</span><span class="symbol">)</span><span class="symbol">;</span>
+    <span class="keyword">if</span> <span class="symbol">(</span> <span class="ident">rtc_fd</span> <span class="symbol">=</span><span class="symbol">=</span> <span class="symbol">-</span><span class="numeric">1</span> <span class="symbol">)</span>
+    <span class="braces">{</span>
+        <span class="ident">printf</span><span class="symbol">(</span> <span class="string">&quot;Couldn't open rtc<span class="esc_char">\n</span>&quot;</span> <span class="symbol">)</span><span class="symbol">;</span>
+        <span class="keyword">return</span> <span class="symbol">-</span><span class="numeric">1</span><span class="symbol">;</span>
+    <span class="braces">}</span>
+
+    // <span class="ident">read</span> <span class="ident">the</span> <span class="ident">time</span>, <span class="ident">can</span> <span class="ident">also</span> <span class="ident">set</span> <span class="ident">the</span> <span class="ident">time</span> <span class="keyword">if</span> <span class="ident">you</span> <span class="ident">are</span> <span class="ident">root</span>
+    <span class="keyword">if</span> <span class="symbol">(</span> <span class="ident">ioctl</span><span class="symbol">(</span> <span class="ident">rtc_fd</span>, <span class="ident">RTC_RD_TIME</span>, <span class="symbol">&amp;</span><span class="ident">currentTime</span> <span class="symbol">)</span> <span class="symbol">=</span><span class="symbol">=</span> <span class="symbol">-</span><span class="numeric">1</span> <span class="symbol">)</span>
+    <span class="braces">{</span>
+        <span class="ident">printf</span><span class="symbol">(</span> <span class="string">&quot;Couldn't execute ioctl to read time on rtc<span class="esc_char">\n</span>&quot;</span> <span class="symbol">)</span><span class="symbol">;</span>
+        <span class="keyword">return</span> <span class="symbol">-</span><span class="numeric">1</span><span class="symbol">;</span>
+    <span class="braces">}</span>
+
+    // <span class="ident">use</span> <span class="ident">ioctl</span> <span class="ident">to</span> <span class="ident">set</span> <span class="ident">RTC_UIE_ON</span>, <span class="ident">NULL</span>,
+    // <span class="ident">exit</span> <span class="keyword">if</span> <span class="ident">an</span> <span class="ident">error</span> <span class="symbol">-</span> <span class="ident">error</span> <span class="ident">will</span> <span class="ident">cause</span> <span class="ident">read</span><span class="symbol">(</span>,,<span class="symbol">)</span> <span class="ident">to</span> <span class="ident">stall</span>
+
+    // <span class="ident">read</span> <span class="ident">the</span> <span class="keyword">sizeof</span><span class="symbol">(</span><span class="ident">currentStatus</span><span class="symbol">)</span> <span class="ident">Bytes</span> <span class="ident">into</span> <span class="ident">the</span> <span class="ident">currentStatus</span> <span class="ident">variable</span> <span class="ident">using</span> <span class="ident">read</span><span class="symbol">(</span>..,..,..<span class="symbol">)</span>
+    // <span class="ident">Note</span><span class="symbol">:</span> <span class="ident">the</span> <span class="ident">program</span> <span class="ident">will</span> <span class="ident">wait</span> <span class="ident">until</span> <span class="ident">a</span> <span class="ident">clock</span> <span class="ident">interrupt</span> <span class="ident">occurs</span>
+    // <span class="ident">and</span> <span class="ident">then</span> <span class="ident">returns</span> <span class="ident">a</span> <span class="ident">status</span> <span class="ident">returned</span> <span class="ident">from</span> <span class="ident">each</span> <span class="ident">serviced</span> <span class="ident">interrupt</span>
+
+    // <span class="ident">use</span> <span class="ident">ioctl</span> <span class="ident">to</span> <span class="ident">set</span> <span class="ident">RTC_UIE_OFF</span>, <span class="ident">NULL</span>
+    // <span class="ident">print</span> <span class="ident">error</span> <span class="ident">but</span> <span class="keyword">do</span> <span class="ident">not</span> <span class="ident">exit</span> <span class="ident">on</span> <span class="ident">error</span>
+
+    // <span class="ident">close</span> <span class="ident">the</span> <span class="ident">handle</span>
+    
+    // ... <span class="ident">print</span> <span class="ident">contents</span> <span class="ident">of</span> <span class="ident">the</span> <span class="ident">current</span> <span class="ident">time</span> ...
+    // ... <span class="ident">print</span> <span class="ident">contents</span> <span class="ident">of</span> <span class="ident">the</span> <span class="ident">status</span> <span class="ident">and</span> <span class="ident">analyze</span> ...
+
+    <span class="keyword">return</span><span class="symbol">(</span><span class="numeric">0</span><span class="symbol">)</span><span class="symbol">;</span>
+<span class="braces">}</span>
+</pre>
+<!-- <hr>syntax highlighted by <a href="https://www.palfrader.org/code/code2html/">Code2HTML</a>, v. 0.9.1  -->
+</body>
+</html>

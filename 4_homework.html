@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8" />
+<title>ECE472/572 (UCLX) Assignment Number 4</title>
+<!-- meta http-equiv="Pragma" content="no-cache" -->
+<meta name="robots" content="index,follow" />
+<!-- meta name="robots" content="noarchive" -->
+<link rel="shortcut icon" href="../../../icons/mopsys.ico" type="image/x-icon" />
+<script type="text/JavaScript" src="../../../default.js"></script>
+<link rel="stylesheet" href="../../../default.css" type="text/css" />
+<style type="text/css" />
+<!--
+.s_command {font-family: "Courier New", Courier, mono; }
+.s_tograde {color: #006600; }
+.s_tosee {color: #0000FF; }
+.s_optional { font-weight: lighter; color: #3F3FFF; }
+.s_warning {font-weight: bold; color: #7F0000; }
+.s_cmd_choice {color: #FF0000; font-family: "Courier New", Courier, mono; }
+.s_cmd_4grade {color: #006600; font-family: "Courier New", Courier, mono; }
+.s_code_fragment {font-family: "Courier New", Courier, mono; color: #0000FF; }
+-->
+</style>
+</head>
+<body>
+
+<h1>ECE 472/572 Assignment 4</h1>
+
+
+<h2>Purpose</h2>
+
+<h3>Skills</h3>
+
+<p>The purpose of this assignment is to help you practice the following skills that are essential to your success in this course / in school / in this field / in professional life beyond school:</p>
+
+<ul>
+    <li>Ability to create simple Makefiles.</li>
+    <li>Ability to make minor modifications in complex Makefile systems.</li>
+    <li>Setting up efficient building of software projects.</li>
+    <li>Creating cuistom library files and linking own code with provided libraries.</li>
+</ul>
+
+<h3>Knowledge</h3>
+
+<p>This assignment will also help you to become familiar with the following important content knowledge in this discipline:</p>
+
+<ul>
+    <li>Fundamental concepts of Makefile software build system.</li>
+    <li>Makefiles are widely used in Linx enviuronemnt software development and will be utilized in all further labs in this course.</li>
+</ul>
+
+
+
+<h2>Prepare for the lab</h2>
+
+<p>Answer these questions while doing this lab &ndash; they will help you understand the procedure and better prepare for the tests.</p>
+<ul>
+    <li>What is<span class="s_command"> Makefile </span>and what is its basic structure?</li>
+    <li>What are the dependencies?</li>
+    <li>What are the rules?</li>
+    <li>Why preserving tabs (<span class="s_command">'\t'</span>) and not allowing them to be converted to spaces (<span class="s_command">' '</span>) in the <span class="s_command">Makefile</span> is important?</li>
+    <li>What does <em class="s_command">Draw Spaces</em> do when activated in <span class="s_command">gedit</span>? Why it may be useful when editing makefiles?</li>
+    <li>Does the file controlling the behavior of <span class="s_command">make</span> command need to to be named <span class="s_command">Makefile</span> with capitalized first character? Why so, or why not?</li>
+    <li>What are the differences between a compiler and a linker?</li>
+    <li>What does <span class="s_command">ar</span> program do, what are its input file(s), and how its result file is used later?</li>
+    <li>What are the differences between a static library and a shared library?</li>
+    <li>What are the linker options -L and -l? Why -L option is needed in our project?</li>
+    <li>How are<span class="s_command"> Makefile </span>variables declared and used? Why it is convenient to use them?</li>
+    <li>What does<span class="s_command"> ufw </span>program do? How to set it up, 
+    enable, and manage basic configuration of its settings?</li>
+</ul>
+
+
+<h2>Activity (20 pts.)</h2>
+
+<h3>Creating static libraries and introduction to Makefile</h3>
+<p>Download and unpack the <a href="4_code.tar.gz">code.tar.gz</a> 
+project. Learn how to unpack it using console window utilities rather 
+than graphical tools. Modify the existing <span class="s_command">Makefile</span> so that it support 
+four projects - building <span class="s_command">tnplib</span> static library and then three programs. You can start with the partialy completed <span class="s_command">Makefile</span> . The third project is 
+<a href="4_http_multi.cpp.HTML" class="s_command">http_multi.cpp</a>. Compile and run all 
+programs. Use a Web browser to verify whether they work and what they 
+do. Be prepared to 
+answer all questions regarding unpacking and packing the project, and the structure of Makefiles.</p>
+<p>Suggested procedure:</p>
+<ul>
+    <li>Install (if you have not done it earleir) and configure the firewall:<br><span class="s_command">
+    sudo apt install ufw<br>sudo ufw allow 22/tcp<br>sudo ufw allow 8081/tcp<br>
+    sudo ufw allow 8082/tcp<br>sudo ufw allow 8083/tcp<br>sudo ufw enable<br>
+    sudo ufw status</span></li>
+    <li>Prepare the gedit text editor to be more useful when editing makefiles:
+    <ul>
+        <li><span class="s_command">sudo apt-get install gedit-plugins</span></li>
+        <li>Run gedit and enable the plugin called <em class="s_command">Draw Spaces</em>. See: MENU/Edit/Preferences/Plugins tab</li>
+        <li>You can disable and re-enable it at any time. If you cannot get used to the new view of your text files, please enable it at least once for a short time when editing the <span class="s_command">Makefile</span></li>
+    </ul>
+    </li>
+    <li>Using a Web browser save the <a href="4_code.tar.gz">code.tar.gz</a> project into a folder where you want to do your work</li>
+    <li>open a console window and go to the folder where you saved the file</li>
+    <li>unpack it</li>
+    <li>find the name of the folder that was created, and go to the folder</li>
+    <li>edit file named http_multi.cpp (create it) and paste contents of <a href="4_http_multi.cpp.HTML" class="s_command">http_multi.cpp</a></li>
+    <li>edit Makefile</li>
+    <li>modify the Makefile to include the third target project (create appropriate rule entires and modify the rule for <em>all</em>)</li>
+    <li>run make all</li>
+    <li>start on of the compiled programs</li>
+    <li>Verify if the programs do work an d what they do using a Web browser. Location is <span class="s_command"><a href="http://localhost:8081/">
+    http://localhost:<span>PORT</span>/</a></span> <br>
+    where PORT is the port number for a program (e.g. 8081, or 8082, or 8083)</li>
+    <li>create a rule entry for creating the <span class="s_command">libtnplib.a</span> that depends on <span class="s_command">tnplib.o</span> <br>
+    Note: in order to create a library one needs to run:
+    <ul>
+        <li class="s_command">ar -rcs libtnplib.a tnplib.o</li>
+    </ul>
+    </li>
+    <li>In other rules replace dependence from <span class="s_command">tnplib.o</span> to <span class="s_command">libtnplib.a</span></li>
+    <li>The linker now should not use <span class="s_command">tnplib.o</span> but instead the static library <span class="s_command">-L. -ltnplib</span> 
+    <br>and <strong>place it after</strong> any other *.o files because of 
+    possible command line argument interpretation error inside g++</li>
+    <li>Modify the options for <span class="s_command">ARFLAGS</span> as necessary close to the top of the file 
+    if necessary</li>
+    <li>Modify rule clean to remove the compiled library as well</li>
+    <li>run <span class="s_command">make all</span> and inspect the folder</li>
+    <li>run <span class="s_command">make clean</span> and inspect the folder</li>
+    <li>run <span class="s_command">make tar</span> to prepare the file for submission</li>
+    <li>rename the file <span class="s_command">whatever.tar.gz</span> to
+    <span class="s_command">whatever.tgz</span> so that it is accepted by the 
+    submission system</li>
+</ul>
+
+
+
+<h2>Submission</h2>
+
+<p>Drop off the compressed (tar-gzipped) contents of your project folder in the corresponding assignment drop box on Canvas.</p>
+
+<p>Thank you.</p>
+
+
+
+<h2>Criteria for Success</h2>
+
+<p>The success in this lab is measured by the following outcomes:
+<ul>
+    <li>Adding the third compilation target to the provided Makelfile.
+        I.e. make all will compile all three programs instead of the two 
+        that are compiled by the provided Makefile out-of-the-box. (50%)</li>
+    <li>Creating a custom library file that contains tnplib.o (25%)</li>
+    <li>Linking all software targets with the created custom library 
+        libtnplib.a (-l and -L options) instead of with tnplib.o object. (25%)</li>
+    <li>Successfull packing all related files using tar and utiilizing 
+        one of the available compression methods. (minor penalty if not done.)</li>
+    <li>Grading is implemented by Makefile inspection and possibly
+        by verification by running the <span class="s_command">make</span> command with various targets.</li>
+    <li>Additional modest extra credit of up to 10% is awarded if the fully successful lab 
+        is submitted early ahead of the deadline as defined when majority of course participants 
+        start submitting successfully completed lab assignments.</li>
+</ul>
+</p>
+
+
+
+<p>
+<a href="../../../index.html"><img src="../../../icons/main.gif" class="menu32x32" alt="web site front" /></a>
+<a href="../index.html"><img src="../../../icons/menu.gif" class="menu32x32" alt="local main page" /></a>
+<a href="index.html"><img src="../../../icons/mmisc.gif" class="menu32x32" alt="local list page" /></a>
+<a href="../../../bookmark/index.html"><img src="../../../icons/mbookmark.gif" class="menu32x32" alt="general bookmarks" /></a>
+<a href="../../../bookmark/software.html"><img src="../../../icons/mbookabcd.gif" class="menu32x32" alt="software bookmarks" /></a>
+<a href="javascript:void(window.history.back());"><img src="../../../icons/maleft.gif" class="menu32x32" alt="go back" /></a>
+<a href="javascript:void(window.open('../../../copyright.html','C','toolbar=no,status=no,menubar=no,directories=no,location=no,width=600,height=500,resizable=no'));"><img src="../../../icons/mchecked.gif" class="menu32x32" alt="copyright info" /></a>
+</p>
+
+</body>
+</html>

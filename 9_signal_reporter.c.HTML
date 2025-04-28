@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=UTF-8" />
+  <title>9_signal_reporter.c</title>
+  <style type="text/css" />
+  <!--
+body { color: #000000; background: #ffffff; }
+h3.title_comment             { color: #F00000; }
+span.comment                 { color: #444444; }
+span.doc_comment             { color: #444444; font-style: italic; }
+span.string                  { color: #008000; }
+span.esc_string              { color: #77dd77; }
+span.char                    { color: #008000; }
+span.esc_char                { color: #77dd77; }
+span.numeric                 { color: #FF0000; }
+span.ident                   { color: #2040a0; }
+span.predef_ident            { color: #2040a0; font-weight: bold; }
+span.type                    { color: #2040a0; font-weight: bold; }
+span.predef_type             { color: #2040a0; font-weight: bold; }
+span.keyword                 {                 font-weight: bold; }
+span.library_fn              { color: #a52a2a; font-weight: bold; }
+span.include                 { color: #0000ff; font-weight: bold; }
+span.preproc                 { color: #0000ff; font-weight: bold; }
+span.braces                  { color: #4444FF; font-weight: bold; }
+span.symbol                  { color: #4444FF; }
+span.fn_header               {                 font-weight: bold; }
+span.fn_header_name          { color: #ff0000; }
+span.fn_header_args          { color: #2040a0; }
+span.regex                   { color: #b000d0; }
+span.text                    {                 font-style: italic; }
+span.entity                  { color: #ff0000; }
+span.assignment              { color: #2040a0; }
+span.dep_line                { color: #8b2252; }
+span.dep_target              {                 font-weight: bold; }
+span.dep_cont                { color: #000000; font-weight: bold; }
+span.macro                   { color: #2040a0; }
+span.int_macro               { color: #4080ff; }
+span.esc_usd                 { color: #444444; }
+  -->
+  </style>
+</head>
+<body>
+<pre>
+<h3 class="title_comment">//* A demo to illustrate the usage of CRON *</h3>
+<span class="preproc">#include <span class="string">&lt;signal.h&gt;</span></span>
+<span class="preproc">#include <span class="string">&lt;unistd.h&gt;</span></span>
+<span class="preproc">#include <span class="string">&lt;stdlib.h&gt;</span></span>
+<span class="preproc">#include <span class="string">&lt;stdio.h&gt;</span></span>
+<span class="preproc">#include <span class="string">&lt;string.h&gt;</span></span>
+<span class="preproc">#include <span class="string">&lt;sys/types.h&gt;</span></span>
+
+// <span class="ident">replace</span> <span class="ident">word</span> <span class="ident">YOURSIGNAL</span> <span class="ident">with</span> <span class="ident">a</span> <span class="ident">positive</span> <span class="ident">number</span> <span class="ident">of</span> <span class="ident">your</span> <span class="ident">choice</span> <span class="ident">except</span> <span class="numeric">9</span>
+
+<span class="comment">/* the signal handler function */</span>
+<span class="keyword">void</span> <span class="ident">handle_YOURSIGNAL</span><span class="symbol">(</span><span class="keyword">int</span><span class="symbol">)</span> <span class="braces">{</span> //<span class="numeric">1</span>
+        <span class="ident">printf</span><span class="symbol">(</span><span class="string">&quot;User Signal Received by &lt;insert_your_name_here&gt;<span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+<span class="braces">}</span>
+
+<span class="keyword">int</span> <span class="ident">main</span><span class="symbol">(</span><span class="symbol">)</span>
+<span class="braces">{</span>
+        <span class="keyword">int</span> <span class="ident">sleeptime</span> <span class="symbol">=</span> <span class="numeric">0</span><span class="symbol">;</span>
+        <span class="keyword">struct</span> <span class="ident">sigaction</span> <span class="ident">handler</span><span class="symbol">;</span>
+        <span class="ident">handler</span>.<span class="ident">sa_handler</span> <span class="symbol">=</span> <span class="ident">handle_YOURSIGNAL</span><span class="symbol">;</span> //<span class="numeric">2</span>
+        <span class="ident">handler</span>.<span class="ident">sa_flags</span> <span class="symbol">=</span> <span class="numeric">0</span><span class="symbol">;</span>
+        <span class="ident">sigemptyset</span><span class="symbol">(</span><span class="symbol">&amp;</span><span class="ident">handler</span>.<span class="ident">sa_mask</span><span class="symbol">)</span><span class="symbol">;</span>
+        <span class="ident">sigaction</span><span class="symbol">(</span><span class="ident">YOURSIGNAL</span>, <span class="symbol">&amp;</span><span class="ident">handler</span>, <span class="ident">NULL</span><span class="symbol">)</span><span class="symbol">;</span> //<span class="numeric">3</span>
+        <span class="ident">sleeptime</span> <span class="symbol">=</span> <span class="ident">sleep</span><span class="symbol">(</span><span class="numeric">3600</span><span class="symbol">)</span><span class="symbol">;</span> // <span class="ident">wait</span> <span class="keyword">for</span> <span class="ident">the</span> <span class="ident">first</span> <span class="ident">signal</span> <span class="ident">received</span> <span class="ident">so</span> <span class="ident">that</span> <span class="ident">the</span> <span class="ident">interval</span> <span class="ident">can</span> <span class="ident">be</span> <span class="ident">measured</span>
+        <span class="keyword">while</span><span class="symbol">(</span><span class="numeric">1</span><span class="symbol">)</span>
+        <span class="braces">{</span>
+            <span class="ident">sleeptime</span> <span class="symbol">=</span> <span class="ident">sleep</span><span class="symbol">(</span><span class="numeric">3600</span><span class="symbol">)</span><span class="symbol">;</span> //<span class="ident">Sleep</span> <span class="keyword">for</span> <span class="ident">an</span> <span class="ident">hour</span> <span class="ident">to</span> <span class="ident">prevent</span> <span class="ident">the</span> <span class="ident">program</span> <span class="ident">being</span> <span class="ident">loaded</span> <span class="ident">into</span> <span class="ident">memory</span> <span class="ident">when</span> <span class="ident">it</span> <span class="ident">is</span> <span class="ident">not</span> <span class="ident">needed</span>.
+            <span class="keyword">if</span><span class="symbol">(</span><span class="ident">sleeptime</span><span class="symbol">!</span><span class="symbol">=</span><span class="numeric">0</span><span class="symbol">)</span> //<span class="ident">Program</span> <span class="ident">will</span> <span class="ident">sleep</span> <span class="ident">until</span> <span class="ident">it</span> <span class="ident">receives</span> <span class="ident">a</span> <span class="ident">signal</span>. <span class="ident">On</span> <span class="ident">signal</span> <span class="ident">sleep</span> <span class="ident">returns</span> <span class="ident">with</span> <span class="ident">remaining</span> <span class="ident">amount</span> <span class="ident">of</span> <span class="ident">time</span> <span class="ident">on</span> <span class="ident">sleep</span> <span class="ident">interval</span>.
+            <span class="braces">{</span>
+                <span class="ident">printf</span><span class="symbol">(</span><span class="string">&quot;You have configured Cron to trigger this program every %d seconds.<span class="esc_char">\n</span>&quot;</span>,<span class="symbol">(</span><span class="numeric">3600</span><span class="symbol">-</span><span class="ident">sleeptime</span><span class="symbol">)</span><span class="symbol">)</span><span class="symbol">;</span>
+            <span class="braces">}</span>
+            <span class="keyword">else</span>
+            <span class="braces">{</span>
+                <span class="ident">printf</span><span class="symbol">(</span><span class="string">&quot;You do not have Cron configured to trigger this program or your trigger interval is greater than one hour.<span class="esc_char">\n</span>&quot;</span><span class="symbol">)</span><span class="symbol">;</span>
+            <span class="braces">}</span>
+            //<span class="ident">Do</span> <span class="ident">Nothing</span>
+        <span class="braces">}</span>
+    <span class="keyword">return</span><span class="symbol">(</span><span class="numeric">0</span><span class="symbol">)</span><span class="symbol">;</span>
+<span class="braces">}</span>
+
+</pre>
+<!-- <hr>syntax highlighted by <a href="https://www.palfrader.org/code/code2html/">Code2HTML</a>, v. 0.9.1  -->
+</body>
+</html>
