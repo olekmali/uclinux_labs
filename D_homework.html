@@ -226,16 +226,19 @@ Customize the container name using your BUnetID to show that you did this lab by
         </ul>
     </li>
 </ul>
-<h2>Cleanup of unneeded Docker containers and Images</h2>
+<h2>Cleanup of all Docker containers and Images</h2>
 <ul>
     <li><span class="s_command">docker container ls -a</span></li>
-    <li><span class="s_command">docker images</span></li>
-    <li><span class="s_command">docker volume ls</span></li>
     <li><span class="s_command">docker container prune</span></li>
-    <li><span class="s_command">docker image prune</span></li>
-    <li><span class="s_command">docker volume prune</span></li>
     <li><span class="s_command">docker container ls -a</span></li>
     <li><span class="s_command">docker images</span></li>
+    <li><span class="s_command">docker image prune</span></li>
+    <li><span class="s_command">docker images</span></li>
+    <li><span class="s_command">docker image rm http_counted_dram</span></li>
+    <li><span class="s_command">docker image rm ubuntu</span></li>
+    <li><span class="s_command">docker images</span></li>
+    <li><span class="s_command">docker volume ls</span></li>
+    <li><span class="s_command">docker volume prune</span></li>
     <li><span class="s_command">docker volume ls</span></li>
 </ul>
 <h2>Submission</h2>
