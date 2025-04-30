@@ -27,19 +27,43 @@
 <h1>ECE 472/572 Extra Credit Assignment D</h1>
 
 
+<h2>Purpose</h2>
+
+<h3>Skills</h3>
+
+<p>The purpose of this assignment is to help you practice the following skills that are essential to your success in this course / in school / in this field / in professional life beyond school:</p>
+
+<ul>
+    <li>Learning Docker commands and tools.</li>
+    <li>Creating docker images.</li>
+    <li>Fundamental computer network skills.</li>
+    <li>Command-line profficiency.</li>
+</ul>
+
+<h3>Knowledge</h3>
+
+<p>This assignment will also help you to become familiar with the following important content knowledge in this discipline:</p>
+
+<ul>
+    <li>Containerization and virtualzation Concepts.</li>
+    <li>Applicaiton packaging.</li>
+    <li>Operating system fundamentals.</li>
+</ul>
+
+
 
 <h2>Prepare for the lab</h2>
 
-<p>Answer these questions while doing this lab &ndash; they will help you understand the procedure and better prepare for the tests. 
+<p>Answer these questions while doing this lab &ndash; 
+they will help you understand the procedure and better prepare for the tests. 
 You can find the answers at
-<a href="https://docs.docker.com/get-started/" target="_blank">
-https://docs.docker.com/get-started/</a> .&nbsp; Read all "Parts" of the "Get 
-Started" section of the documentaiton that is shown in the left side menu of the 
-documentation page.&nbsp; Then look at
-<a href="https://docs.docker.com/engine/reference/builder/" target="_blank">
-https://docs.docker.com/engine/reference/builder/</a> and finish with
-<a href="https://docs.docker.com/compose/compose-file/" target="_blank">
-https://docs.docker.com/compose/compose-file/</a> .</p>
+<a href="https://docs.docker.com/get-started/" target="_blank">https://docs.docker.com/get-started/</a> .
+Read all "Parts" of the "Get Started" section of the documentaiton that is shown in the left side menu 
+of the documentation page.&nbsp; Then look at
+<a href="https://docs.docker.com/engine/reference/builder/" target="_blank">https://docs.docker.com/engine/reference/builder/</a> 
+and finish with
+<a href="https://docs.docker.com/compose/compose-file/" target="_blank">https://docs.docker.com/compose/compose-file/</a> .</p>
+
 <ul>
     <li>What is a docker container?</li>
     <li>What is a container image?</li>
@@ -49,6 +73,7 @@ https://docs.docker.com/compose/compose-file/</a> .</p>
     <li>How to allow incoming network traffic to a specific port?</li>
     <li>How to run an command inside a dokcer image using the command <span class="s_command">docker exec ... </span>?</li>
     <li>What is a YAML language in general? What is a YAML file int he context of Docker?</li>
+    <li>Once Docker images are created they do not need to be recreated each time. Where are they stored?</li>
 </ul>
 
 <h2>Extra Credit Activity 1 (Up to 20 pts.)</h2>
@@ -184,12 +209,16 @@ Customize the container name using your BUnetID to show that you did this lab by
         <br><span class="s_command">docker-compose up</span>
     </li>
     <li>Run the web browser again, stop and start the container again, and check if the counter was reset or not</li>
-    <li>Repeat the test above, but this time instead of using <span class="s_command">Ctrl+C</span> run the command below to stop the container. Use the same directory.
+    <li>Repeat the test above, but this time instead of using <span class="s_command">Ctrl+C</span> 
+        run the command below to stop the container. Use the same directory.
         <br><span class="s_command">docker-compose down</span>
     </li>
-    <li>Repeat the test above, but this time instead of using <span class="s_command">Ctrl+C</span> run the command below to stop the container. Use from anywhere.
+    <li>Repeat the test above, but this time instead of using <span class="s_command">Ctrl+C</span> 
+        run the command below to stop the container. Use from anywhere.
         <br><span class="s_command">docker ps<br>docker kill xxx</span>
     </li>
+    <li>Inspect Docker storage - run the command <span class="s_command">sudo tree /var/libn/docker</span>
+    </li>    
     <li><span class="s_tograde">Homework submission:</span>
         <ul>
             <li><span class="s_tograde">type <span class="s_command">exit</span></span></li>
@@ -212,9 +241,22 @@ Customize the container name using your BUnetID to show that you did this lab by
 <h2>Submission</h2>
 
 <p>Drop the file with <span class="s_tograde">the information collected during the exercise as instructed</span> 
-and the created Debian package in the corresponding assignment drop box on Canvas.</p>
+in the corresponding assignment drop box on Canvas.</p>
 
 <p>Thank you.</p>
+
+
+
+<h2>Criteria for Success</h2>
+
+<p>The success in this lab is measured by the following outcomes:
+<ul>
+    <li>Demonstration of the successful creation of a Docket container.</li>
+    <li>Demonstration that the container can be interacted with using network connection.</li>
+    <li>Demonstration that the container retains information between its subsequent runs.</li>
+    <li>Demonstration of the successful fully automated composition a Docker container.</li>
+</ul>
+</p>
 
 
 
