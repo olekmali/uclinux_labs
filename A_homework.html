@@ -1,15 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta http-equiv="Content-type" content="text/html; charset=UTF-8" />
-<title>ECE472/572 (UCLX) Assignment Number 10</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+<title>ECE 472/572 Assignment Number 10</title>
 <!-- meta http-equiv="Pragma" content="no-cache" -->
-<meta name="robots" content="index,follow" />
+<meta name="robots" content="index,follow">
 <!-- meta name="robots" content="noarchive" -->
-<link rel="shortcut icon" href="../../../icons/mopsys.ico" type="image/x-icon" />
-<script type="text/JavaScript" src="../../../default.js"></script>
-<link rel="stylesheet" href="../../../default.css" type="text/css" />
-<style type="text/css" />
+<link rel="shortcut icon" href="../../mopsys.ico" type="image/x-icon">
+<script type="text/JavaScript" src="../default.js"></script>
+<link rel="stylesheet" href="../default.css" type="text/css">
+<style type="text/css">
 <!--
 .s_command {font-family: "Courier New", Courier, mono; }
 .s_tograde {color: #006600; }
@@ -27,28 +28,45 @@
 <h1>ECE 472/572 Assignment 10</h1>
 
 
-<h2>Purpose</h2>
+<h2>💡 Purpose</h2>
 
-<h3>Skills</h3>
+<h3>🛠 Skills</h3>
 
 <p>The purpose of this assignment is to help you practice the following skills that are essential to your success in this course / in school / in this field / in professional life beyond school:</p>
 
 <ul>
-    <li>Configuring <span class="s_command">udev</span> system to allow non-root access to selected device(s).</li>
-    <li>Communicating with device drivers using ioctl API in user space.</li>
-    <li>Configuring and using Linux sysfs digital IO interface that allows for control Digital IO Pins.</li>
+    <li>Locating Linux kernel header files and understanding their structure</li>
+    <li>Using <code>man</code> pages to interpret system calls and device interfaces</li>
+    <li>Executing commands like <code>ls -l /dev/rt*</code> and analyzing device permissions</li>
+    <li>Modifying device access rules using <code>udevadm</code> and custom udev rules</li>
+    <li>Writing and compiling C programs to interact with hardware devices via <code>ioctl</code></li>
+    <li>Cross-compiling programs for embedded Linux environments (Buildroot, ucLinux)</li>
+    <li>Controlling GPIO pins using shell commands and scripts</li>
+    <li>Developing scripts or programs to toggle LEDs and verify GPIO functionality</li>
+    <li>Mounting and inspecting debugfs for GPIO information</li>
+    <li>Testing device behavior when multiple peripherals (USB mouse, serial converters) are connected</li>
 </ul>
 
-<h3>Knowledge</h3>
+<h3>📚 Knowledge</h3>
 
 <p>This assignment will also help you to become familiar with the following important content knowledge in this discipline:</p>
 
 <ul>
-    <li>Use of ioctl API.</li>
-    <li><span class="s_command">/dev</span> interface to devices.</li>
-    <li><span class="s_command">/sys/class</span> interface to devices.</li>
+    <li>Purpose and structure of Linux kernel header files (<code>&lt;linux/xxxx.h&gt;</code>)</li>
+    <li>Difference between <code>open()</code> and <code>fopen()</code> in Linux programming</li>
+    <li>Functionality of <code>ioctl()</code> and its role in device control</li>
+    <li>Understanding RTC device operations and major/minor numbers in <code>/dev</code></li>
+    <li>Role of UDEV/EUDEV and dynamic device management in Linux</li>
+    <li>Groups and permissions in <code>/etc/group</code> and their impact on device access</li>
+    <li>Concept of character vs block devices and their identification in <code>/dev</code></li>
+    <li>GPIO fundamentals and interaction with Linux via sysfs/debugfs</li>
+    <li>Cross-compilation workflow for embedded Linux systems</li>
 </ul>
 
+<h3>🌟 Learning Outcomes</h3>
+
+<ul>
+</ul>
 
 
 <h2>Prepare for the lab - direct questions</h2>
@@ -101,7 +119,7 @@
     <li>What is the maximum file name or path name in number of characters in case of CDROM/DVD file systems: ISO, Joliet, UDF?</li>
 </ul>
 
-<h2>Activity 1 (10 pts.)</h2>
+<h2>🖥️ Activity 1 (10 pts.)</h2>
 
 <ol>
     <li>Find and inspect the Linux rtc device. Run <span class="s_command">ls -l /dev/rt*</span></li>
@@ -133,7 +151,7 @@
     <li><span class="s_tograde">Capture the view of the output of the program you wrote.</span></li>
 </ol>
 
-<h2>Activity 2 (10 pts.)</h2>
+<h2>🖥️ Activity 2 (10 pts.)</h2>
 
 <ol>
     <li>Inspect the GPIO access description
@@ -243,7 +261,7 @@ Instead, you have to use the predefined devices located at <span class="s_comman
 
 
 
-<h2>Submission</h2>
+<h2>📤 Submission</h2>
 
 <p>Submit both the source code of your program or script and
 a short video demonstration of the LED control to the corresponding assignment drop box on Canvas.</p>
@@ -252,7 +270,7 @@ a short video demonstration of the LED control to the corresponding assignment d
 
 
 
-<h2>Criteria for Success</h2>
+<h2>🎯 Criteria for Success</h2>
 
 <p>Successful completion of Activity 1 relies on three steps that can be evaluated independently. 
 <ul>

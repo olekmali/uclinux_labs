@@ -1,15 +1,16 @@
-<!DOCTYPE html>
-<html>
+<!DOCTYPE html> 
 <head>
-<meta http-equiv="Content-type" content="text/html; charset=UTF-8" />
-<title>ECE472/572 (UCLX) Assignment Number 9</title>
-<!-- meta http-equiv="Pragma" content="no-cache" -->
-<meta name="robots" content="index,follow" />
-<!-- meta name="robots" content="noarchive" -->
-<link rel="shortcut icon" href="../../../icons/mopsys.ico" type="image/x-icon" />
-<script type="text/JavaScript" src="../../../default.js"></script>
-<link rel="stylesheet" href="../../../default.css" type="text/css" />
-<style type="text/css" /> 
+<meta name="viewport" content="width=device-width, initial-scale=1" /> 
+<head> 
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8"> 
+<title>ECE 472/572 Assignment Number 9</title> 
+<!-- meta http-equiv="Pragma" content="no-cache" --> 
+<meta name="robots" content="index,follow"> 
+<!-- meta name="robots" content="noarchive" --> 
+<link rel="shortcut icon" href="../../mopsys.ico" type="image/x-icon"> 
+<script type="text/JavaScript" src="../default.js"></script> 
+<link rel="stylesheet" href="../default.css" type="text/css"> 
+<style type="text/css"> 
 <!--
 .s_command {font-family: "Courier New", Courier, mono; }
 .s_tograde {color: #006600; }
@@ -27,29 +28,48 @@
 <h1>ECE 472/572 Assignment 9</h1>
 
 
-<h2>Purpose</h2>
+<h2>💡 Purpose</h2>
 
-<h3>Skills</h3>
+<h3>🛠 Skills</h3>
 
 <p>The purpose of this assignment is to help you practice the following skills that are essential to your success in this course / in school / in this field / in professional life beyond school:</p>
 
 <ul>
-    <li>Setting up recurring events using CRON tables.</li>
-    <li>Filtering data for command line programs using Unix tools like <code>grep</code>, <code>awk</code>, <code>head</code>, and <code>cut</code>.</li>
+    <li>Downloading, editing, and compiling C source code on Linux</li>
+    <li>Understanding and modifying signal handling in C programs using <code>sigaction()</code></li>
+    <li>Using <code>man</code> pages to research system calls like <code>kill</code> and <code>ioctl</code></li>
+    <li>Executing process management commands (<code>ps</code>, <code>grep</code>, <code>awk</code>)</li>
+    <li>Sending signals to processes using <code>kill</code> with process IDs</li>
+    <li>Automating tasks with <code>cron</code> and editing crontab entries</li>
+    <li>Understanding cron syntax for scheduling tasks</li>
+    <li>Debugging PATH issues in cron jobs and specifying full command paths</li>
+    <li>Testing and verifying scheduled tasks by observing program output</li>
 </ul>
 
-<h3>Knowledge</h3>
+<h3>📚 Knowledge</h3>
 
 <p>This assignment will also help you to become familiar with the following important content knowledge in this discipline:</p>
 
 <ul>
-    <li>Scheduling in Linuix OS using CRON tables.</li>
-    <li>Interprocess communication using signals.</li>
+    <li>Concept of Unix signals and their role in process control</li>
+    <li>Difference between <code>kill</code> signals and direct file I/O operations</li>
+    <li>Structure and functionality of signal handlers in C programs</li>
+    <li>Process identification and PID extraction using command pipelines</li>
+    <li>Role of <code>cron</code> in Linux task automation and its limitations</li>
+    <li>Cron table syntax: minute, hour, day, month, weekday fields</li>
+    <li>Impact of environment variables (e.g., PATH) on cron jobs</li>
+    <li>Differences between interactive shell execution and cron execution</li>
+    <li>Importance of scheduling for system administration and automation</li>
+    <li>Security considerations when running cron jobs as root vs regular user</li>
+</ul>
+
+<h3>🌟 Learning Outcomes</h3>
+
+<ul>
 </ul>
 
 
-
-<h2>Prepare for the lab</h2> 
+<h2>🔍 Prepare for the lab</h2> 
  
 <p>Answer these questions while doing this lab &ndash; they will help you understand the procedure and better prepare for the tests.</p>
 <ul> 
@@ -99,7 +119,7 @@
     </li>
 </ul> 
  
-<h2>Activity 1 (10 pts.)</h2>
+<h2>🖥️ Activity 1 (10 pts.)</h2>
 
 <h3>Use Cron table to Control a Program on Linux</h3>
 
@@ -198,7 +218,7 @@
     <li><strong><span class="s_tograde">Exit script</span>.</strong></li>
 </ul>
 
-<h2>Activity 2 (10 pts.)</h2>
+<h2>🖥️ Activity 2 (10 pts.)</h2>
 
 <h3>Use Cron table to Control a Program on Microcontroller Linux</h3>
 
@@ -255,7 +275,7 @@
 
 
 
-<h2>Submission</h2> 
+<h2>📤 Submission</h2> 
 
 <p>For each exercise, drop the captured screen image that shows the output produced by 
 the signal receiver program reporting receving the signal at least several times 
@@ -267,7 +287,7 @@ in the same screenshot. Resize the terminal as necessary.</p>
 
 
 
-<h2>Criteria for Success</h2>
+<h2>🎯 Criteria for Success</h2>
 
 <p>The success in this lab is measured by the following outcomes:
 <ul>

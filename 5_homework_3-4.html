@@ -40,7 +40,47 @@
 
 
 
-<h2>Prepare for the lab</h2>
+<h2>💡 Purpose</h2>
+
+<h3>🛠 Skills</h3>
+
+<p>The purpose of this assignment is to help you practice the following skills that are essential to your success in this course / in school / in this field / in professional life beyond school:</p>
+
+<ul>
+    <li>Setting up a Linux kernel build environment for x86_64 architecture</li>
+    <li>Downloading and configuring Linux kernel source code</li>
+    <li>Adding a custom system call to the kernel source tree</li>
+    <li>Editing kernel header files and syscall tables</li>
+    <li>Compiling and building a custom Linux kernel</li>
+    <li>Installing and booting into a custom kernel on a virtual or physical machine</li>
+    <li>Writing user-space programs to invoke the new system call</li>
+    <li>Debugging kernel build errors and resolving dependency issues</li>
+    <li>Testing and verifying the functionality of the added system call</li>
+</ul>
+
+<h3>📚 Knowledge</h3>
+
+<p>This assignment will also help you to become familiar with the following important content knowledge in this discipline:</p>
+
+<ul>
+    <li>Linux kernel architecture and its modular design</li>
+    <li>System call mechanism and its role in user-kernel interaction</li>
+    <li>Structure of syscall tables and how system calls are registered</li>
+    <li>Kernel compilation process and configuration options</li>
+    <li>Differences between monolithic and modular kernel components</li>
+    <li>Impact of kernel changes on system stability and security</li>
+    <li>Best practices for modifying and maintaining custom kernels</li>
+    <li>Understanding x86_64 architecture specifics in Linux kernel development</li>
+    <li>Role of user-space and kernel-space in Linux system design</li>
+</ul>
+
+<h3>🌟 Learning Outcomes</h3>
+
+<ul>
+</ul>
+
+
+<h2>🔍 Prepare for the lab</h2>
 
 <p>Answer these questions while doing this lab &ndash; they will help you understand the procedure and better prepare for the tests.</p>
 <ul>
@@ -81,7 +121,7 @@
 </ul>
 
 
-<h2>Activity (30 pts.)</h2>
+<h2>🖥️ Activity (30 pts.)</h2>
 
 <h3>Custom Kernel</h3>
 <ul>
@@ -443,7 +483,7 @@ int main()
 
 
 
-<h2>Submission</h2>
+<h2>📤 Submission</h2>
 
 <p>Use <span class="style2">tar</span> and then <span class="style2">gzip</span> 
 or <span class="style2">bz2</span> to combine all script files required for the 
@@ -456,6 +496,32 @@ The installed Ubuntu disks or the virtual machine configurations will not be
 collected.</p>
 
 <p>Thank you.</p>
+
+
+
+<h2>🎯 Criteria for Success</h2>
+
+<p>This lab proof of work can be graded in three stages of success: 
+<ul>
+    <li>Your name, initials or user ID needs to be inserted as requested in order
+        to have any credit awarded for the work.</li>
+    <li>A partial credit is awarded if significant effort has been made as it can be 
+        verified by inspecting the recorded script or series of scripts but no postive results 
+        listed below have been achieved.</li>
+    <li>75% of credit is awarded if the kernel with the customized tag was compiled successfull 
+        as show by the attached SCREENSHOT 1 that shows the debian packages listed by ls -l .. command
+        and by uname -a command captured by SCREENSHOT 2.</li>
+    <li>Full credit os awarded if the lab has been completed as shown by SCREENSHOT 2 
+        that captured the <span class="s_command">uname -a</span> command showing 
+        that you booted into your custom kernel (your name or initils shown) 
+        and that the new system call was added correctly as verified 
+        by the <span class="s_command">ltrace</span> and/or <span class="s_command">strace</span> 
+        command results captured in the screenshot.</li>
+    <li>Additional modest extra credit of up to 10% is awarded if the fully successful lab 
+        is submitted early ahead of the deadline as defined when majority of course participants 
+        start submitting successfully completed lab assignments.</li>
+</ul>
+</p>
 
 
 

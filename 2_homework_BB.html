@@ -1,15 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta http-equiv="Content-type" content="text/html; charset=UTF-8" />
-<title>ECE472/572 (UCLX) Assignment Number 2</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+<title>ECE 472/572 Assignment Number 2</title>
 <!-- meta http-equiv="Pragma" content="no-cache" -->
-<meta name="robots" content="index,follow" />
+<meta name="robots" content="index,follow">
 <!-- meta name="robots" content="noarchive" -->
-<link rel="shortcut icon" href="../../../icons/mopsys.ico" type="image/x-icon" />
-<script type="text/JavaScript" src="../../../default.js"></script>
-<link rel="stylesheet" href="../../../default.css" type="text/css" />
-<style type="text/css" />
+<link rel="shortcut icon" href="../../mopsys.ico" type="image/x-icon">
+<script type="text/JavaScript" src="../default.js"></script>
+<link rel="stylesheet" href="../default.css" type="text/css">
+<style type="text/css">
 <!--
 .s_command {font-family: "Courier New", Courier, mono; }
 .s_tograde {color: #006600; }
@@ -27,15 +28,15 @@
 <h1>ECE 472/572 Assignment 2 - version for Beagle Bone</h1>
 
 
-<h2>Purpose</h2>
+<h2>💡 Purpose</h2>
 
 <p>This is an early attempt to prepare an SD card with a provided operating systenm for an Electronic Control Module and then use it.
 The actual purpose is to find out if you have all accessories that will be needed in every lab starting from Lab 6 so that you could
 address any problems without risking late submission of any of the later labs.</p>
 
-<h3>Skills</h3>
+<h3>🛠 Skills</h3>
 
-<p>Your skills of using command line itnerface will enhance. 
+<p>Your skills of using command line interface will enhance. 
 It is expected that you look up what each command used by you does.
 The lab does not explain the reason for each step to allow you 
 to look it up on your own and explore the subject.</p>
@@ -43,26 +44,45 @@ to look it up on your own and explore the subject.</p>
 <p>The purpose of this assignment is to help you practice the following skills that are essential to your success in this course / in school / in this field / in professional life beyond school:</p>
 
 <ul>
-    <li>Introduce the concept of the manual upgrade and recovery of the OS for ECM.</li>
-    <li>Show how to access ECM using a serial debug console.</li>
-    <li>Ensure that you have all resources needed to carry out Labs six and later
-        or have sufficent time to order anything that is needed but you miss.</li>
+    <li>Setting up a Linux or Debian-based environment for embedded development</li>
+    <li>Using console utilities for disk partitioning (<code>fdisk</code>, <code>parted</code>)</li>
+    <li>Formatting partitions with Linux file systems (<code>mkfs.ext4</code>, <code>mkfs.vfat</code>)</li>
+    <li>Mounting and unmounting partitions using <code>mount</code> and <code>umount</code></li>
+    <li>Copying bootloader and root filesystem files manually to SD card partitions</li>
+    <li>Verifying partition structure and boot configuration using <code>lsblk</code> and <code>df</code></li>
+    <li>Downloading embedded system distributions from official repositories</li>
+    <li>Testing headless embedded system boot and connectivity (SSH or serial console)</li>
+    <li>Troubleshooting boot issues and correcting partition or file placement errors</li>
 </ul>
 
-<h3>Knowledge</h3>
+<h3>📚 Knowledge</h3>
 
 <p>This assignment will also help you to become familiar with the following important content knowledge in this discipline:</p>
 
 <ul>
-    <li>What a serial debug console is.</li>
-    <li>Understanding the actual process of preparing the media with an operating system 
-        is too advanced at this point of the curse. You will benefit from this exprience 
-        later on when file systems are covered in the theory trail of this course.</li>
+    <li>BeagleBone, Raspberry Pi, etc. architecture and boot process (bootloader, kernel, root filesystem)</li>
+    <li>Role of boot partition vs root filesystem partition on SD cards</li>
+    <li>Linux disk partitioning concepts (MBR vs GPT, primary vs extended partitions)</li>
+    <li>File system types used in embedded Linux (FAT for boot, ext4 for root)</li>
+    <li>Importance of manual installation for understanding embedded system internals</li>
+    <li>Differences between automated scripts and manual setup for learning purposes</li>
+    <li>Networking basics for headless devices (IP configuration, SSH access)</li>
+    <li>Reliability considerations when cloning and deploying embedded Linux systems</li>
+</ul>
+
+<h3>🌟 Learning Outcomes</h3>
+
+<ul>
+    <li>Demonstrate the manual cloning and installation of a Beagle Bone SD card from a downloaded image.</li>
+    <li>Explain the role and use of a serial debug console in headless embedded systems.</li>
+    <li>Safely identify, mount, format, and partition external media without affecting the host system.</li>
+    <li>Execute common Linux commands (<code>sfdisk</code>, <code>lsblk</code>, <code>mount</code>, <code>apt-get</code>, etc.) and interpret their output.</li>
+    <li>Manage recording sessions (<code>script</code>) and ensure reproducibility through captured logs.</li>
+    <li>Evaluate your development setup readiness and identify missing components early in the semester.</li>
 </ul>
 
 
-
-<h2>Prepare for the lab</h2>
+<h2>🔍 Prepare for the lab</h2>
 
 <p>Answer these questions while doing this lab &ndash; they will help you understand the procedure and better prepare for the tests.</p>
 <ul>
@@ -108,7 +128,7 @@ to look it up on your own and explore the subject.</p>
 </ul>
 
 
-<h2>Activity (20 pts.)</h2>
+<h2>🖥️ Activity (20 pts.)</h2>
 
 <p>This installation assumes that you are running a Linux, or preferably Debian Linux such as Ubuntu booted from a HD or a Virtual Machine. It may be possible to do it while running from a Live CD but the amount of data to be saved temporarily on a RAM disk might be prohibitive.</p>
 
@@ -302,7 +322,7 @@ to look it up on your own and explore the subject.</p>
 
 
 
-<h3>Assignment submission</h3>
+<h2>📤 Submission</h2>
 
 <p>Open a HyperTerminal (e.g. PuTTY) either on your Windows host machine or
 Linux guest machine and login to your microcontroller. 
@@ -327,7 +347,7 @@ to receive partial credit "for the effort."</p>
 
 
 
-<h2>Criteria for Success</h2>
+<h2>🎯 Criteria for Success</h2>
 
 <p>This is all-or-nothing lab. One cannot setup or update a usable version of an 
 operating system on an ECM half-way. The successful proof of work contains a demonstration
